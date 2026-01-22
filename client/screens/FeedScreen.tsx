@@ -74,6 +74,7 @@ function PostCard({
   onBlock,
   onReport,
   t,
+  onCaptionPress,
 }: {
   post: PostWithUser;
   onLike: () => void;
@@ -85,9 +86,9 @@ function PostCard({
   onBlock: () => void;
   onReport: () => void;
   t: (en: string, ru: string) => string;
+  onCaptionPress: (post: PostWithUser) => void;
 }) {
   const { theme, language } = useTheme();
-  const [showCaptionModal, setShowCaptionModal] = useState(false);
   const likeScale = useSharedValue(1);
   const saveScale = useSharedValue(1);
 
@@ -279,17 +280,17 @@ function PostCard({
 
       {post.caption ? (
         <Pressable 
-          onPress={() => setSelectedMessage(post as any)}
+          onPress={() => onCaptionPress(post)}
           style={styles.captionContainer}
         >
           <ThemedText 
             type="small" 
-            style={{ color: theme.text, flexShrink: 1 }}
+            style={{ color: theme.text, flex: 1 }}
             numberOfLines={1}
           >
             {post.caption}
           </ThemedText>
-          {post.caption.length > 50 ? (
+          {post.caption.length > 40 ? (
             <ThemedText type="caption" style={{ color: theme.link, marginLeft: Spacing.xs, fontWeight: "600" }}>
               {t("more", "ещё")}
             </ThemedText>
@@ -333,6 +334,8 @@ export default function FeedScreen({ navigation }: Props) {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
   const { setFeedRefreshing } = useRefresh();
+
+  const [selectedMessage, setSelectedMessage] = useState<PostWithUser | null>(null);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -443,6 +446,7 @@ export default function FeedScreen({ navigation }: Props) {
         onSave={() => saveMutation.mutate({ postId: item.id, isSaved: item.isSaved })}
         onComment={() => navigation.navigate("Comments", { postId: item.id })}
         onUserPress={() => navigation.navigate("UserProfile", { userId: item.userId })}
+        onCaptionPress={(post) => setSelectedMessage(post)}
         t={t}
         onBlock={() => {
           Alert.alert(
@@ -749,7 +753,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.xs,
-    paddingBottom: Spacing.xs,
+    paddingBottom: Spacing.sm,
+    marginTop: -Spacing.xs,
   },
   captionModalOverlay: {
     flex: 1,
