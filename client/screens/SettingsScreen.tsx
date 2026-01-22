@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert, Modal } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TextInput } from "react-native";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/query-client";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
@@ -102,6 +104,40 @@ export default function SettingsScreen({ navigation }: Props) {
   const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePin, setDeletePin] = useState("");
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/users/${user?.id}`, { pin: deletePin });
+    },
+    onSuccess: async () => {
+      await logout();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+    onError: () => {
+      Alert.alert("Ошибка", "Неверный PIN-код или не удалось удалить аккаунт");
+    },
+  });
+
+  const handleDeleteAccount = () => {
+    if (deletePin.length !== 4) {
+      Alert.alert("Ошибка", "Введите 4-значный PIN-код");
+      return;
+    }
+    Alert.alert(
+      "Удалить аккаунт навсегда?",
+      "Все ваши данные, посты, сообщения будут удалены без возможности восстановления.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить навсегда",
+          style: "destructive",
+          onPress: () => deleteAccountMutation.mutate(),
+        },
+      ]
+    );
+  };
 
   const handleCopyId = async () => {
     if (user?.id) {
@@ -222,12 +258,38 @@ export default function SettingsScreen({ navigation }: Props) {
       ],
     },
     {
+      title: "ПОДДЕРЖКА",
+      items: [
+        {
+          icon: "mail",
+          title: "Связаться с нами",
+          subtitle: "support@moments-app.com",
+          onPress: () => {
+            Alert.alert("Связаться с нами", "Email: support@moments-app.com\n\nМы отвечаем в течение 24 часов.");
+          },
+        },
+        {
+          icon: "file-text",
+          title: "Условия использования",
+          subtitle: "Пользовательское соглашение",
+          onPress: () => navigation.navigate("PrivacyPolicy"),
+        },
+      ],
+    },
+    {
       title: "",
       items: [
         {
           icon: "log-out",
           title: "Выйти из аккаунта",
           onPress: handleLogout,
+          danger: true,
+        },
+        {
+          icon: "trash-2",
+          title: "Удалить аккаунт",
+          subtitle: "Безвозвратное удаление",
+          onPress: () => setShowDeleteModal(true),
           danger: true,
         },
       ],
@@ -274,6 +336,64 @@ export default function SettingsScreen({ navigation }: Props) {
           </Animated.View>
         ))}
       </ScrollView>
+
+      <Modal
+        visible={showDeleteModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <ThemedText type="h3">Удаление аккаунта</ThemedText>
+            <Pressable onPress={() => setShowDeleteModal(false)} hitSlop={8}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.colorPickerContent}>
+            <View style={styles.deleteWarning}>
+              <Feather name="alert-triangle" size={48} color={theme.error} />
+              <ThemedText type="h4" style={{ color: theme.error, marginTop: Spacing.md, textAlign: "center" }}>
+                Внимание!
+              </ThemedText>
+              <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: "center" }}>
+                После удаления аккаунта все ваши данные будут потеряны навсегда. Это действие нельзя отменить.
+              </ThemedText>
+            </View>
+
+            <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.xl }}>
+              Для подтверждения введите ваш PIN-код:
+            </ThemedText>
+            <TextInput
+              value={deletePin}
+              onChangeText={setDeletePin}
+              placeholder="0000"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="number-pad"
+              maxLength={4}
+              secureTextEntry
+              style={[
+                styles.pinInput,
+                {
+                  backgroundColor: theme.backgroundSecondary,
+                  color: theme.text,
+                  borderColor: theme.border,
+                },
+              ]}
+            />
+
+            <Pressable
+              onPress={handleDeleteAccount}
+              style={[styles.deleteButton, { backgroundColor: theme.error }]}
+            >
+              <ThemedText type="body" style={{ color: "#fff", fontWeight: "600" }}>
+                Удалить аккаунт навсегда
+              </ThemedText>
+            </Pressable>
+          </ScrollView>
+        </View>
+      </Modal>
 
       <Modal
         visible={showColorPicker}
@@ -400,6 +520,27 @@ const styles = StyleSheet.create({
   },
   colorName: {
     fontWeight: "500",
+  },
+  deleteWarning: {
+    alignItems: "center",
+    paddingVertical: Spacing.xl,
+  },
+  pinInput: {
+    height: 56,
+    borderRadius: 12,
+    paddingHorizontal: Spacing.lg,
+    fontSize: 24,
+    textAlign: "center",
+    letterSpacing: 8,
+    borderWidth: 1,
+    marginTop: Spacing.md,
+  },
+  deleteButton: {
+    height: 50,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.xl,
   },
 });
 

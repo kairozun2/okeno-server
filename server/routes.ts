@@ -750,6 +750,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user account
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      const { pin } = req.body;
+      const user = await storage.getUserByIdAndPin(req.params.id, pin);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid PIN" });
+      }
+      await storage.deleteUser(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
+  // Report content/user
+  app.post("/api/reports", async (req, res) => {
+    try {
+      const { reporterId, reportedUserId, reportedPostId, reason } = req.body;
+      if (!reporterId || !reason) {
+        return res.status(400).json({ error: "Reporter ID and reason required" });
+      }
+      const report = await storage.createReport({
+        reporterId,
+        reportedUserId,
+        reportedPostId,
+        reason,
+      });
+      res.json(report);
+    } catch (error) {
+      console.error("Create report error:", error);
+      res.status(500).json({ error: "Failed to create report" });
+    }
+  });
+
+  // Block user
+  app.post("/api/users/:id/blocked", async (req, res) => {
+    try {
+      const { blockedUserId } = req.body;
+      if (!blockedUserId) {
+        return res.status(400).json({ error: "Blocked user ID required" });
+      }
+      await storage.blockUser(req.params.id, blockedUserId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Block user error:", error);
+      res.status(500).json({ error: "Failed to block user" });
+    }
+  });
+
+  // Unblock user
+  app.delete("/api/users/:id/blocked/:blockedUserId", async (req, res) => {
+    try {
+      await storage.unblockUser(req.params.id, req.params.blockedUserId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Unblock user error:", error);
+      res.status(500).json({ error: "Failed to unblock user" });
+    }
+  });
+
+  // Get blocked users
+  app.get("/api/users/:id/blocked", async (req, res) => {
+    try {
+      const blockedIds = await storage.getBlockedUsers(req.params.id);
+      const blockedUsers = await Promise.all(
+        blockedIds.map(async (id) => {
+          const user = await storage.getUser(id);
+          return user ? { id: user.id, username: user.username, emoji: user.emoji } : null;
+        })
+      );
+      res.json(blockedUsers.filter(u => u !== null));
+    } catch (error) {
+      console.error("Get blocked users error:", error);
+      res.status(500).json({ error: "Failed to get blocked users" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

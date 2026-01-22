@@ -127,6 +127,29 @@ export const archivedPosts = pgTable("archived_posts", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Reports table - for reporting inappropriate content/users
+export const reports = pgTable("reports", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  reportedUserId: varchar("reported_user_id").references(() => users.id, { onDelete: "cascade" }),
+  reportedPostId: varchar("reported_post_id").references(() => posts.id, { onDelete: "cascade" }),
+  reason: text("reason").notNull(),
+  status: text("status").default("pending").notNull(), // pending, reviewed, resolved
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Blocked users table
+export const blockedUsers = pgTable("blocked_users", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  blockedUserId: varchar("blocked_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Chat settings table - per-user customizations for each chat
 export const chatSettings = pgTable("chat_settings", {
   id: varchar("id")
@@ -313,6 +336,18 @@ export const insertChatSettingsSchema = createInsertSchema(chatSettings).pick({
   backgroundImage: true,
 });
 
+export const insertReportSchema = createInsertSchema(reports).pick({
+  reporterId: true,
+  reportedUserId: true,
+  reportedPostId: true,
+  reason: true,
+});
+
+export const insertBlockedUserSchema = createInsertSchema(blockedUsers).pick({
+  userId: true,
+  blockedUserId: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -334,3 +369,7 @@ export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type Session = typeof sessions.$inferSelect;
 export type InsertChatSettings = z.infer<typeof insertChatSettingsSchema>;
 export type ChatSettings = typeof chatSettings.$inferSelect;
+export type InsertReport = z.infer<typeof insertReportSchema>;
+export type Report = typeof reports.$inferSelect;
+export type InsertBlockedUser = z.infer<typeof insertBlockedUserSchema>;
+export type BlockedUser = typeof blockedUsers.$inferSelect;

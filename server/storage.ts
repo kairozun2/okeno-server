@@ -11,6 +11,8 @@ import {
   hiddenUsers,
   archivedPosts,
   chatSettings,
+  reports,
+  blockedUsers,
   type User,
   type InsertUser,
   type Post,
@@ -31,6 +33,10 @@ import {
   type InsertSession,
   type ChatSettings,
   type InsertChatSettings,
+  type Report,
+  type InsertReport,
+  type BlockedUser,
+  type InsertBlockedUser,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -110,6 +116,18 @@ export interface IStorage {
   getChatSettings(userId: string, otherUserId: string): Promise<ChatSettings | undefined>;
   getAllChatSettings(userId: string): Promise<ChatSettings[]>;
   upsertChatSettings(settings: InsertChatSettings): Promise<ChatSettings>;
+  
+  // Reports
+  createReport(report: InsertReport): Promise<Report>;
+  
+  // Blocked users
+  blockUser(userId: string, blockedUserId: string): Promise<void>;
+  unblockUser(userId: string, blockedUserId: string): Promise<void>;
+  getBlockedUsers(userId: string): Promise<string[]>;
+  isBlocked(userId: string, blockedUserId: string): Promise<boolean>;
+  
+  // Account deletion
+  deleteUser(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -408,6 +426,45 @@ export class DatabaseStorage implements IStorage {
   async updateChatSettings(id: string, data: any): Promise<ChatSettings> {
     const [updated] = await db.update(chatSettings).set({ ...data, updatedAt: new Date() }).where(eq(chatSettings.id, id)).returning();
     return updated;
+  }
+  
+  // Reports
+  async createReport(report: InsertReport): Promise<Report> {
+    const [newReport] = await db.insert(reports).values(report).returning();
+    return newReport;
+  }
+  
+  // Blocked users
+  async blockUser(userId: string, blockedUserId: string): Promise<void> {
+    const existing = await db.select().from(blockedUsers).where(
+      and(eq(blockedUsers.userId, userId), eq(blockedUsers.blockedUserId, blockedUserId))
+    );
+    if (existing.length === 0) {
+      await db.insert(blockedUsers).values({ userId, blockedUserId });
+    }
+  }
+  
+  async unblockUser(userId: string, blockedUserId: string): Promise<void> {
+    await db.delete(blockedUsers).where(
+      and(eq(blockedUsers.userId, userId), eq(blockedUsers.blockedUserId, blockedUserId))
+    );
+  }
+  
+  async getBlockedUsers(userId: string): Promise<string[]> {
+    const result = await db.select({ blockedUserId: blockedUsers.blockedUserId }).from(blockedUsers).where(eq(blockedUsers.userId, userId));
+    return result.map(r => r.blockedUserId);
+  }
+  
+  async isBlocked(userId: string, blockedUserId: string): Promise<boolean> {
+    const result = await db.select().from(blockedUsers).where(
+      and(eq(blockedUsers.userId, userId), eq(blockedUsers.blockedUserId, blockedUserId))
+    );
+    return result.length > 0;
+  }
+  
+  // Account deletion - deletes user and all associated data
+  async deleteUser(userId: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
   }
 }
 
