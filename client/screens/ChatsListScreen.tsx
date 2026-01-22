@@ -107,7 +107,7 @@ function ChatItem({
               numberOfLines={1}
               style={{ color: theme.textSecondary, flex: 1 }}
             >
-              • {chat.lastMessage || "Start a conversation"}
+              • {typeof chat.lastMessage === 'string' ? chat.lastMessage : "Start a conversation"}
             </ThemedText>
             {chat.unreadCount && chat.unreadCount > 0 ? (
               <View style={[styles.unreadBadge, { backgroundColor: theme.link }]}>

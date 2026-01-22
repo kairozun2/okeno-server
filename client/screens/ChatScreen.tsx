@@ -133,11 +133,11 @@ function MessageBubble({
               {t("Reply", "Ответ")}
             </ThemedText>
             <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
-              {replyMessage.content}
+              {typeof replyMessage.content === 'string' ? replyMessage.content : ""}
             </ThemedText>
           </View>
         ) : null}
-        {renderContent(message.content, isOwn)}
+        {renderContent(typeof message.content === 'string' ? message.content : "", isOwn)}
         <View style={styles.messageFooter}>
           {message.isEdited ? (
             <ThemedText
@@ -546,7 +546,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                   {editingMessage ? t("Editing", "Редактирование") : t("Reply to", "Ответ на")}
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }} numberOfLines={1}>
-                  {editingMessage?.content || replyTo?.content}
+                  {(editingMessage?.content && typeof editingMessage.content === 'string') || (replyTo?.content && typeof replyTo.content === 'string') || ""}
                 </ThemedText>
               </View>
               <Pressable onPress={cancelReplyOrEdit} style={styles.cancelReplyButton}>
