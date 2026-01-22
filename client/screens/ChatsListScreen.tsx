@@ -311,13 +311,7 @@ export default function ChatsListScreen({ navigation }: Props) {
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.md }]}>
-            <View style={styles.modalHeaderButton}>
-              {selectedChat && (
-                <Pressable onPress={() => setSelectedChat(null)} style={styles.modalHeaderButton}>
-                  <Feather name="chevron-left" size={24} color={theme.text} />
-                </Pressable>
-              )}
-            </View>
+            <View style={styles.modalHeaderButton} />
             <ThemedText type="h3" style={styles.modalTitle}>
               {selectedChat ? "Настройки чата" : "Выберите чат"}
             </ThemedText>
@@ -378,6 +372,9 @@ export default function ChatsListScreen({ navigation }: Props) {
               contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
             >
               <View style={styles.selectedUserHeader}>
+                <Pressable onPress={() => setSelectedChat(null)} style={styles.backButton}>
+                  <Feather name="chevron-left" size={24} color={theme.text} />
+                </Pressable>
                 <Avatar emoji={selectedChat.otherUser?.emoji || "🐸"} size={48} />
                 <ThemedText type="h3" style={{ marginTop: Spacing.sm }} truncate maxLength={20}>
                   {selectedChat.otherUser?.username}
