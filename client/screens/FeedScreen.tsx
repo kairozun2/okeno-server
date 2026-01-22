@@ -386,8 +386,8 @@ export default function FeedScreen({ navigation }: Props) {
     queryKey: ["/api/posts"],
     queryFn: async ({ pageParam = 0 }) => {
       const response = await apiRequest("GET", `/api/posts?limit=10&offset=${pageParam}`, null);
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      const resData = await response.json();
+      return Array.isArray(resData) ? resData : [];
     },
     getNextPageParam: (lastPage, allPages) => {
       if (!Array.isArray(lastPage) || lastPage.length < 10) return undefined;
@@ -397,10 +397,8 @@ export default function FeedScreen({ navigation }: Props) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const posts = useMemo(() => {
-    if (!data?.pages) return [];
-    return data.pages.flat().filter(post => post !== null);
-  }, [data]);
+  const postsData = data?.pages ? data.pages.flat().filter(post => post !== null) : [];
+
 
   const likeMutation = useMutation({
     mutationFn: async ({ postId, isLiked }: { postId: string; isLiked: boolean }) => {
@@ -559,7 +557,7 @@ export default function FeedScreen({ navigation }: Props) {
       </Modal>
 
       <FlashList
-        data={posts}
+        data={postsData}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
