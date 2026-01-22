@@ -6,7 +6,15 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import Animated, { 
+  FadeIn, 
+  FadeOut, 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  runOnJS 
+} from "react-native-reanimated";
+import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -51,6 +59,7 @@ function MessageBubble({
   replyMessage,
   language,
   isSelected,
+  onSwipeReply,
 }: {
   message: Message;
   isOwn: boolean;
@@ -58,9 +67,42 @@ function MessageBubble({
   replyMessage?: Message | null;
   language: string;
   isSelected: boolean;
+  onSwipeReply: (msg: Message) => void;
 }) {
   const { theme, isDark } = useTheme();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
+  const translateX = useSharedValue(0);
+
+  const gesture = Gesture.Pan()
+    .activeOffsetX(isOwn ? [-10, 0] : [0, 10]) // Swipe left for own, right for others
+    .onUpdate((event) => {
+      const translation = event.translateX;
+      if (isOwn) {
+        // Swipe left (negative)
+        if (translation < 0) {
+          translateX.value = Math.max(translation, -60);
+        }
+      } else {
+        // Swipe right (positive)
+        if (translation > 0) {
+          translateX.value = Math.min(translation, 60);
+        }
+      }
+    })
+    .onEnd(() => {
+      if (Math.abs(translateX.value) > 40) {
+        runOnJS(onSwipeReply)(message);
+        if (Haptics.impactAsync) {
+          runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
+        }
+      }
+      translateX.value = withSpring(0);
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   const handleUrlPress = useCallback(async (url: string) => {
     try {
@@ -119,77 +161,79 @@ function MessageBubble({
   };
 
   return (
-    <View style={{ zIndex: isSelected ? 1001 : 1 }}>
-      <Pressable 
-        onLongPress={() => onLongPress(message)}
-        delayLongPress={150}
-        style={({ pressed }) => [
-          styles.messageBubble,
-          isOwn ? styles.ownMessage : styles.otherMessage,
-          { 
-            backgroundColor: isOwn 
-              ? (isSelected ? (isDark ? "#4a9eff" : "#2a89ff") : theme.link) 
-              : (isSelected ? (isDark ? "#323235" : "#f0f0f2") : theme.cardBackground),
-            opacity: pressed ? 0.9 : 1,
-            transform: [{ scale: isSelected ? 1.05 : 1 }],
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: isSelected ? 0.3 : 0,
-            shadowRadius: 8,
-            elevation: isSelected ? 10 : 0,
-          },
-        ]}
-      >
-        {replyMessage ? (
-          <View style={[styles.replyContainer, { borderLeftColor: isOwn ? "rgba(255,255,255,0.5)" : theme.link }]}>
-            <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontWeight: "600" }}>
-              {t("Reply", "Ответ")}
-            </ThemedText>
-            <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
-              {typeof replyMessage.content === 'string' ? replyMessage.content : ""}
-            </ThemedText>
-          </View>
-        ) : null}
-        {renderContent(typeof message.content === 'string' ? message.content : "", isOwn)}
-        <View style={styles.messageFooter}>
-          {message.isEdited ? (
-            <ThemedText
-              type="caption"
-              style={[styles.editedLabel, { color: isOwn ? "rgba(255,255,255,0.5)" : theme.textSecondary }]}
-            >
-              {t("edited", "изм.")}
-            </ThemedText>
+    <GestureDetector gesture={gesture}>
+      <Animated.View style={[{ zIndex: isSelected ? 1001 : 1 }, animatedStyle]}>
+        <Pressable 
+          onLongPress={() => onLongPress(message)}
+          delayLongPress={150}
+          style={({ pressed }) => [
+            styles.messageBubble,
+            isOwn ? styles.ownMessage : styles.otherMessage,
+            { 
+              backgroundColor: isOwn 
+                ? (isSelected ? (isDark ? "#4a9eff" : "#2a89ff") : theme.link) 
+                : (isSelected ? (isDark ? "#323235" : "#f0f0f2") : theme.cardBackground),
+              opacity: pressed ? 0.9 : 1,
+              transform: [{ scale: isSelected ? 1.05 : 1 }],
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isSelected ? 0.3 : 0,
+              shadowRadius: 8,
+              elevation: isSelected ? 10 : 0,
+            },
+          ]}
+        >
+          {replyMessage ? (
+            <View style={[styles.replyContainer, { borderLeftColor: isOwn ? "rgba(255,255,255,0.5)" : theme.link }]}>
+              <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontWeight: "600" }}>
+                {t("Reply", "Ответ")}
+              </ThemedText>
+              <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
+                {typeof replyMessage.content === 'string' ? replyMessage.content : ""}
+              </ThemedText>
+            </View>
           ) : null}
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <ThemedText
-              type="caption"
-              style={[
-                styles.messageTime,
-                { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, marginRight: 2 },
-              ]}
-            >
-              {formatMessageTime(new Date(message.createdAt))}
-            </ThemedText>
-            {isOwn && (
-              <Feather 
-                name="check" 
-                size={11} 
-                color={message.isRead ? "#fff" : "rgba(255,255,255,0.4)"} 
-                style={{ marginLeft: 2 }}
-              />
-            )}
-            {isOwn && message.isRead && (
-              <Feather 
-                name="check" 
-                size={11} 
-                color="#fff" 
-                style={{ marginLeft: -7 }}
-              />
-            )}
+          {renderContent(typeof message.content === 'string' ? message.content : "", isOwn)}
+          <View style={styles.messageFooter}>
+            {message.isEdited ? (
+              <ThemedText
+                type="caption"
+                style={[styles.editedLabel, { color: isOwn ? "rgba(255,255,255,0.5)" : theme.textSecondary }]}
+              >
+                {t("edited", "изм.")}
+              </ThemedText>
+            ) : null}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <ThemedText
+                type="caption"
+                style={[
+                  styles.messageTime,
+                  { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, marginRight: 2 },
+                ]}
+              >
+                {formatMessageTime(new Date(message.createdAt))}
+              </ThemedText>
+              {isOwn && (
+                <Feather 
+                  name="check" 
+                  size={11} 
+                  color={message.isRead ? "#fff" : "rgba(255,255,255,0.4)"} 
+                  style={{ marginLeft: 2 }}
+                />
+              )}
+              {isOwn && message.isRead && (
+                <Feather 
+                  name="check" 
+                  size={11} 
+                  color="#fff" 
+                  style={{ marginLeft: -7 }}
+                />
+              )}
+            </View>
           </View>
-        </View>
-      </Pressable>
-    </View>
+        </Pressable>
+      </Animated.View>
+    </GestureDetector>
   );
 }
 
@@ -487,9 +531,10 @@ export default function ChatScreen({ route, navigation }: Props) {
         replyMessage={getReplyMessage(item.replyToId)}
         language={language}
         isSelected={selectedMessage?.id === item.id && showActionModal}
+        onSwipeReply={handleReply}
       />
     ),
-    [user?.id, language, messages, selectedMessage?.id, showActionModal]
+    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply]
   );
 
   const chatContent = (
