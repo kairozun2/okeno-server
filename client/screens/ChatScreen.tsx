@@ -122,7 +122,7 @@ function MessageBubble({
     <View style={{ zIndex: isSelected ? 1001 : 1 }}>
       <Pressable 
         onLongPress={() => onLongPress(message)}
-        delayLongPress={300}
+        delayLongPress={150}
         style={({ pressed }) => [
           styles.messageBubble,
           isOwn ? styles.ownMessage : styles.otherMessage,
@@ -436,6 +436,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   }, []);
 
   const handleLongPress = (msg: Message) => {
+    // Immediate haptic and modal state update
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedMessage(msg);
     setShowActionModal(true);
