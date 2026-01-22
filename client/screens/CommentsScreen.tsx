@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -85,6 +86,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
   const { theme } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
 
@@ -103,6 +105,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "comments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "comments", "count"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
   });
@@ -134,7 +137,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       behavior="padding"
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      keyboardVerticalOffset={0}
     >
       <FlatList
         data={comments}
@@ -142,7 +145,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.commentsList,
-          { paddingTop: insets.top + Spacing.xl },
+          { paddingTop: headerHeight + Spacing.md },
           comments.length === 0 && { flex: 1 },
         ]}
         ListEmptyComponent={<EmptyComments />}

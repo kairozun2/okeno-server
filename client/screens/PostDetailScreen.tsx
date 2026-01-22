@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -108,6 +108,36 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     },
   });
 
+  const deletePostMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/posts/${postId}`);
+    },
+    onSuccess: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
+      navigation.goBack();
+    },
+    onError: () => {
+      Alert.alert("Ошибка", "Не удалось удалить публикацию");
+    },
+  });
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Удалить публикацию?",
+      "Это действие нельзя отменить.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить",
+          style: "destructive",
+          onPress: () => deletePostMutation.mutate(),
+        },
+      ]
+    );
+  };
+
   const likeAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: likeScale.value }],
   }));
@@ -152,6 +182,8 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  const isOwner = currentUser?.id === post.userId;
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView
@@ -169,20 +201,27 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         />
 
         <Animated.View entering={FadeIn} style={styles.content}>
-          <Pressable
-            onPress={() => navigation.navigate("UserProfile", { userId: post.userId })}
-            style={styles.userRow}
-          >
-            <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
-            <View style={styles.userInfo}>
-              <ThemedText type="body" style={styles.username}>
-                {postUser?.username || "Пользователь"}
-              </ThemedText>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ru })}
-              </ThemedText>
-            </View>
-          </Pressable>
+          <View style={styles.userRow}>
+            <Pressable
+              onPress={() => navigation.navigate("UserProfile", { userId: post.userId })}
+              style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+            >
+              <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
+              <View style={styles.userInfo}>
+                <ThemedText type="body" style={styles.username}>
+                  {postUser?.username || "Пользователь"}
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ru })}
+                </ThemedText>
+              </View>
+            </Pressable>
+            {isOwner && (
+              <Pressable onPress={handleDelete} style={styles.deleteButton}>
+                <Feather name="trash-2" size={20} color={theme.error} />
+              </Pressable>
+            )}
+          </View>
 
           {post.location ? (
             <View style={styles.locationRow}>
@@ -276,6 +315,9 @@ const styles = StyleSheet.create({
   },
   username: {
     fontWeight: "500",
+  },
+  deleteButton: {
+    padding: Spacing.sm,
   },
   locationRow: {
     flexDirection: "row",
