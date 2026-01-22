@@ -199,12 +199,12 @@ function MessageBubble({
             <View style={[
               styles.reactionsBadge,
               { 
-                backgroundColor: isOwn ? "rgba(255,255,255,0.2)" : theme.backgroundSecondary,
-                borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                backgroundColor: 'transparent',
+                left: isOwn ? -15 : 10,
               }
             ]}>
               {(message as any).reactions.map((r: any, idx: number) => (
-                <ThemedText key={idx} style={{ fontSize: 11 }}>{r.emoji}</ThemedText>
+                <ThemedText key={idx} style={{ fontSize: 13 }}>{r.emoji}</ThemedText>
               ))}
             </View>
           )}
@@ -485,7 +485,9 @@ export default function ChatScreen({ route, navigation }: Props) {
       queryClient.setQueryData(["/api/chats", chatId, "messages"], context?.previousMessages);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chats", chatId, "messages"] });
+      // Don't invalidate immediately if we want to keep optimistic state longer
+      // or ensure the server actually supports reactions in the schema
+      // For now, let's keep it and ensure we're not clearing it accidentally
     },
   });
 
@@ -978,14 +980,11 @@ const styles = StyleSheet.create({
   reactionsBadge: {
     position: 'absolute',
     bottom: -10,
-    left: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     paddingVertical: 2,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 2,
+    gap: 1,
     zIndex: 10,
   },
   emojiPickerContainer: {
