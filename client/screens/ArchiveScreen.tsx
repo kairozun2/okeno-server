@@ -27,24 +27,33 @@ interface Post {
 }
 
 export default function ArchiveScreen({ navigation }: Props) {
-  const { theme } = useTheme();
+  const { theme, language } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: "Archive",
+      headerTitle: t("Archive", "Архив"),
       headerLeft: () => (
         <Pressable 
           onPress={() => navigation.goBack()}
-          style={{ marginLeft: Spacing.sm }}
+          hitSlop={20}
+          style={{ 
+            width: 40,
+            height: 40,
+            alignItems: "center",
+            justifyContent: "center",
+            marginLeft: 8,
+          }}
         >
           <Feather name="chevron-left" size={28} color={theme.text} />
         </Pressable>
       ),
     });
-  }, [navigation, theme.text]);
+  }, [navigation, theme.text, language]);
 
   const { data: archivedPosts, isLoading } = useQuery<Post[]>({
     queryKey: ["/api/users", user?.id, "archived"],

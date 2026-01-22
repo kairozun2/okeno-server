@@ -8,30 +8,36 @@ type ThemeContextType = {
   isDark: boolean;
   accentColor: string | null;
   language: "en" | "ru";
+  hapticsEnabled: boolean;
   setAccentColor: (color: string | null) => Promise<void>;
   setLanguage: (lang: "en" | "ru") => Promise<void>;
+  toggleHaptics: () => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_ACCENT_KEY = "theme_accent_color";
 const THEME_LANGUAGE_KEY = "theme_language";
+const THEME_HAPTICS_KEY = "theme_haptics_enabled";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const colorScheme = useColorScheme();
   const [accentColor, setAccentState] = useState<string | null>(null);
-  const [language, setLanguageState] = useState<"en" | "ru">("en");
+  const [language, setLanguageState] = useState<"en" | "ru">("ru");
+  const [hapticsEnabled, setHapticsEnabled] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadSettings() {
       try {
-        const [savedAccent, savedLang] = await Promise.all([
+        const [savedAccent, savedLang, savedHaptics] = await Promise.all([
           AsyncStorage.getItem(THEME_ACCENT_KEY),
           AsyncStorage.getItem(THEME_LANGUAGE_KEY),
+          AsyncStorage.getItem(THEME_HAPTICS_KEY),
         ]);
         if (savedAccent) setAccentState(savedAccent);
         if (savedLang) setLanguageState(savedLang as "en" | "ru");
+        if (savedHaptics !== null) setHapticsEnabled(savedHaptics === "true");
       } catch (e) {
         console.error("Load theme settings error:", e);
       } finally {
@@ -60,6 +66,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setLanguageState(lang);
     } catch (e) {
       console.error("Save language error:", e);
+    }
+  };
+
+  const toggleHaptics = async () => {
+    try {
+      const newState = !hapticsEnabled;
+      await AsyncStorage.setItem(THEME_HAPTICS_KEY, newState.toString());
+      setHapticsEnabled(newState);
+    } catch (e) {
+      console.error("Save haptics error:", e);
     }
   };
 
@@ -96,7 +112,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   if (isLoading) return null;
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, setAccentColor, setLanguage }}>
+    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, hapticsEnabled, setAccentColor, setLanguage, toggleHaptics }}>
       {children}
     </ThemeContext.Provider>
   );

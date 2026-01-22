@@ -163,6 +163,21 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           <Avatar emoji={profileUser?.emoji || "🐸"} size={32} />
         </Animated.View>
       ),
+      headerLeft: () => (
+        <Pressable 
+          onPress={() => navigation.goBack()}
+          hitSlop={20}
+          style={{ 
+            width: 40,
+            height: 40,
+            alignItems: "center",
+            justifyContent: "center",
+            marginLeft: 8,
+          }}
+        >
+          <Feather name="chevron-left" size={28} color={theme.text} />
+        </Pressable>
+      ),
       headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center", paddingRight: 8 }}>
           <Pressable 

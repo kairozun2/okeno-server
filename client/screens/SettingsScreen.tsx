@@ -97,7 +97,7 @@ function SettingRow({ item, isLast }: SettingRowProps) {
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 
 export default function SettingsScreen({ navigation }: Props) {
-  const { theme, accentColor, setAccentColor, language, setLanguage } = useTheme();
+  const { theme, accentColor, setAccentColor, language, setLanguage, hapticsEnabled, toggleHaptics } = useTheme();
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -238,10 +238,15 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("SOUND & FEEDBACK", "ЗВУК И ОТКЛИК"),
       items: [
         {
-          icon: "volume-x",
-          title: t("Sound Effects", "Звуковые эффекты"),
-          subtitle: t("Off", "Выкл"),
-          onPress: () => {},
+          icon: hapticsEnabled ? "volume-2" : "volume-x",
+          title: t("Haptic Feedback", "Виброотклик"),
+          subtitle: hapticsEnabled ? t("On", "Вкл") : t("Off", "Выкл"),
+          onPress: async () => {
+            await toggleHaptics();
+            if (!hapticsEnabled) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }
+          },
         },
       ],
     },
