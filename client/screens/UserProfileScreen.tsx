@@ -55,11 +55,11 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const [reportCategory, setReportCategory] = useState<string | null>(null);
 
   const REPORT_CATEGORIES = [
-    { id: "spam", label: "Спам" },
-    { id: "harassment", label: "Оскорбления" },
-    { id: "sexual", label: "Сексуальный контент" },
-    { id: "violence", label: "Насилие" },
-    { id: "other", label: "Другое" },
+    { id: "spam", label: "Spam" },
+    { id: "harassment", label: "Harassment" },
+    { id: "sexual", label: "Sexual content" },
+    { id: "violence", label: "Violence" },
+    { id: "other", label: "Other" },
   ];
 
   const reportMutation = useMutation({
@@ -72,13 +72,13 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     },
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Жалоба отправлена", "Мы рассмотрим вашу жалобу в течение 24 часов.");
+      Alert.alert("Report sent", "We will review your report within 24 hours.");
       setShowReportModal(false);
       setReportReason("");
       setReportCategory(null);
     },
     onError: () => {
-      Alert.alert("Ошибка", "Не удалось отправить жалобу");
+      Alert.alert("Error", "Failed to send report");
     },
   });
 
@@ -90,18 +90,18 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     },
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Пользователь заблокирован", "Вы больше не увидите контент этого пользователя.");
+      Alert.alert("User blocked", "You will no longer see content from this user.");
       navigation.goBack();
     },
   });
 
   const handleReport = () => {
     if (!reportCategory) {
-      Alert.alert("Ошибка", "Выберите категорию жалобы");
+      Alert.alert("Error", "Please select a report category");
       return;
     }
     if (reportCategory === "other" && !reportReason.trim()) {
-      Alert.alert("Ошибка", "Укажите причину жалобы");
+      Alert.alert("Error", "Please specify the reason");
       return;
     }
     reportMutation.mutate();
@@ -109,12 +109,12 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   const handleBlock = () => {
     Alert.alert(
-      "Заблокировать пользователя?",
-      "Вы больше не увидите контент этого пользователя и не сможете получать от него сообщения.",
+      "Block user?",
+      "You will no longer see content from this user and won't be able to receive messages from them.",
       [
-        { text: "Отмена", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Заблокировать",
+          text: "Block",
           style: "destructive",
           onPress: () => blockMutation.mutate(),
         },
@@ -220,12 +220,12 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   const handleHide = () => {
     Alert.alert(
-      "Скрыть пользователя",
-      "Вы больше не увидите публикации этого пользователя в ленте.",
+      "Hide user",
+      "You will no longer see posts from this user in your feed.",
       [
-        { text: "Отмена", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Скрыть",
+          text: "Hide",
           style: "destructive",
           onPress: async () => {
             try {
@@ -235,7 +235,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               navigation.goBack();
             } catch (error) {
-              Alert.alert("Ошибка", "Не удалось скрыть пользователя");
+              Alert.alert("Error", "Failed to hide user");
             }
           },
         },
@@ -248,7 +248,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const shareUrl = `https://${process.env.EXPO_PUBLIC_DOMAIN}/user/${userId}`;
       await Share.share({
-        message: `Посмотри профиль ${profileUser?.username} в приложении Moments: ${shareUrl}`,
+        message: `Check out ${profileUser?.username}'s profile on Moments: ${shareUrl}`,
         url: shareUrl,
       });
     } catch (error) {
@@ -277,7 +277,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           <View style={styles.stat}>
             <ThemedText type="h4">{posts.length}</ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              публикаций
+              posts
             </ThemedText>
           </View>
         </View>
@@ -285,7 +285,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         {currentUser?.id !== userId ? (
           <View style={styles.actions}>
             <Button onPress={handleMessage} style={styles.messageButton}>
-              Написать
+              Message
             </Button>
           </View>
         ) : (
@@ -295,7 +295,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               style={[styles.messageButton, { backgroundColor: theme.backgroundSecondary }]}
               textStyle={{ color: theme.text }}
             >
-              Поделиться профилем
+              Share Profile
             </Button>
           </View>
         )}
@@ -357,7 +357,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             <View style={styles.emptyContainer}>
               <Feather name="image" size={36} color={theme.textSecondary} />
               <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-                Пока нет публикаций
+                No posts yet
               </ThemedText>
             </View>
           ) : null
@@ -387,7 +387,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               style={styles.actionSheetItem}
             >
               <Feather name="send" size={20} color={theme.text} />
-              <ThemedText style={styles.actionSheetText}>Поделиться профилем</ThemedText>
+              <ThemedText style={styles.actionSheetText}>Share Profile</ThemedText>
             </Pressable>
             
             <View style={[styles.actionSheetDivider, { backgroundColor: theme.border }]} />
@@ -400,7 +400,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               style={styles.actionSheetItem}
             >
               <Feather name="flag" size={20} color={theme.error} />
-              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>Пожаловаться</ThemedText>
+              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>Report</ThemedText>
             </Pressable>
             
             <View style={[styles.actionSheetDivider, { backgroundColor: theme.border }]} />
@@ -413,7 +413,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               style={styles.actionSheetItem}
             >
               <Feather name="slash" size={20} color={theme.error} />
-              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>Заблокировать</ThemedText>
+              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>Block</ThemedText>
             </Pressable>
           </Animated.View>
         </Pressable>
@@ -427,7 +427,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-            <ThemedText type="h3">Пожаловаться</ThemedText>
+            <ThemedText type="h3">Report</ThemedText>
             <Pressable onPress={() => setShowReportModal(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
@@ -435,7 +435,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
           <ScrollView contentContainerStyle={styles.modalContent}>
             <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
-              Выберите категорию и опишите причину жалобы. Мы рассмотрим её в течение 24 часов.
+              Select a category and describe the reason for the report. We will review it within 24 hours.
             </ThemedText>
 
             <View style={styles.categoriesGrid}>
@@ -467,7 +467,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             <TextInput
               value={reportReason}
               onChangeText={setReportReason}
-              placeholder="Дополнительные детали (необязательно)..."
+              placeholder="Additional details (optional)..."
               placeholderTextColor={theme.textSecondary}
               multiline
               numberOfLines={4}
@@ -487,7 +487,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               style={[styles.reportButton, { backgroundColor: theme.error }]}
             >
               <ThemedText type="body" style={{ color: "#fff", fontWeight: "600" }}>
-                Отправить жалобу
+                Send Report
               </ThemedText>
             </Pressable>
 
@@ -497,7 +497,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             >
               <Feather name="slash" size={18} color={theme.error} />
               <ThemedText type="body" style={{ color: theme.error, fontWeight: "600", marginLeft: Spacing.sm }}>
-                Заблокировать пользователя
+                Block User
               </ThemedText>
             </Pressable>
           </ScrollView>

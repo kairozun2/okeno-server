@@ -41,14 +41,14 @@ export default function RegisterScreen({ navigation }: Props) {
   const handleNext = () => {
     if (step === "username") {
       if (!username.trim()) {
-        Alert.alert("Ошибка", "Введите имя пользователя");
+        Alert.alert("Error", "Please enter a username");
         return;
       }
       setStep("age");
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } else if (step === "age") {
       if (!isAgeConfirmed) {
-        Alert.alert("Требуется подтверждение", "Вы должны подтвердить, что вам исполнилось 18 лет, чтобы продолжить.");
+        Alert.alert("Confirmation required", "You must confirm that you are at least 18 years old to continue.");
         return;
       }
       setStep("pin");
@@ -66,7 +66,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const handleRegister = async () => {
     if (pin !== confirmPin) {
       setError(true);
-      Alert.alert("Ошибка", "PIN-коды не совпадают");
+      Alert.alert("Error", "PINs do not match");
       return;
     }
 
@@ -79,7 +79,7 @@ export default function RegisterScreen({ navigation }: Props) {
     } catch (err: any) {
       setError(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Ошибка", err.message || "Не удалось зарегистрироваться");
+      Alert.alert("Error", err.message || "Failed to register");
     } finally {
       setIsLoading(false);
     }
@@ -114,24 +114,24 @@ export default function RegisterScreen({ navigation }: Props) {
           <Avatar emoji={previewEmoji} size={80} />
           <ThemedText type="h2" style={styles.title}>
             {step === "username"
-              ? "Создать аккаунт"
+              ? "Create Account"
               : step === "age"
-              ? "Возрастное ограничение"
+              ? "Age Restriction"
               : step === "pin"
-              ? "Создайте PIN"
-              : "Подтвердите PIN"}
+              ? "Create PIN"
+              : "Confirm PIN"}
           </ThemedText>
           <ThemedText
             type="body"
             style={[styles.subtitle, { color: theme.textSecondary, opacity: 0.8 }]}
           >
             {step === "username"
-              ? "Выберите имя для вашего профиля"
+              ? "Choose a username for your profile"
               : step === "age"
-              ? "Приложение Moments имеет возрастной рейтинг 18+. Пожалуйста, подтвердите ваш возраст."
+              ? "The Moments app has an 18+ age rating. Please confirm your age."
               : step === "pin"
-              ? "Создайте 4-значный PIN для защиты"
-              : "Введите PIN ещё раз для подтверждения"}
+              ? "Create a 4-digit PIN for protection"
+              : "Enter your PIN again to confirm"}
           </ThemedText>
         </Animated.View>
 
@@ -141,7 +141,7 @@ export default function RegisterScreen({ navigation }: Props) {
         >
           {step === "username" ? (
             <Input
-              placeholder="Имя пользователя"
+              placeholder="Username"
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -170,7 +170,7 @@ export default function RegisterScreen({ navigation }: Props) {
                   {isAgeConfirmed && <Feather name="check" size={14} color="white" />}
                 </View>
                 <ThemedText style={{ flex: 1, marginLeft: Spacing.sm }}>
-                  Мне исполнилось 18 лет и я принимаю условия использования.
+                  I am at least 18 years old and I accept the terms of use.
                 </ThemedText>
               </Pressable>
             </View>
@@ -194,7 +194,7 @@ export default function RegisterScreen({ navigation }: Props) {
           <View style={styles.buttons}>
             {step !== "username" ? (
               <Pressable onPress={handleBack} style={styles.backButton}>
-                <ThemedText type="link">Назад</ThemedText>
+                <ThemedText type="link">Back</ThemedText>
               </Pressable>
             ) : null}
 
@@ -204,7 +204,7 @@ export default function RegisterScreen({ navigation }: Props) {
                 disabled={isLoading || confirmPin.length !== 4}
                 style={styles.button}
               >
-                {isLoading ? "Создание..." : "Создать аккаунт"}
+                {isLoading ? "Creating..." : "Create Account"}
               </Button>
             ) : (
               <Button
@@ -216,7 +216,7 @@ export default function RegisterScreen({ navigation }: Props) {
                 }
                 style={styles.button}
               >
-                Далее
+                Next
               </Button>
             )}
           </View>
@@ -227,10 +227,10 @@ export default function RegisterScreen({ navigation }: Props) {
           style={styles.footer}
         >
           <ThemedText type="body" style={{ color: theme.textSecondary }}>
-            Уже есть аккаунт?{" "}
+            Already have an account?{" "}
           </ThemedText>
           <Pressable onPress={() => navigation.navigate("Login")}>
-            <ThemedText type="link">Войти</ThemedText>
+            <ThemedText type="link">Login</ThemedText>
           </Pressable>
         </Animated.View>
       </KeyboardAwareScrollView>

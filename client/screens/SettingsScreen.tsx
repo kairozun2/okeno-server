@@ -123,16 +123,16 @@ export default function SettingsScreen({ navigation }: Props) {
 
   const handleDeleteAccount = () => {
     if (deletePin.length !== 4) {
-      Alert.alert("Ошибка", "Введите 4-значный PIN-код");
+      Alert.alert("Error", "Please enter your 4-digit PIN");
       return;
     }
     Alert.alert(
-      "Удалить аккаунт навсегда?",
-      "Все ваши данные, посты, сообщения будут удалены без возможности восстановления.",
+      "Delete account forever?",
+      "All your data, posts, and messages will be deleted and cannot be recovered.",
       [
-        { text: "Отмена", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Удалить навсегда",
+          text: "Delete Forever",
           style: "destructive",
           onPress: () => deleteAccountMutation.mutate(),
         },
@@ -144,18 +144,18 @@ export default function SettingsScreen({ navigation }: Props) {
     if (user?.id) {
       await Clipboard.setStringAsync(user.id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Скопировано", "Ваш ID скопирован в буфер обмена");
+      Alert.alert("Copied", "Your ID has been copied to the clipboard");
     }
   };
 
   const handleLogout = () => {
     Alert.alert(
-      "Выйти",
-      "Вы уверены, что хотите выйти?",
+      "Logout",
+      "Are you sure you want to logout?",
       [
-        { text: "Отмена", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Выйти",
+          text: "Logout",
           style: "destructive",
           onPress: async () => {
             await logout();
@@ -168,102 +168,102 @@ export default function SettingsScreen({ navigation }: Props) {
 
   const sections: SettingSection[] = [
     {
-      title: "АККАУНТ",
+      title: "ACCOUNT",
       items: [
         {
           icon: "user",
-          title: "Управление аккаунтом",
-          subtitle: "ID восстановления и безопасность",
+          title: "Account Management",
+          subtitle: "Recovery ID and security",
           onPress: () => setShowAccountModal(true),
         },
         {
           icon: "smartphone",
-          title: "Активные сеансы",
-          subtitle: "Управление устройствами",
+          title: "Active Sessions",
+          subtitle: "Manage devices",
           onPress: () => navigation.navigate("Sessions"),
         },
       ],
     },
     {
-      title: "ДАННЫЕ И ПАМЯТЬ",
+      title: "DATA & STORAGE",
       items: [
         {
           icon: "database",
-          title: "Использование памяти",
-          subtitle: "Очистка кэша и управление данными",
+          title: "Storage Usage",
+          subtitle: "Clear cache and manage data",
           onPress: () => navigation.navigate("CacheSettings"),
         },
       ],
     },
     {
-      title: "ЯЗЫК / LANGUAGE",
+      title: "LANGUAGE",
       items: [
         {
           icon: "globe",
-          title: "Язык приложения",
-          subtitle: "Русский (Russian)",
+          title: "App Language",
+          subtitle: "English",
           onPress: () => {
-            Alert.alert("Язык", "В данный момент поддерживается только Русский. Английский будет добавлен в ближайшем обновлении.");
+            Alert.alert("Language", "Currently only English is supported. Russian will be added back in a future update.");
           },
         },
       ],
     },
     {
-      title: "АРХИВ",
+      title: "ARCHIVE",
       items: [
         {
           icon: "archive",
-          title: "Архив",
-          subtitle: "Просмотр архивных воспоминаний",
+          title: "Archive",
+          subtitle: "View archived memories",
           onPress: () => navigation.navigate("Archive"),
         },
         {
           icon: "eye-off",
-          title: "Скрытые пользователи",
-          subtitle: "Управление скрытыми пользователями",
+          title: "Hidden Users",
+          subtitle: "Manage blocked users",
           onPress: () => {
-            Alert.alert("Информация", "Список заблокированных пользователей пуст.");
+            Alert.alert("Information", "The blocked users list is empty.");
           },
         },
       ],
     },
     {
-      title: "ЗВУК И ОТКЛИК",
+      title: "SOUND & FEEDBACK",
       items: [
         {
           icon: "volume-x",
-          title: "Звуковые эффекты",
-          subtitle: "Выключено",
+          title: "Sound Effects",
+          subtitle: "Off",
           onPress: () => {},
         },
       ],
     },
     {
-      title: "ВНЕШНИЙ ВИД",
+      title: "APPEARANCE",
       items: [
         {
           icon: "aperture",
-          title: "Цвет приложения",
-          subtitle: ACCENT_COLORS.find(c => c.color === (accentColor || "#5C7A5C"))?.name || "По умолчанию",
+          title: "App Color",
+          subtitle: ACCENT_COLORS.find(c => c.color === (accentColor || "#5C7A5C"))?.name || "Default",
           onPress: () => setShowColorPicker(true),
         },
       ],
     },
     {
-      title: "ПОМОЩЬ И ОБРАТНАЯ СВЯЗЬ",
+      title: "HELP & FEEDBACK",
       items: [
         {
           icon: "help-circle",
-          title: "Центр помощи",
-          subtitle: "Частые вопросы и инструкции",
+          title: "Help Center",
+          subtitle: "FAQs and instructions",
           onPress: () => {
             Linking.openURL("https://skaisay.github.io/App-Privacy/");
           },
         },
         {
           icon: "alert-octagon",
-          title: "Сообщить об ошибке",
-          subtitle: "Помогите нам стать лучше",
+          title: "Report a Bug",
+          subtitle: "Help us improve",
           onPress: () => {
             Linking.openURL("mailto:messaconfirmation@gmail.com?subject=Bug Report - Moments");
           },
@@ -271,11 +271,11 @@ export default function SettingsScreen({ navigation }: Props) {
       ],
     },
     {
-      title: "ПОДДЕРЖКА",
+      title: "SUPPORT",
       items: [
         {
           icon: "mail",
-          title: "Связаться с нами",
+          title: "Contact Us",
           subtitle: "messaconfirmation@gmail.com",
           onPress: () => {
             Linking.openURL("mailto:messaconfirmation@gmail.com");
@@ -283,7 +283,7 @@ export default function SettingsScreen({ navigation }: Props) {
         },
         {
           icon: "message-circle",
-          title: "Наш Discord",
+          title: "Our Discord",
           subtitle: "https://discord.gg/FRAZ6PBcH9",
           onPress: () => {
             Linking.openURL("https://discord.gg/FRAZ6PBcH9");
@@ -291,8 +291,8 @@ export default function SettingsScreen({ navigation }: Props) {
         },
         {
           icon: "file-text",
-          title: "Условия использования",
-          subtitle: "Пользовательское соглашение",
+          title: "Terms of Use",
+          subtitle: "User Agreement",
           onPress: () => navigation.navigate("PrivacyPolicy"),
         },
       ],
@@ -352,7 +352,7 @@ export default function SettingsScreen({ navigation }: Props) {
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-            <ThemedText type="h3">Аккаунт</ThemedText>
+            <ThemedText type="h3">Account</ThemedText>
             <Pressable onPress={() => setShowAccountModal(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
@@ -360,9 +360,9 @@ export default function SettingsScreen({ navigation }: Props) {
 
           <ScrollView contentContainerStyle={styles.colorPickerContent}>
             <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, padding: Spacing.lg }]}>
-              <ThemedText type="h4" style={{ marginBottom: Spacing.sm }}>ID восстановления</ThemedText>
+              <ThemedText type="h4" style={{ marginBottom: Spacing.sm }}>Recovery ID</ThemedText>
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.md }}>
-                Этот идентификатор необходим для восстановления доступа к вашему аккаунту. Никогда не передавайте его посторонним.
+                This ID is required to restore access to your account. Never share it with anyone.
               </ThemedText>
               
               <View style={[styles.idContainer, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
@@ -386,7 +386,7 @@ export default function SettingsScreen({ navigation }: Props) {
                 textStyle={{ color: "#fff" }}
               >
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <ThemedText style={{ color: "#fff", fontWeight: "600" }}>Скопировать ID</ThemedText>
+                  <ThemedText style={{ color: "#fff", fontWeight: "600" }}>Copy ID</ThemedText>
                   <Feather name="copy" size={16} color="#fff" />
                 </View>
               </Button>
@@ -398,7 +398,7 @@ export default function SettingsScreen({ navigation }: Props) {
               <SettingRow 
                 item={{
                   icon: "log-out",
-                  title: "Выйти из аккаунта",
+                  title: "Logout",
                   onPress: () => {
                     setShowAccountModal(false);
                     handleLogout();
@@ -409,7 +409,7 @@ export default function SettingsScreen({ navigation }: Props) {
               <SettingRow 
                 item={{
                   icon: "trash-2",
-                  title: "Удалить аккаунт",
+                  title: "Delete Account",
                   onPress: () => {
                     setShowAccountModal(false);
                     setShowDeleteModal(true);
@@ -421,7 +421,7 @@ export default function SettingsScreen({ navigation }: Props) {
             </View>
 
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xl, textAlign: "center" }}>
-              Moments использует анонимную систему аккаунтов.{"\n"}Ваш PIN-код и ID — единственные способы доступа.
+              Moments uses an anonymous account system.{"\n"}Your PIN and ID are the only ways to access it.
             </ThemedText>
           </ScrollView>
         </View>
@@ -435,7 +435,7 @@ export default function SettingsScreen({ navigation }: Props) {
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-            <ThemedText type="h3">Удаление аккаунта</ThemedText>
+            <ThemedText type="h3">Delete Account</ThemedText>
             <Pressable onPress={() => setShowDeleteModal(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
@@ -445,15 +445,15 @@ export default function SettingsScreen({ navigation }: Props) {
             <View style={styles.deleteWarning}>
               <Feather name="alert-triangle" size={48} color={theme.error} />
               <ThemedText type="h4" style={{ color: theme.error, marginTop: Spacing.md, textAlign: "center" }}>
-                Внимание!
+                Warning!
               </ThemedText>
               <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: "center" }}>
-                После удаления аккаунта все ваши данные будут потеряны навсегда. Это действие нельзя отменить.
+                Once your account is deleted, all your data will be lost forever. This action cannot be undone.
               </ThemedText>
             </View>
 
             <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.xl }}>
-              Для подтверждения введите ваш PIN-код:
+              Enter your PIN to confirm:
             </ThemedText>
             <TextInput
               value={deletePin}
@@ -478,7 +478,7 @@ export default function SettingsScreen({ navigation }: Props) {
               style={[styles.deleteButton, { backgroundColor: theme.error }]}
             >
               <ThemedText type="body" style={{ color: "#fff", fontWeight: "600" }}>
-                Удалить аккаунт навсегда
+                Delete Account Forever
               </ThemedText>
             </Pressable>
           </ScrollView>
@@ -493,7 +493,7 @@ export default function SettingsScreen({ navigation }: Props) {
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-            <ThemedText type="h3">Цвет приложения</ThemedText>
+            <ThemedText type="h3">App Color</ThemedText>
             <Pressable onPress={() => setShowColorPicker(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
@@ -504,7 +504,7 @@ export default function SettingsScreen({ navigation }: Props) {
             showsVerticalScrollIndicator={false}
           >
             <ThemedText type="body" style={[styles.colorPickerSubtitle, { color: theme.textSecondary }]}>
-              Выберите основной цвет для всего интерфейса
+              Choose the primary color for the interface
             </ThemedText>
 
             <View style={styles.colorGrid}>

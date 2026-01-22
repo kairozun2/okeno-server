@@ -15,7 +15,7 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -112,7 +112,7 @@ function PostCard({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const shareUrl = `https://${process.env.EXPO_PUBLIC_DOMAIN}/post/${post.id}`;
       await Share.share({
-        message: `Посмотри этот момент в приложении Moments: ${shareUrl}`,
+        message: `Check out this moment on Moments: ${shareUrl}`,
         url: shareUrl,
       });
     } catch (error) {
@@ -131,13 +131,13 @@ function PostCard({
     
     if (diffInHours < 1) {
       const diffInMins = Math.floor(diffInHours * 60);
-      return `${diffInMins}м`;
+      return `${diffInMins}m`;
     } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}ч`;
+      return `${Math.floor(diffInHours)}h`;
     } else {
       const diffInDays = Math.floor(diffInHours / 24);
-      if (diffInDays < 7) return `${diffInDays}д`;
-      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      if (diffInDays < 7) return `${diffInDays}d`;
+      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
     }
   }, [post.createdAt]);
 
@@ -196,7 +196,7 @@ function PostCard({
               }}
             >
               <Feather name="flag" size={20} color={theme.error} />
-              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Пожаловаться</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Report</ThemedText>
             </Pressable>
 
             <Pressable 
@@ -207,7 +207,7 @@ function PostCard({
               }}
             >
               <Feather name="slash" size={20} color={theme.error} />
-              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Заблокировать</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Block</ThemedText>
             </Pressable>
 
             <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
@@ -216,7 +216,7 @@ function PostCard({
               style={[styles.actionSheetItem, { marginTop: Spacing.xs }]}
               onPress={() => setShowActions(false)}
             >
-              <ThemedText style={{ width: "100%", textAlign: "center", color: theme.textSecondary }}>Отмена</ThemedText>
+              <ThemedText style={{ width: "100%", textAlign: "center", color: theme.textSecondary }}>Cancel</ThemedText>
             </Pressable>
           </ThemedView>
         </Pressable>
@@ -283,13 +283,13 @@ function EmptyFeed() {
     <View style={styles.emptyContainer}>
       <Feather name="camera" size={40} color={theme.textSecondary} />
       <ThemedText type="h3" style={styles.emptyTitle}>
-        Пока нет публикаций
+        No posts yet
       </ThemedText>
       <ThemedText
         type="body"
         style={[styles.emptyText, { color: theme.textSecondary }]}
       >
-        Будьте первыми, кто поделится моментом!
+        Be the first to share a moment!
       </ThemedText>
     </View>
   );
@@ -317,11 +317,11 @@ export default function FeedScreen({ navigation }: Props) {
   const [reportedUserId, setReportedUserId] = useState<string | null>(null);
 
   const REPORT_CATEGORIES = [
-    { id: "spam", label: "Спам" },
-    { id: "harassment", label: "Оскорбления" },
-    { id: "sexual", label: "Сексуальный контент" },
-    { id: "violence", label: "Насилие" },
-    { id: "other", label: "Другое" },
+    { id: "spam", label: "Spam" },
+    { id: "harassment", label: "Harassment" },
+    { id: "sexual", label: "Sexual content" },
+    { id: "violence", label: "Violence" },
+    { id: "other", label: "Other" },
   ];
 
   const reportMutation = useMutation({
@@ -335,7 +335,7 @@ export default function FeedScreen({ navigation }: Props) {
     },
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Жалоба отправлена", "Мы рассмотрим вашу жалобу в течение 24 часов.");
+      Alert.alert("Report sent", "We will review your report within 24 hours.");
       setShowReportModal(false);
       setReportReason("");
       setReportCategory(null);
@@ -352,14 +352,14 @@ export default function FeedScreen({ navigation }: Props) {
     },
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Пользователь заблокирован", "Вы больше не увидите контент этого пользователя.");
+      Alert.alert("User blocked", "You will no longer see content from this user.");
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     },
   });
 
   const handleReport = () => {
     if (!reportCategory) {
-      Alert.alert("Ошибка", "Выберите категорию жалобы");
+      Alert.alert("Error", "Please select a report category");
       return;
     }
     reportMutation.mutate();
@@ -413,11 +413,11 @@ export default function FeedScreen({ navigation }: Props) {
         onUserPress={() => navigation.navigate("UserProfile", { userId: item.userId })}
         onBlock={() => {
           Alert.alert(
-            "Заблокировать?",
-            "Вы больше не увидите контент этого пользователя.",
+            "Block user?",
+            "You will no longer see content from this user.",
             [
-              { text: "Отмена", style: "cancel" },
-              { text: "Блокировать", style: "destructive", onPress: () => blockMutation.mutate(item.userId) }
+              { text: "Cancel", style: "cancel" },
+              { text: "Block", style: "destructive", onPress: () => blockMutation.mutate(item.userId) }
             ]
           );
         }}
@@ -455,7 +455,7 @@ export default function FeedScreen({ navigation }: Props) {
         >
           <ThemedView style={[styles.actionSheetContainer, { borderRadius: BorderRadius.xl, paddingBottom: Spacing.xl }]}>
             <View style={[styles.modalHeader, { paddingTop: Spacing.sm }]}>
-              <ThemedText type="h4">Пожаловаться</ThemedText>
+              <ThemedText type="h4">Report</ThemedText>
               <Pressable onPress={() => setShowReportModal(false)} style={styles.closeButton}>
                 <Feather name="x" size={24} color={theme.text} />
               </Pressable>
@@ -463,7 +463,7 @@ export default function FeedScreen({ navigation }: Props) {
 
             <View style={{ padding: Spacing.md }}>
               <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.md }}>
-                Выберите категорию жалобы:
+                Select a report category:
               </ThemedText>
 
               <View style={styles.categoriesGrid}>
@@ -495,7 +495,7 @@ export default function FeedScreen({ navigation }: Props) {
               <TextInput
                 value={reportReason}
                 onChangeText={setReportReason}
-                placeholder="Дополнительно (необязательно)..."
+                placeholder="Additional details (optional)..."
                 placeholderTextColor={theme.textSecondary}
                 style={[
                   styles.reportInput,
@@ -515,7 +515,7 @@ export default function FeedScreen({ navigation }: Props) {
                 disabled={reportMutation.isPending}
               >
                 <ThemedText style={{ color: "white", fontWeight: "600" }}>
-                  {reportMutation.isPending ? "Отправка..." : "Отправить"}
+                  {reportMutation.isPending ? "Sending..." : "Send"}
                 </ThemedText>
               </Pressable>
             </View>
@@ -553,11 +553,11 @@ export default function FeedScreen({ navigation }: Props) {
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl }}>
              <Feather name="map" size={48} color={theme.textSecondary} />
              <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: 'center' }}>
-               Карты доступны в приложении Moments через Expo Go на вашем устройстве.
+               Maps are available in the Moments app via Expo Go on your device.
              </ThemedText>
              {selectedLocation && (
                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: 'center' }}>
-                 Координаты: {selectedLocation.lat.toFixed(4)}, {selectedLocation.lng.toFixed(4)}
+                 Coordinates: {selectedLocation.lat.toFixed(4)}, {selectedLocation.lng.toFixed(4)}
                </ThemedText>
              )}
           </View>
