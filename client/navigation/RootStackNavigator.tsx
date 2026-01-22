@@ -63,7 +63,7 @@ function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; us
         alignItems: "center", 
         flex: 1, 
         justifyContent: "flex-end",
-        marginRight: Spacing.sm
+        marginRight: Spacing.md
       }}
     >
       <View style={{ marginRight: Spacing.sm, alignItems: "flex-end" }}>
