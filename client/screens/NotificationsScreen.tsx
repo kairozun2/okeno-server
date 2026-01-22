@@ -197,6 +197,13 @@ export default function NotificationsScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
+          <Feather name="x" size={24} color={theme.text} />
+        </Pressable>
+        <ThemedText type="h3">Уведомления</ThemedText>
+        <View style={{ width: 24 }} />
+      </View>
       {unreadCount > 0 ? (
         <Pressable
           onPress={() => markAllReadMutation.mutate()}
@@ -210,7 +217,7 @@ export default function NotificationsScreen({ navigation }: Props) {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingTop: headerHeight,
+          paddingTop: Spacing.sm,
           paddingBottom: insets.bottom + Spacing.xl,
         }}
         ListEmptyComponent={<EmptyNotifications />}
@@ -222,6 +229,13 @@ export default function NotificationsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   markAllButton: {
     position: "absolute",

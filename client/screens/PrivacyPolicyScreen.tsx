@@ -53,9 +53,16 @@ export default function PrivacyPolicyScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
+          <Feather name="x" size={24} color={theme.text} />
+        </Pressable>
+        <ThemedText type="h3">Конфиденциальность</ThemedText>
+        <View style={{ width: 24 }} />
+      </View>
       <ScrollView
         contentContainerStyle={{
-          paddingTop: headerHeight,
+          paddingTop: Spacing.sm,
           paddingBottom: insets.bottom + Spacing["2xl"],
           paddingHorizontal: Spacing.lg,
         }}
@@ -95,6 +102,13 @@ export default function PrivacyPolicyScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   section: {
     marginBottom: Spacing.xl,

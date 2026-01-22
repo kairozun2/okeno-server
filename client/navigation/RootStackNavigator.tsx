@@ -185,11 +185,11 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Notifications"
             component={NotificationsScreen}
-            options={({ navigation }) => ({
-              ...modalOptions,
-              headerTitle: "Уведомления",
-              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
-            })}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
           />
           <Stack.Screen
             name="PostDetail"
@@ -221,12 +221,11 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="PrivacyPolicy"
             component={PrivacyPolicyScreen}
-            options={({ navigation }) => ({
-              ...modalOptions,
-              headerTitle: "Конфиденциальность",
-              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
-              headerShadowVisible: false,
-            })}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
           />
           <Stack.Screen
             name="CacheSettings"
