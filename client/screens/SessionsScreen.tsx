@@ -96,17 +96,45 @@ function SessionItem({
 type Props = NativeStackScreenProps<RootStackParamList, "Sessions">;
 
 export default function SessionsScreen({ navigation }: Props) {
-  const { theme } = useTheme();
+  const { theme, language } = useTheme();
   const { user, sessionId } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
 
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: "Active Sessions",
+      headerTitle: t("Active Sessions", "Активные сессии"),
+      headerLeft: () => (
+        <View style={{ 
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: "rgba(255, 255, 255, 0.1)",
+          borderWidth: 1,
+          borderColor: "rgba(255, 255, 255, 0.2)",
+          alignItems: "center",
+          justifyContent: "center",
+          marginLeft: 16,
+        }}>
+          <Pressable 
+            onPress={() => navigation.goBack()}
+            hitSlop={20}
+            style={{ 
+              width: "100%",
+              height: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Feather name="chevron-left" size={24} color={theme.text} />
+          </Pressable>
+        </View>
+      ),
     });
-  }, [navigation]);
+  }, [navigation, theme.text, language]);
 
   const { data: sessions = [] } = useQuery<Session[]>({
     queryKey: ["/api/users", user?.id, "sessions"],

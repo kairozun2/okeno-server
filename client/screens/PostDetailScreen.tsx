@@ -96,12 +96,12 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     mutationFn: async () => {
       await apiRequest("DELETE", `/api/users/${currentUser?.id}/archived/${postId}`);
     },
-    onSuccess: () => {
+      onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "archived"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigation.navigate("MainTabs" as never, { screen: "Home" } as never);
+      navigation.navigate("Main" as any, { screen: "Home" } as any);
     },
   });
 
