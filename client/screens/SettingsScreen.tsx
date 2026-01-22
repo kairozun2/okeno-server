@@ -281,12 +281,8 @@ export default function SettingsScreen({ navigation }: Props) {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowColorPicker(false)}
       >
-        <LinearGradient
-          colors={[theme.backgroundRoot, theme.backgroundRoot, theme.cardBackground]}
-          locations={[0, 0.7, 1]}
-          style={styles.modalContainer}
-        >
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm }]}>
+        <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
             <ThemedText type="h3">Цвет приложения</ThemedText>
             <Pressable onPress={() => setShowColorPicker(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
@@ -324,7 +320,7 @@ export default function SettingsScreen({ navigation }: Props) {
               ))}
             </View>
           </ScrollView>
-        </LinearGradient>
+        </View>
       </Modal>
     </View>
   );

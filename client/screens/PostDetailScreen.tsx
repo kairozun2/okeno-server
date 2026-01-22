@@ -134,10 +134,12 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   }, [deletePostMutation]);
 
   useEffect(() => {
-    if (isOwner) {
-      navigation.setOptions({
-        headerRight: () => (
-          <View style={{ flexDirection: "row", alignItems: "center", paddingRight: -8 }}>
+    navigation.setOptions({
+      headerRight: () => {
+        if (!isOwner) return null;
+        
+        return (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
             {isArchived ? (
               <Pressable
                 onPress={() => {
@@ -147,15 +149,14 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 style={({ pressed }) => ({
                   width: 38,
                   height: 38,
+                  borderRadius: 19,
+                  backgroundColor: theme.backgroundSecondary,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: 19,
-                  marginRight: 8,
-                  backgroundColor: theme.accent,
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
-                <Feather name="arrow-up" size={18} color="#FFF" />
+                <Feather name="arrow-up" size={20} color={theme.text} />
               </Pressable>
             ) : null}
             <Pressable
@@ -169,8 +170,8 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: 12,
-                marginRight: -2,
                 backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
+                opacity: pressed ? 0.7 : 1,
               })}
             >
               <Feather name="edit-2" size={20} color={theme.text} />
@@ -187,19 +188,16 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 justifyContent: 'center',
                 borderRadius: 12,
                 backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
+                opacity: pressed ? 0.7 : 1,
               })}
             >
               <Feather name="trash-2" size={20} color={theme.error} />
             </Pressable>
           </View>
-        ),
-      });
-    } else {
-      navigation.setOptions({
-        headerRight: undefined
-      });
-    }
-  }, [isOwner, isArchived, navigation, theme.error, theme.text, theme.accent, handleDelete, postId, unarchiveMutation]);
+        );
+      },
+    });
+  }, [navigation, isOwner, theme, handleDelete, postId, isArchived, unarchiveMutation]);
 
   const likeMutation = useMutation({
     mutationFn: async () => {
