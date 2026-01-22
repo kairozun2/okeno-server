@@ -117,7 +117,6 @@ export default function RootStackNavigator() {
                   }}
                 />
               ),
-              headerTitleAlign: "right",
               headerTransparent: true,
               headerBackground: () => (
                 <BlurView
