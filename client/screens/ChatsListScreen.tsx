@@ -9,8 +9,17 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
+import { enUS, ru } from "date-fns/locale";
+
+function formatCompactDate(date: Date, language: string) {
+  const locale = language === "ru" ? ru : enUS;
+  if (isToday(date)) return format(date, "HH:mm");
+  if (isYesterday(date)) return language === "ru" ? "Вчера" : "Yest";
+  
+  // Compact format: "22 Jan" or "22 Янв"
+  return format(date, "d MMM", { locale });
+}
 import { Image } from "expo-image";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -62,10 +71,12 @@ function ChatItem({
   chat,
   onPress,
   allChatSettings,
+  language,
 }: {
   chat: ChatWithDetails;
   onPress: () => void;
   allChatSettings: ChatSettings[];
+  language: string;
 }) {
   const { theme } = useTheme();
 
@@ -94,8 +105,8 @@ function ChatItem({
                 {chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
               </View>
             </View>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, flexShrink: 0, marginLeft: Spacing.xs }}>
-              {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: enUS })}
+            <ThemedText type="caption" style={{ color: theme.textSecondary, flexShrink: 0, marginLeft: Spacing.xs, fontSize: 11 }}>
+              {formatCompactDate(new Date(chat.updatedAt), language)}
             </ThemedText>
           </View>
           <View style={styles.chatPreview}>
@@ -285,6 +296,7 @@ export default function ChatsListScreen({ navigation }: Props) {
         <ChatItem
           chat={item}
           allChatSettings={allChatSettings}
+          language={language}
           onPress={() => navigation.navigate("Chat", { 
             chatId: item.id,
             otherUserId: item.otherUser?.id,
@@ -295,7 +307,7 @@ export default function ChatsListScreen({ navigation }: Props) {
         />
       );
     },
-    [navigation]
+    [navigation, allChatSettings, language]
   );
 
   return (

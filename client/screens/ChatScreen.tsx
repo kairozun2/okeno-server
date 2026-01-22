@@ -449,14 +449,15 @@ export default function ChatScreen({ route, navigation }: Props) {
       const response = await fetch(url.toString(), { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch messages");
       const msgs = await response.json() as Message[];
-      return msgs; // Reactions are now included from server
+      return msgs; 
     },
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length === 0) return undefined;
       return lastPage.length === 20 ? allPages.length * 20 : undefined;
     },
     initialPageParam: 0,
-    refetchInterval: 3000, // Reduced polling frequency to prevent flickering/resets
+    staleTime: 5000,
+    refetchInterval: 5000, 
   });
 
   const messages = data?.pages.flat() || [];
