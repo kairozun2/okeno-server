@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { KeyboardAvoidingView, KeyboardStickyView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -148,7 +148,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior="padding"
         keyboardVerticalOffset={0}
       >
         <FlatList
@@ -167,13 +167,11 @@ export default function ChatScreen({ route, navigation }: Props) {
         />
 
         <View
-          style={[
-            styles.inputContainer,
-            {
-              paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
-              backgroundColor: "transparent",
-            },
-          ]}
+          style={{
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
+            backgroundColor: "transparent",
+            paddingTop: Spacing.sm,
+          }}
         >
           <View style={styles.inputWrapper}>
             <TextInput
@@ -250,9 +248,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     transform: [{ scaleY: -1 }],
-  },
-  inputContainer: {
-    paddingTop: Spacing.sm,
   },
   inputWrapper: {
     flexDirection: "row",
