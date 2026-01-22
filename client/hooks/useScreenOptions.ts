@@ -6,12 +6,10 @@ import { useTheme } from "@/hooks/useTheme";
 
 interface UseScreenOptionsParams {
   transparent?: boolean;
-  modal?: boolean;
 }
 
 export function useScreenOptions({
   transparent = true,
-  modal = false,
 }: UseScreenOptionsParams = {}): NativeStackNavigationOptions {
   const { theme, isDark } = useTheme();
 
@@ -34,7 +32,6 @@ export function useScreenOptions({
     return {
       ...baseOptions,
       headerTransparent: true,
-      headerBlurEffect: isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight",
       headerStyle: {
         backgroundColor: "transparent",
       },
@@ -51,7 +48,7 @@ export function useScreenOptions({
 }
 
 export function useModalScreenOptions(): NativeStackNavigationOptions {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
 
   return {
     presentation: "modal",
@@ -62,7 +59,6 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
       fontSize: 17,
     },
     headerTransparent: true,
-    headerBlurEffect: isDark ? "systemThinMaterialDark" : "systemThinMaterialLight",
     headerStyle: {
       backgroundColor: "transparent",
     },

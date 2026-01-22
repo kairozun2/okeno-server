@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { View, StyleSheet, TextInput, Pressable, FlatList } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
@@ -43,7 +43,7 @@ function MessageBubble({
         styles.messageBubble,
         isOwn ? styles.ownMessage : styles.otherMessage,
         {
-          backgroundColor: isOwn ? theme.link : theme.backgroundSecondary,
+          backgroundColor: isOwn ? theme.link : theme.cardBackground,
         },
       ]}
     >
@@ -60,7 +60,7 @@ function MessageBubble({
           { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary },
         ]}
       >
-        {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+        {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: ru })}
       </ThemedText>
     </Animated.View>
   );
@@ -71,9 +71,9 @@ function EmptyChat() {
 
   return (
     <View style={styles.emptyContainer}>
-      <Feather name="message-circle" size={48} color={theme.textSecondary} />
+      <Feather name="message-circle" size={40} color={theme.textSecondary} />
       <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
-        Start the conversation
+        Начните переписку
       </ThemedText>
     </View>
   );
@@ -86,13 +86,13 @@ export default function ChatScreen({ route }: Props) {
   const { theme } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const flatListRef = useRef<FlatList>(null);
 
-  const { data: messages = [], isLoading } = useQuery<Message[]>({
+  const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ["/api/chats", chatId, "messages"],
+    refetchInterval: 3000,
   });
 
   const sendMutation = useMutation({
@@ -118,7 +118,6 @@ export default function ChatScreen({ route }: Props) {
   };
 
   useEffect(() => {
-    // Mark messages as read
     if (user?.id) {
       apiRequest("POST", `/api/chats/${chatId}/read`, { userId: user.id }).catch(() => {});
     }
@@ -131,21 +130,25 @@ export default function ChatScreen({ route }: Props) {
     [user?.id]
   );
 
+  const sortedMessages = [...messages].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       behavior="padding"
-      keyboardVerticalOffset={0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <FlatList
         ref={flatListRef}
-        data={messages.toReversed()}
+        data={sortedMessages}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         inverted={messages.length > 0}
         contentContainerStyle={[
           styles.messagesList,
-          { paddingTop: headerHeight + Spacing.lg },
+          messages.length === 0 && { flex: 1 },
         ]}
         ListEmptyComponent={<EmptyChat />}
         showsVerticalScrollIndicator={false}
@@ -155,8 +158,10 @@ export default function ChatScreen({ route }: Props) {
         style={[
           styles.inputContainer,
           {
-            backgroundColor: theme.backgroundDefault,
-            paddingBottom: insets.bottom || Spacing.lg,
+            backgroundColor: theme.backgroundRoot,
+            paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md,
+            borderTopWidth: 1,
+            borderTopColor: theme.border,
           },
         ]}
       >
@@ -166,9 +171,11 @@ export default function ChatScreen({ route }: Props) {
             {
               backgroundColor: theme.inputBackground,
               color: theme.text,
+              borderWidth: 1,
+              borderColor: theme.border,
             },
           ]}
-          placeholder="Message..."
+          placeholder="Сообщение..."
           placeholderTextColor={theme.textSecondary}
           value={message}
           onChangeText={setMessage}
@@ -187,7 +194,7 @@ export default function ChatScreen({ route }: Props) {
         >
           <Feather
             name="send"
-            size={20}
+            size={18}
             color={message.trim() ? "#fff" : theme.textSecondary}
           />
         </Pressable>
@@ -201,15 +208,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesList: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    flexGrow: 1,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
   },
   messageBubble: {
     maxWidth: "80%",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
     marginBottom: Spacing.sm,
   },
   ownMessage: {
@@ -223,6 +229,7 @@ const styles = StyleSheet.create({
   messageTime: {
     marginTop: Spacing.xs,
     alignSelf: "flex-end",
+    fontSize: 10,
   },
   emptyContainer: {
     flex: 1,
@@ -233,23 +240,23 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
     gap: Spacing.sm,
   },
   input: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 40,
     maxHeight: 100,
-    borderRadius: BorderRadius.xl,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    fontSize: 16,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    fontSize: 15,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },

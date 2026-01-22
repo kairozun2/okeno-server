@@ -1,8 +1,6 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, RefreshControl, Pressable, Dimensions, Alert } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { View, StyleSheet, RefreshControl, Pressable, Dimensions, Alert, FlatList } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -21,9 +19,9 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const GRID_GAP = Spacing.xs;
+const GRID_GAP = 2;
 const NUM_COLUMNS = 3;
-const ITEM_SIZE = (SCREEN_WIDTH - Spacing.lg * 2 - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+const ITEM_SIZE = (SCREEN_WIDTH - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
 interface User {
   id: string;
@@ -47,7 +45,6 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const { theme } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -88,12 +85,12 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   const handleHide = () => {
     Alert.alert(
-      "Hide User",
-      "You won't see this user's posts in your feed. You can unhide them later in Settings.",
+      "Скрыть пользователя",
+      "Вы больше не увидите публикации этого пользователя в ленте.",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Отмена", style: "cancel" },
         {
-          text: "Hide",
+          text: "Скрыть",
           style: "destructive",
           onPress: async () => {
             try {
@@ -103,7 +100,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               navigation.goBack();
             } catch (error) {
-              Alert.alert("Error", "Failed to hide user");
+              Alert.alert("Ошибка", "Не удалось скрыть пользователя");
             }
           },
         },
@@ -113,16 +110,16 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   const renderHeader = () => (
     <Animated.View entering={FadeIn} style={styles.header}>
-      <Avatar emoji={profileUser?.emoji || "🐸"} size={100} />
-      <ThemedText type="h2" style={styles.username}>
+      <Avatar emoji={profileUser?.emoji || "🐸"} size={72} />
+      <ThemedText type="h3" style={styles.username}>
         {profileUser?.username}
       </ThemedText>
 
       <View style={styles.stats}>
         <View style={styles.stat}>
           <ThemedText type="h4">{posts.length}</ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            Posts
+          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+            публикаций
           </ThemedText>
         </View>
       </View>
@@ -130,13 +127,13 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       {currentUser?.id !== userId ? (
         <View style={styles.actions}>
           <Button onPress={handleMessage} style={styles.messageButton}>
-            Message
+            Написать
           </Button>
           <Pressable
             onPress={handleHide}
-            style={[styles.hideButton, { backgroundColor: theme.backgroundSecondary }]}
+            style={[styles.hideButton, { backgroundColor: theme.cardBackground }]}
           >
-            <Feather name="eye-off" size={20} color={theme.textSecondary} />
+            <Feather name="eye-off" size={18} color={theme.textSecondary} />
           </Pressable>
         </View>
       ) : null}
@@ -155,15 +152,13 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             height: ITEM_SIZE,
             marginRight: column < NUM_COLUMNS - 1 ? GRID_GAP : 0,
             marginBottom: GRID_GAP,
-            borderRadius: BorderRadius.sm,
-            overflow: "hidden",
           }}
         >
           <Image
             source={{ uri: item.imageUrl }}
             style={{ width: "100%", height: "100%" }}
             contentFit="cover"
-            transition={200}
+            transition={100}
           />
         </Pressable>
       );
@@ -173,32 +168,32 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <FlashList
+      <FlatList
         data={posts}
         renderItem={renderItem}
+        keyExtractor={(item) => item.id}
         numColumns={NUM_COLUMNS}
-        estimatedItemSize={ITEM_SIZE}
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.lg,
+          paddingTop: insets.top + Spacing.xl,
           paddingBottom: insets.bottom + Spacing.xl,
-          paddingHorizontal: Spacing.lg,
         }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={theme.text}
+            tintColor={theme.textSecondary}
           />
         }
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Feather name="image" size={48} color={theme.textSecondary} />
-            <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
-              No posts yet
+            <Feather name="image" size={36} color={theme.textSecondary} />
+            <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+              Пока нет публикаций
             </ThemedText>
           </View>
         }
+        showsVerticalScrollIndicator={false}
       />
     </ThemedView>
   );
@@ -210,41 +205,41 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
   },
   username: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.sm,
   },
   stats: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
   stat: {
     alignItems: "center",
-    paddingHorizontal: Spacing.xl,
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
-    marginTop: Spacing.xl,
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
   },
   messageButton: {
     flex: 1,
-    maxWidth: 200,
+    maxWidth: 160,
   },
   hideButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing["4xl"],
+    paddingVertical: Spacing["3xl"],
   },
 });

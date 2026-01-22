@@ -1,13 +1,13 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, TextInput, Pressable, FlatList } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
@@ -46,17 +46,17 @@ function CommentItem({
   return (
     <Animated.View entering={FadeIn} style={styles.commentItem}>
       <Pressable onPress={onUserPress}>
-        <Avatar emoji={comment.user?.emoji || "🐸"} size={40} />
+        <Avatar emoji={comment.user?.emoji || "🐸"} size={36} />
       </Pressable>
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
           <Pressable onPress={onUserPress}>
             <ThemedText type="small" style={styles.commentUsername}>
-              {comment.user?.username || "User"}
+              {comment.user?.username || "Пользователь"}
             </ThemedText>
           </Pressable>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: ru })}
           </ThemedText>
         </View>
         <ThemedText type="body">{comment.content}</ThemedText>
@@ -70,9 +70,9 @@ function EmptyComments() {
 
   return (
     <View style={styles.emptyContainer}>
-      <Feather name="message-square" size={48} color={theme.textSecondary} />
+      <Feather name="message-square" size={40} color={theme.textSecondary} />
       <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
-        No comments yet. Be the first!
+        Пока нет комментариев
       </ThemedText>
     </View>
   );
@@ -85,11 +85,10 @@ export default function CommentsScreen({ route, navigation }: Props) {
   const { theme } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
 
-  const { data: comments = [], isLoading } = useQuery<Comment[]>({
+  const { data: comments = [] } = useQuery<Comment[]>({
     queryKey: ["/api/posts", postId, "comments"],
   });
 
@@ -135,7 +134,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       behavior="padding"
-      keyboardVerticalOffset={0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <FlatList
         data={comments}
@@ -143,7 +142,8 @@ export default function CommentsScreen({ route, navigation }: Props) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.commentsList,
-          { paddingTop: headerHeight + Spacing.lg },
+          { paddingTop: insets.top + Spacing.xl },
+          comments.length === 0 && { flex: 1 },
         ]}
         ListEmptyComponent={<EmptyComments />}
         showsVerticalScrollIndicator={false}
@@ -153,21 +153,25 @@ export default function CommentsScreen({ route, navigation }: Props) {
         style={[
           styles.inputContainer,
           {
-            backgroundColor: theme.backgroundDefault,
-            paddingBottom: insets.bottom || Spacing.lg,
+            backgroundColor: theme.backgroundRoot,
+            paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md,
+            borderTopWidth: 1,
+            borderTopColor: theme.border,
           },
         ]}
       >
-        <Avatar emoji={user?.emoji || "🐸"} size={36} />
+        <Avatar emoji={user?.emoji || "🐸"} size={32} />
         <TextInput
           style={[
             styles.input,
             {
               backgroundColor: theme.inputBackground,
               color: theme.text,
+              borderWidth: 1,
+              borderColor: theme.border,
             },
           ]}
-          placeholder="Add a comment..."
+          placeholder="Комментарий..."
           placeholderTextColor={theme.textSecondary}
           value={comment}
           onChangeText={setComment}
@@ -185,7 +189,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
               fontWeight: "600",
             }}
           >
-            Post
+            Отправить
           </ThemedText>
         </Pressable>
       </View>
@@ -198,17 +202,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   commentsList: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    flexGrow: 1,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   commentItem: {
     flexDirection: "row",
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   commentContent: {
     flex: 1,
-    marginLeft: Spacing.md,
+    marginLeft: Spacing.sm,
   },
   commentHeader: {
     flexDirection: "row",
@@ -217,27 +220,27 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   commentUsername: {
-    fontWeight: "600",
+    fontWeight: "500",
   },
   emptyContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing["4xl"],
+    paddingVertical: Spacing["3xl"],
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    gap: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
+    gap: Spacing.sm,
   },
   input: {
     flex: 1,
     minHeight: 36,
     maxHeight: 100,
-    borderRadius: BorderRadius.xl,
-    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     fontSize: 15,
   },

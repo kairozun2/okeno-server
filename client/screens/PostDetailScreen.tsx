@@ -1,7 +1,6 @@
-import React, { useState, useCallback } from "react";
+import React from "react";
 import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
@@ -13,11 +12,11 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
-import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/query-client";
@@ -50,7 +49,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   const { theme } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
 
   const likeScale = useSharedValue(1);
@@ -119,7 +117,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   }));
 
   const handleLike = () => {
-    likeScale.value = withSpring(1.3, { damping: 3 }, () => {
+    likeScale.value = withSpring(1.2, { damping: 4 }, () => {
       likeScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -127,7 +125,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   };
 
   const handleSave = () => {
-    saveScale.value = withSpring(1.3, { damping: 3 }, () => {
+    saveScale.value = withSpring(1.2, { damping: 4 }, () => {
       saveScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -137,7 +135,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out this post!`,
+        message: `Посмотри эту публикацию!`,
       });
     } catch (error) {
       console.error("Share error:", error);
@@ -148,7 +146,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     return (
       <ThemedView style={[styles.container, styles.loadingContainer]}>
         <ThemedText type="body" style={{ color: theme.textSecondary }}>
-          Loading...
+          Загрузка...
         </ThemedText>
       </ThemedView>
     );
@@ -158,15 +156,16 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     <ThemedView style={styles.container}>
       <ScrollView
         contentContainerStyle={{
-          paddingTop: headerHeight,
+          paddingTop: insets.top + Spacing.xl,
           paddingBottom: insets.bottom + Spacing.xl,
         }}
+        showsVerticalScrollIndicator={false}
       >
         <Image
           source={{ uri: post.imageUrl }}
           style={styles.image}
           contentFit="cover"
-          transition={300}
+          transition={200}
         />
 
         <Animated.View entering={FadeIn} style={styles.content}>
@@ -174,29 +173,23 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             onPress={() => navigation.navigate("UserProfile", { userId: post.userId })}
             style={styles.userRow}
           >
-            <Avatar emoji={postUser?.emoji || "🐸"} size={48} />
+            <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
             <View style={styles.userInfo}>
               <ThemedText type="body" style={styles.username}>
-                {postUser?.username || "User"}
+                {postUser?.username || "Пользователь"}
               </ThemedText>
               <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ru })}
               </ThemedText>
             </View>
           </Pressable>
 
           {post.location ? (
             <View style={styles.locationRow}>
-              <Feather name="map-pin" size={16} color={theme.textSecondary} />
+              <Feather name="map-pin" size={14} color={theme.textSecondary} />
               <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
                 {post.location}
               </ThemedText>
-              <Pressable style={[styles.translateButton, { backgroundColor: theme.backgroundSecondary }]}>
-                <Feather name="globe" size={14} color={theme.link} />
-                <ThemedText type="caption" style={{ color: theme.link, marginLeft: 4 }}>
-                  Translate
-                </ThemedText>
-              </Pressable>
             </View>
           ) : null}
 
@@ -204,12 +197,11 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             <AnimatedPressable onPress={handleLike} style={[styles.actionButton, likeAnimatedStyle]}>
               <Feather
                 name="heart"
-                size={28}
-                color={likedData?.liked ? theme.error : theme.text}
-                style={{ opacity: likedData?.liked ? 1 : 0.8 }}
+                size={24}
+                color={likedData?.liked ? theme.error : theme.textSecondary}
               />
               {likesData && likesData.count > 0 ? (
-                <ThemedText type="small" style={styles.actionCount}>
+                <ThemedText type="small" style={[styles.actionCount, { color: theme.textSecondary }]}>
                   {likesData.count}
                 </ThemedText>
               ) : null}
@@ -219,16 +211,16 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               onPress={() => navigation.navigate("Comments", { postId })}
               style={styles.actionButton}
             >
-              <Feather name="message-circle" size={28} color={theme.text} style={{ opacity: 0.8 }} />
+              <Feather name="message-circle" size={24} color={theme.textSecondary} />
               {commentsData && commentsData.count > 0 ? (
-                <ThemedText type="small" style={styles.actionCount}>
+                <ThemedText type="small" style={[styles.actionCount, { color: theme.textSecondary }]}>
                   {commentsData.count}
                 </ThemedText>
               ) : null}
             </Pressable>
 
             <Pressable onPress={handleShare} style={styles.actionButton}>
-              <Feather name="share" size={28} color={theme.text} style={{ opacity: 0.8 }} />
+              <Feather name="share" size={24} color={theme.textSecondary} />
             </Pressable>
 
             <View style={{ flex: 1 }} />
@@ -236,23 +228,22 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle]}>
               <Feather
                 name="bookmark"
-                size={28}
-                color={savedData?.saved ? theme.accent : theme.text}
-                style={{ opacity: savedData?.saved ? 1 : 0.8 }}
+                size={24}
+                color={savedData?.saved ? theme.link : theme.textSecondary}
               />
             </AnimatedPressable>
           </View>
 
           <Pressable
             onPress={() => navigation.navigate("Comments", { postId })}
-            style={[styles.viewCommentsButton, { backgroundColor: theme.backgroundSecondary }]}
+            style={[styles.viewCommentsButton, { backgroundColor: theme.cardBackground }]}
           >
-            <Feather name="message-square" size={18} color={theme.text} />
+            <Feather name="message-square" size={16} color={theme.textSecondary} />
             <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>
-              View Comments
+              Комментарии
             </ThemedText>
             <View style={{ flex: 1 }} />
-            <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+            <Feather name="chevron-right" size={18} color={theme.textSecondary} />
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -273,41 +264,34 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
   },
   content: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   userRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   userInfo: {
-    marginLeft: Spacing.md,
+    marginLeft: Spacing.sm,
   },
   username: {
-    fontWeight: "600",
+    fontWeight: "500",
   },
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  translateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: "auto",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
+    marginBottom: Spacing.md,
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: Spacing.xl,
+    marginRight: Spacing.lg,
   },
   actionCount: {
     marginLeft: Spacing.xs,
@@ -316,7 +300,7 @@ const styles = StyleSheet.create({
   viewCommentsButton: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
   },
 });

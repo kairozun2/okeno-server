@@ -195,6 +195,7 @@ export default function SettingsScreen({ navigation }: Props) {
         paddingTop: headerHeight + Spacing.lg,
         paddingBottom: insets.bottom + Spacing.xl,
       }}
+      showsVerticalScrollIndicator={false}
     >
       {sections.map((section, sectionIndex) => (
         <Animated.View
