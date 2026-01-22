@@ -108,7 +108,7 @@ export default function QRCodeScreen({ navigation }: Props) {
       setScannedData(null);
       
       // Navigate to profile instead of creating a chat
-      navigation.navigate("Profile", { userId });
+      navigation.navigate("UserProfile", { userId });
     } else {
       Alert.alert("Неверный QR-код", "Этот QR-код не принадлежит пользователю Moments.");
       setIsProcessing(false);
