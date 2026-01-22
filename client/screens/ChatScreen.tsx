@@ -541,9 +541,9 @@ export default function ChatScreen({ route, navigation }: Props) {
 
         <LinearGradient
           colors={[
-            isDark ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-            isDark ? 'rgba(15, 15, 15, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-            isDark ? 'rgba(15, 15, 15, 0.3)' : 'rgba(255, 255, 255, 0.3)',
+            isDark ? 'rgba(0, 0, 0, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+            isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+            isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
             'transparent'
           ]}
           style={{
@@ -551,7 +551,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             top: 0,
             left: 0,
             right: 0,
-            height: insets.top + (chatFullscreen ? 160 : 120),
+            height: insets.top + (chatFullscreen ? 180 : 140),
             zIndex: 90, 
             pointerEvents: 'none',
           }}
@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(128,128,128,0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   userInfo: {
     flexDirection: 'row',
@@ -747,7 +747,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: 'rgba(128,128,128,0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   messagesList: {
     paddingHorizontal: Spacing.md,
