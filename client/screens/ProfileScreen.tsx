@@ -249,7 +249,7 @@ export default function ProfileScreen({ navigation }: Props) {
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={theme.textSecondary}
-            progressViewOffset={headerHeight + insets.top}
+            progressViewOffset={headerHeight + insets.top + Spacing.md}
           />
         }
         ListHeaderComponent={headerComponent}

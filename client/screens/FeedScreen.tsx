@@ -280,7 +280,7 @@ export default function FeedScreen({ navigation }: Props) {
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={theme.textSecondary}
-            progressViewOffset={headerHeight}
+            progressViewOffset={headerHeight + Spacing.md}
           />
         }
         ListEmptyComponent={!isLoading ? <EmptyFeed /> : null}

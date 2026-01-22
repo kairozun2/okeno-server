@@ -188,12 +188,6 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             <Button onPress={handleMessage} style={styles.messageButton}>
               Написать
             </Button>
-            <Pressable
-              onPress={handleHide}
-              style={[styles.hideButton, { backgroundColor: theme.cardBackground }]}
-            >
-              <Feather name="eye-off" size={18} color={theme.textSecondary} />
-            </Pressable>
           </View>
         ) : null}
       </Animated.View>
@@ -244,6 +238,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={theme.textSecondary}
+            progressViewOffset={insets.top + Spacing.xl}
           />
         }
         ListHeaderComponent={renderHeader}
