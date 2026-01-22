@@ -715,6 +715,7 @@ export async function registerRoutes(app: express.Express) {
         isVerified: u.isVerified,
         isBanned: u.isBanned,
         createdAt: u.createdAt,
+        avatarUrl: u.avatarUrl,
       })));
     } catch (error) {
       console.error("Get all users error:", error);

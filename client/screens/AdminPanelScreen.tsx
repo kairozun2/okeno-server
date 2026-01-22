@@ -23,6 +23,7 @@ interface AdminUser {
   isVerified: boolean;
   isBanned: boolean;
   createdAt: string;
+  avatarUrl: string | null;
 }
 
 type Props = NativeStackScreenProps<RootStackParamList, "AdminPanel">;
@@ -112,7 +113,7 @@ export default function AdminPanelScreen({ navigation }: Props) {
       onPress={() => handleUserAction(item)}
       style={[styles.userItem, { backgroundColor: theme.cardBackground }]}
     >
-      <Avatar emoji={item.emoji} size={44} />
+      <Avatar emoji={item.emoji} size={44} imageUrl={item.avatarUrl || undefined} />
       <View style={styles.userInfo}>
         <View style={styles.usernameRow}>
           <ThemedText type="body" style={{ fontWeight: "600" }}>
