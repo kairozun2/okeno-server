@@ -1018,13 +1018,12 @@ const styles = StyleSheet.create({
   },
   emojiPickerRow: {
     flexDirection: "row",
-    justifyContent: "flex-start", // Changed to flex-start to move emojis left
+    justifyContent: "flex-start",
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 30,
+    paddingVertical: 10,
     marginBottom: Spacing.sm,
-    minHeight: 100,
     alignItems: 'center',
-    gap: Spacing.md, // Added gap to keep emojis separated when aligned left
+    gap: 8,
   },
   actionSheetContent: {
     borderRadius: 14,
@@ -1032,7 +1031,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   emojiButton: {
-    padding: Spacing.xs,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
