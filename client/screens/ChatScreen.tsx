@@ -136,6 +136,15 @@ export default function ChatScreen({ route, navigation }: Props) {
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
+  const EmptyChatState = () => (
+    <View style={styles.emptyContainer}>
+      <Feather name="message-circle" size={40} color={theme.textSecondary} />
+      <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
+        Начните переписку
+      </ThemedText>
+    </View>
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
       <KeyboardAvoidingView
@@ -154,7 +163,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             { paddingTop: Spacing.md },
             messages.length === 0 && { flex: 1 },
           ]}
-          ListEmptyComponent={<EmptyChat />}
+          ListEmptyComponent={EmptyChatState}
           showsVerticalScrollIndicator={false}
         />
 

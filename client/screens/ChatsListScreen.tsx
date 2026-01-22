@@ -157,6 +157,7 @@ export default function ChatsListScreen({ navigation }: Props) {
             otherUserId: item.otherUser?.id,
             otherUserName: item.otherUser?.username,
             otherUserEmoji: item.otherUser?.emoji,
+            otherUserUsername: item.otherUser?.username, // Pass the username too
           })}
         />
       );

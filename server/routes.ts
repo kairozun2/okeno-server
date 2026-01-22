@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import { storage } from "./storage";
-import { getRandomEmoji } from "@shared/schema";
 
 // Helper to get random emoji
 function generateEmoji(): string {
