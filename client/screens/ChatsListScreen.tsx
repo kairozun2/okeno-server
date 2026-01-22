@@ -332,45 +332,7 @@ export default function ChatsListScreen({ navigation }: Props) {
             </Pressable>
           </View>
 
-          {!selectedChat ? (
-            <ScrollView 
-              style={styles.chatsList}
-              contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
-            >
-              <ThemedText type="body" style={[styles.selectHint, { color: theme.textSecondary }]}>
-                {t("Select a chat to customize", "Выберите чат для настройки")}
-              </ThemedText>
-              {sortedChats.map((chat) => (
-                <Pressable
-                  key={chat.id}
-                  onPress={() => handleSelectChat(chat)}
-                  style={({ pressed }) => [
-                    styles.chatSelectItem,
-                    { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
-                  ]}
-                >
-                  <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
-                  <View style={styles.chatSelectInfo}>
-                    <ThemedText type="body" style={{ fontWeight: "500" }} truncate maxLength={15}>
-                      {chat.otherUser?.username || "User"}
-                    </ThemedText>
-                    <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={20}>
-                      @{chat.otherUser?.username}
-                    </ThemedText>
-                  </View>
-                  <Feather name="chevron-right" size={20} color={theme.textSecondary} />
-                </Pressable>
-              ))}
-              {sortedChats.length === 0 ? (
-                  <View style={styles.noChatsContainer}>
-                    <Feather name="message-circle" size={40} color={theme.textSecondary} />
-                    <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}>
-                      {t("You have no chats yet", "У вас пока нет чатов")}
-                    </ThemedText>
-                  </View>
-              ) : null}
-            </ScrollView>
-          ) : (
+          {selectedChat ? (
             <ScrollView 
               style={styles.settingsContent}
               contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
@@ -470,6 +432,44 @@ export default function ChatsListScreen({ navigation }: Props) {
                   </Pressable>
                 ) : null}
               </View>
+            </ScrollView>
+          ) : (
+            <ScrollView 
+              style={styles.chatsList}
+              contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
+            >
+              <ThemedText type="body" style={[styles.selectHint, { color: theme.textSecondary }]}>
+                {t("Select a chat to customize", "Выберите чат для настройки")}
+              </ThemedText>
+              {sortedChats.map((chat) => (
+                <Pressable
+                  key={chat.id}
+                  onPress={() => handleSelectChat(chat)}
+                  style={({ pressed }) => [
+                    styles.chatSelectItem,
+                    { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+                  ]}
+                >
+                  <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
+                  <View style={styles.chatSelectInfo}>
+                    <ThemedText type="body" style={{ fontWeight: "500" }} truncate maxLength={15}>
+                      {chat.otherUser?.username || "User"}
+                    </ThemedText>
+                    <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={20}>
+                      @{chat.otherUser?.username}
+                    </ThemedText>
+                  </View>
+                  <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+                </Pressable>
+              ))}
+              {sortedChats.length === 0 && (
+                <View style={styles.noChatsContainer}>
+                  <Feather name="message-circle" size={40} color={theme.textSecondary} />
+                  <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}>
+                    {t("You have no chats yet", "У вас пока нет чатов")}
+                  </ThemedText>
+                </View>
+              )}
             </ScrollView>
           )}
         </View>
