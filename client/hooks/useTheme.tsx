@@ -54,7 +54,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     tabIconSelected: accentColor,
     link: accentColor,
     accent: accentColor,
-    success: accentColor, // Apply to success for consistency in some UI parts
+    success: accentColor,
+    backgroundRoot: isDark ? baseTheme.backgroundRoot : accentColor + "10", // Very light tint
+    backgroundDefault: isDark ? baseTheme.backgroundDefault : accentColor + "05",
+    cardBackground: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.7)",
   } : baseTheme;
 
   if (isLoading) return null;

@@ -32,6 +32,19 @@ export default function ArchiveScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <Pressable 
+          onPress={() => navigation.goBack()}
+          style={{ marginLeft: Spacing.sm }}
+        >
+          <Feather name="chevron-left" size={28} color={theme.text} />
+        </Pressable>
+      ),
+    });
+  }, [navigation, theme.text]);
+
   const { data: archivedPosts, isLoading } = useQuery<Post[]>({
     queryKey: ["/api/users", user?.id, "archived"],
     enabled: !!user?.id,

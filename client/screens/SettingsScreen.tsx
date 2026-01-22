@@ -41,7 +41,12 @@ interface SettingSection {
   items: SettingItem[];
 }
 
-function SettingRow({ item, isLast }: { item: SettingItem; isLast: boolean }) {
+interface SettingRowProps {
+  item: SettingItem;
+  isLast: boolean;
+}
+
+function SettingRow({ item, isLast }: SettingRowProps) {
   const { theme } = useTheme();
 
   return (
@@ -271,48 +276,54 @@ export default function SettingsScreen({ navigation }: Props) {
 
       <Modal
         visible={showColorPicker}
-        transparent
-        animationType="fade"
+        transparent={false}
+        animationType="slide"
         onRequestClose={() => setShowColorPicker(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setShowColorPicker(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <Animated.View
-                entering={FadeInDown}
-                style={[styles.modalContent, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}
-              >
-                <ThemedText type="h4" style={styles.modalTitle}>Выберите цвет</ThemedText>
-                <View style={styles.colorGrid}>
-                  {ACCENT_COLORS.map((item) => (
-                    <Pressable
-                      key={item.color}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        setAccentColor(item.color === "#5C7A5C" ? null : item.color);
-                        setShowColorPicker(false);
-                      }}
-                      style={[
-                        styles.colorOption,
-                        { backgroundColor: item.color },
-                        (accentColor || "#5C7A5C") === item.color && {
-                          borderWidth: 3,
-                          borderColor: theme.text,
-                        }
-                      ]}
-                    />
-                  ))}
-                </View>
-                <Pressable
-                  onPress={() => setShowColorPicker(false)}
-                  style={[styles.closeButton, { backgroundColor: theme.backgroundSecondary }]}
-                >
-                  <ThemedText type="body">Закрыть</ThemedText>
-                </Pressable>
-              </Animated.View>
-            </TouchableWithoutFeedback>
+        <View style={[styles.fullScreenModal, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.md }]}>
+            <Pressable 
+              onPress={() => setShowColorPicker(false)}
+              style={styles.backButton}
+            >
+              <Feather name="chevron-left" size={28} color={theme.text} />
+            </Pressable>
+            <ThemedText type="h3">Цвет приложения</ThemedText>
+            <View style={{ width: 28 }} />
           </View>
-        </TouchableWithoutFeedback>
+
+          <ScrollView 
+            contentContainerStyle={styles.modalScroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <ThemedText type="body" style={styles.modalSubtitle}>
+              Выберите основной цвет для элементов интерфейса и фона
+            </ThemedText>
+
+            <View style={styles.colorGrid}>
+              {ACCENT_COLORS.map((item) => (
+                <Pressable
+                  key={item.color}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setAccentColor(item.color === "#5C7A5C" ? null : item.color);
+                  }}
+                  style={[
+                    styles.colorCard,
+                    { backgroundColor: theme.cardBackground }
+                  ]}
+                >
+                  <View style={[styles.colorCircle, { backgroundColor: item.color }]}>
+                    {(accentColor || "#5C7A5C") === item.color && (
+                      <Feather name="check" size={20} color="#FFF" />
+                    )}
+                  </View>
+                  <ThemedText type="small" style={styles.colorName}>{item.name}</ThemedText>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
       </Modal>
     </View>
   );
@@ -352,40 +363,55 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     fontSize: 15,
   },
-  modalOverlay: {
+  fullScreenModal: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
+  },
+  modalHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.xl,
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
-  modalContent: {
-    width: "100%",
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-    borderWidth: 1,
+  backButton: {
+    padding: Spacing.xs,
   },
-  modalTitle: {
+  modalScroll: {
+    padding: Spacing.lg,
+  },
+  modalSubtitle: {
     textAlign: "center",
     marginBottom: Spacing.xl,
+    opacity: 0.7,
   },
   colorGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "center",
+    justifyContent: "space-between",
     gap: Spacing.md,
   },
-  colorOption: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginBottom: Spacing.md,
-  },
-  closeButton: {
-    marginTop: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+  colorCard: {
+    width: "47%",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
     alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  colorCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginBottom: Spacing.sm,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  colorName: {
+    fontWeight: "500",
   },
 });
 
