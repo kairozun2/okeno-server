@@ -143,8 +143,9 @@ export default function RootStackNavigator() {
               ),
               headerShown: false,
               presentation: chatFullscreen ? "card" : "modal",
-              animation: chatFullscreen ? "default" : "slide_from_bottom",
-              gestureEnabled: chatFullscreen,
+              animation: chatFullscreen ? "slide_from_right" : "slide_from_bottom",
+              gestureEnabled: true,
+              contentStyle: { backgroundColor: theme.backgroundRoot },
             })}
           />
           <Stack.Screen
