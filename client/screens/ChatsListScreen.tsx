@@ -206,6 +206,10 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   const { data: allChatSettings = [] } = useQuery<ChatSettings[]>({
     queryKey: ["/api/users", user?.id, "chat-settings"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/users/${user?.id}/chat-settings`, null);
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 

@@ -128,10 +128,18 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   const { data: profileUser, isLoading: isUserLoading } = useQuery<User>({
     queryKey: ["/api/users", userId],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/users/${userId}`, null);
+      return response.json();
+    },
   });
 
   const { data: posts = [], isLoading: isPostsLoading } = useQuery<Post[]>({
     queryKey: ["/api/users", userId, "posts"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/users/${userId}/posts`, null);
+      return response.json();
+    },
   });
 
   const headerEmojiStyle = useAnimatedStyle(() => {

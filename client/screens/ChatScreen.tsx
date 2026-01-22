@@ -220,6 +220,11 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const { data: chatSettings } = useQuery<ChatSettings | null>({
     queryKey: ["/api/users", user?.id, "chat-settings", otherUserId],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/users/${user?.id}/chat-settings/${otherUserId}`, null);
+      if (response.status === 404) return null;
+      return response.json();
+    },
     enabled: !!user?.id && !!otherUserId,
   });
 
@@ -423,6 +428,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   useEffect(() => {
     if (user?.id) {
       apiRequest("POST", `/api/chats/${chatId}/read`, { userId: user.id }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "chats"] });
     }
   }, [chatId, user?.id]);
 
@@ -448,7 +454,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      keyboardVerticalOffset={0}
     >
         <View style={[styles.header, { top: Spacing.sm }]}>
           <Pressable

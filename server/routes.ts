@@ -577,6 +577,17 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
+  app.get("/api/users/:id/chat-settings/:otherUserId", async (req, res) => {
+    try {
+      const settings = await storage.getChatSettings(req.params.id, req.params.otherUserId);
+      if (!settings) return res.status(404).json({ error: "Settings not found" });
+      res.json(settings);
+    } catch (error) {
+      console.error("Get specific chat settings error:", error);
+      res.status(500).json({ error: "Failed to get chat settings" });
+    }
+  });
+
   app.post("/api/users/:id/chat-settings", async (req, res) => {
     try {
       const { otherUserId, nickname, backgroundImage, isGlobal } = req.body;
