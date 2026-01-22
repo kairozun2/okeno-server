@@ -174,6 +174,7 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: "Chats",
       headerRight: () => (
         <Pressable
           onPress={() => {

@@ -62,7 +62,7 @@ export default function QRCodeScreen({ navigation }: Props) {
     },
     onError: (error) => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Ошибка", "Не удалось начать чат. Попробуйте ещё раз.");
+      Alert.alert("Error", "Failed to start chat. Please try again.");
       setIsProcessing(false);
       setScannedData(null);
     },
@@ -73,8 +73,8 @@ export default function QRCodeScreen({ navigation }: Props) {
       const result = await requestPermission();
       if (!result.granted) {
         Alert.alert(
-          "Нужен доступ к камере",
-          "Для сканирования QR-кода необходимо разрешить доступ к камере в настройках."
+          "Camera access needed",
+          "To scan a QR code, you must allow camera access in settings."
         );
         return;
       }
@@ -96,7 +96,7 @@ export default function QRCodeScreen({ navigation }: Props) {
 
     if (userId.length > 5) { // Basic length check for a UUID-like ID
       if (userId === user?.id) {
-        Alert.alert("Это вы!", "Вы отсканировали свой собственный QR-код.");
+        Alert.alert("It's you!", "You scanned your own QR code.");
         setIsProcessing(false);
         setScannedData(null);
         return;
@@ -110,7 +110,7 @@ export default function QRCodeScreen({ navigation }: Props) {
       // Navigate to profile instead of creating a chat
       navigation.navigate("UserProfile", { userId });
     } else {
-      Alert.alert("Неверный QR-код", "Этот QR-код не принадлежит пользователю Moments.");
+      Alert.alert("Invalid QR code", "This QR code does not belong to a Moments user.");
       setIsProcessing(false);
       setScannedData(null);
     }
@@ -134,7 +134,7 @@ export default function QRCodeScreen({ navigation }: Props) {
           )}
           <Feather name="x" size={20} color={theme.text} />
         </Pressable>
-        <ThemedText type="h4">Мой QR-код</ThemedText>
+        <ThemedText type="h4">My QR-code</ThemedText>
         <View style={{ width: 36 }} />
       </View>
 
@@ -165,11 +165,11 @@ export default function QRCodeScreen({ navigation }: Props) {
           >
             <Feather name="camera" size={20} color="#fff" />
             <ThemedText type="body" style={styles.scanButtonText}>
-              Сканировать QR-код
+              Scan QR-code
             </ThemedText>
           </Pressable>
           <ThemedText type="caption" style={{ color: theme.textSecondary, textAlign: "center" }}>
-            Отсканируйте QR-код другого пользователя, чтобы начать с ним чат
+            Scan another user's QR-code to start a chat with them
           </ThemedText>
         </Animated.View>
       </View>
@@ -193,7 +193,7 @@ export default function QRCodeScreen({ navigation }: Props) {
               <Feather name="x" size={24} color="#fff" />
             </Pressable>
             <ThemedText type="h4" style={{ color: "#fff" }}>
-              Сканирование
+              Scanning
             </ThemedText>
             <View style={{ width: 40 }} />
           </View>
@@ -213,7 +213,7 @@ export default function QRCodeScreen({ navigation }: Props) {
 
           <View style={[styles.scannerFooter, { paddingBottom: insets.bottom + Spacing.xl }]}>
             <ThemedText type="body" style={{ color: "#fff", textAlign: "center" }}>
-              {isProcessing ? "Обработка..." : "Наведите камеру на QR-код"}
+              {isProcessing ? "Processing..." : "Point your camera at the QR-code"}
             </ThemedText>
           </View>
         </View>

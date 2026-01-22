@@ -34,6 +34,7 @@ export default function ArchiveScreen({ navigation }: Props) {
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: "Archive",
       headerLeft: () => (
         <Pressable 
           onPress={() => navigation.goBack()}

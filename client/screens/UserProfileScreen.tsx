@@ -164,7 +164,22 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         </Animated.View>
       ),
       headerRight: () => (
-        currentUser?.id !== userId ? (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {currentUser?.id !== userId && (
+            <Pressable 
+              onPress={() => navigation.navigate("Chat", { 
+                otherUserId: userId,
+                otherUserName: profileUser?.username,
+                otherUserEmoji: profileUser?.emoji 
+              })} 
+              hitSlop={20}
+              style={{ 
+                padding: 8,
+              }}
+            >
+              <Feather name="zap" size={24} color={theme.text} />
+            </Pressable>
+          )}
           <Pressable 
             onPress={() => setShowActionSheet(true)} 
             hitSlop={20}
@@ -175,10 +190,10 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           >
             <Feather name="more-horizontal" size={24} color={theme.text} />
           </Pressable>
-        ) : null
+        </View>
       ),
     });
-  }, [navigation, profileUser?.emoji, headerEmojiStyle, currentUser?.id, userId, theme.text]);
+  }, [navigation, profileUser?.emoji, headerEmojiStyle, currentUser?.id, userId, theme.text, profileUser?.username]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {

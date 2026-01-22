@@ -7,7 +7,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -64,18 +64,18 @@ function SessionItem({
       <View style={styles.sessionInfo}>
         <View style={styles.sessionHeader}>
           <ThemedText type="small" style={[styles.deviceName, { flex: 1 }]} numberOfLines={1}>
-            {session.deviceInfo || "Устройство"}
+            {session.deviceInfo || "Device"}
           </ThemedText>
           {isCurrentSession ? (
             <View style={[styles.currentBadge, { backgroundColor: theme.success }]}>
               <ThemedText type="caption" style={{ color: "#fff", fontWeight: "700", fontSize: 9 }}>
-                АКТИВНО
+                ACTIVE
               </ThemedText>
             </View>
           ) : null}
         </View>
         <ThemedText type="caption" style={{ color: theme.textSecondary, fontSize: 11 }}>
-          Активен {formatDistanceToNow(new Date(session.lastActive), { addSuffix: true, locale: ru })}
+          Active {formatDistanceToNow(new Date(session.lastActive), { addSuffix: true, locale: enUS })}
         </ThemedText>
       </View>
       {!isCurrentSession ? (
@@ -101,6 +101,12 @@ export default function SessionsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: "Active Sessions",
+    });
+  }, [navigation]);
 
   const { data: sessions = [] } = useQuery<Session[]>({
     queryKey: ["/api/users", user?.id, "sessions"],
@@ -207,7 +213,7 @@ export default function SessionsScreen({ navigation }: Props) {
               style={[styles.terminateAllButton, { backgroundColor: theme.error }]}
               textStyle={{ fontSize: 14 }}
             >
-              Завершить все остальные сеансы
+              Terminate all other sessions
             </Button>
           </>
         ) : null}

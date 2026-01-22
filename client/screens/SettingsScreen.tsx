@@ -108,6 +108,12 @@ export default function SettingsScreen({ navigation }: Props) {
   const [isIdVisible, setIsIdVisible] = useState(false);
   const [deletePin, setDeletePin] = useState("");
 
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: "Settings",
+    });
+  }, [navigation]);
+
   const deleteAccountMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("DELETE", `/api/users/${user?.id}`, { pin: deletePin });
@@ -117,7 +123,7 @@ export default function SettingsScreen({ navigation }: Props) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     onError: () => {
-      Alert.alert("Ошибка", "Неверный PIN-код или не удалось удалить аккаунт");
+      Alert.alert("Error", "Incorrect PIN or failed to delete account");
     },
   });
 
@@ -203,7 +209,15 @@ export default function SettingsScreen({ navigation }: Props) {
           title: "App Language",
           subtitle: "English",
           onPress: () => {
-            Alert.alert("Language", "Currently only English is supported. Russian will be added back in a future update.");
+            Alert.alert(
+              "Language / Язык",
+              "Choose your preferred language / Выберите предпочтительный язык",
+              [
+                { text: "English", onPress: () => Alert.alert("Settings", "Language set to English") },
+                { text: "Русский", onPress: () => Alert.alert("Настройки", "Выбран русский язык (бета)") },
+                { text: "Cancel / Отмена", style: "cancel" }
+              ]
+            );
           },
         },
       ],

@@ -53,7 +53,7 @@ export default function EditPostScreen({ route, navigation }: Props) {
     },
     onError: (error) => {
       console.error("Archive error:", error);
-      Alert.alert("Ошибка", "Не удалось архивировать публикацию");
+      Alert.alert("Error", "Failed to archive post");
     }
   });
 
@@ -62,9 +62,9 @@ export default function EditPostScreen({ route, navigation }: Props) {
   };
 
   const handleArchive = () => {
-    Alert.alert("Архивировать", "Переместить эту публикацию в архив?", [
-      { text: "Отмена", style: "cancel" },
-      { text: "В архив", onPress: () => archiveMutation.mutate() }
+    Alert.alert("Archive", "Move this post to archive?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "To Archive", onPress: () => archiveMutation.mutate() }
     ]);
   };
 
@@ -77,13 +77,13 @@ export default function EditPostScreen({ route, navigation }: Props) {
         }}
       >
         <Animated.View entering={FadeInDown.delay(100)} style={styles.section}>
-          <ThemedText type="caption" style={styles.label}>ГЕОЛОКАЦИЯ</ThemedText>
+          <ThemedText type="caption" style={styles.label}>GEOLOCATION</ThemedText>
           <View style={[styles.inputWrapper, { backgroundColor: theme.cardBackground }]}>
             <Feather name="map-pin" size={18} color={theme.textSecondary} style={styles.inputIcon} />
             <TextInput
               value={location}
               onChangeText={setLocation}
-              placeholder="Где это было?"
+              placeholder="Where was this?"
               placeholderTextColor={theme.textSecondary}
               style={[styles.input, { color: theme.text }]}
             />
@@ -96,7 +96,7 @@ export default function EditPostScreen({ route, navigation }: Props) {
             style={[styles.actionButton, { backgroundColor: theme.cardBackground }]}
           >
             <Feather name="archive" size={20} color={theme.text} />
-            <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>Архивировать публикацию</ThemedText>
+            <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>Archive post</ThemedText>
           </Pressable>
         </Animated.View>
 
@@ -105,7 +105,7 @@ export default function EditPostScreen({ route, navigation }: Props) {
             onPress={handleSave}
             style={[styles.saveButton, { backgroundColor: theme.link }]}
           >
-            <ThemedText type="body" style={{ color: "#fff", fontWeight: "600" }}>Сохранить изменения</ThemedText>
+            <ThemedText type="body" style={{ color: "#fff", fontWeight: "600" }}>Save changes</ThemedText>
           </Pressable>
         </Animated.View>
       </ScrollView>
