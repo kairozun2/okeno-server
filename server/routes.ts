@@ -1,12 +1,135 @@
 import { createServer } from "http";
 import express, { type Request, Response, NextFunction } from "express";
-import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema } from "@shared/schema";
 import { z } from "zod";
 
+const EMOJIS = ["🐸", "🦊", "🐻", "🐼", "🦁", "🐯", "🐨", "🐮", "🐷", "🐵", "🐔", "🐧", "🐦", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🕷", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊", "🐇", "🦝", "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿", "🦔"];
+
 export async function registerRoutes(app: express.Express) {
-  setupAuth(app);
+  // Auth routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { username, pin } = req.body;
+      
+      if (!username || !pin) {
+        return res.status(400).json({ error: "Username and PIN required" });
+      }
+
+      if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+        return res.status(400).json({ error: "PIN must be 4 digits" });
+      }
+
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already taken" });
+      }
+
+      const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+      const user = await storage.createUser({ username, pin, emoji });
+      
+      const session = await storage.createSession({
+        userId: user.id,
+        deviceName: req.headers["user-agent"] || "Unknown device",
+      });
+
+      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned }, session });
+    } catch (error) {
+      console.error("Register error:", error);
+      res.status(500).json({ error: "Failed to register" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { userId, pin } = req.body;
+      
+      if (!userId || !pin) {
+        return res.status(400).json({ error: "User ID and PIN required" });
+      }
+
+      const user = await storage.getUserByIdAndPin(userId, pin);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      if (user.isBanned) {
+        return res.status(403).json({ error: "Your account is banned" });
+      }
+
+      await storage.updateUserLastSeen(user.id);
+      
+      const session = await storage.createSession({
+        userId: user.id,
+        deviceName: req.headers["user-agent"] || "Unknown device",
+      });
+
+      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned }, session });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Failed to login" });
+    }
+  });
+
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      if (sessionId) {
+        await storage.deleteSession(sessionId);
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ error: "Failed to logout" });
+    }
+  });
+
+  app.get("/api/users/:id/sessions", async (req, res) => {
+    try {
+      const sessions = await storage.getUserSessions(req.params.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Get sessions error:", error);
+      res.status(500).json({ error: "Failed to get sessions" });
+    }
+  });
+
+  app.delete("/api/sessions/:id", async (req, res) => {
+    try {
+      await storage.deleteSession(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete session error:", error);
+      res.status(500).json({ error: "Failed to delete session" });
+    }
+  });
+
+  app.get("/api/users/:id/posts", async (req, res) => {
+    try {
+      const posts = await storage.getUserPosts(req.params.id);
+      const postsWithUser = await Promise.all(posts.map(async (post) => {
+        const user = await storage.getUser(post.userId);
+        const likesCount = await storage.getPostLikesCount(post.id);
+        const commentsCount = await storage.getPostCommentsCount(post.id);
+        const currentUserId = req.headers["x-user-id"] as string;
+        const isLiked = currentUserId ? !!(await storage.getLike(currentUserId, post.id)) : false;
+        const isSaved = currentUserId ? (await storage.getUserSaves(currentUserId)).some(s => s.postId === post.id) : false;
+        
+        return {
+          ...post,
+          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined,
+          likesCount,
+          commentsCount,
+          isLiked,
+          isSaved
+        };
+      }));
+      res.json(postsWithUser);
+    } catch (error) {
+      console.error("Get user posts error:", error);
+      res.status(500).json({ error: "Failed to get user posts" });
+    }
+  });
 
   // Users routes
   app.get("/api/users/search", async (req, res) => {
