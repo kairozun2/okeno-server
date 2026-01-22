@@ -130,67 +130,69 @@ export default function CommentsScreen({ route, navigation }: Props) {
   );
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={0}
-    >
-      <FlatList
-        data={comments}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[
-          styles.commentsList,
-          { paddingTop: Spacing.md },
-          comments.length === 0 && { flex: 1 },
-        ]}
-        ListEmptyComponent={<EmptyComments />}
-        showsVerticalScrollIndicator={false}
-      />
-
-      <View
-        style={[
-          styles.inputContainer,
-          {
-            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.xl : Spacing.xl + Spacing.md,
-          },
-        ]}
+    <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior="padding"
+        keyboardVerticalOffset={0}
       >
-        <Avatar emoji={user?.emoji || "🐸"} size={32} />
-        <TextInput
-          style={[
-            styles.input,
-            {
-              color: theme.text,
-              borderWidth: 1,
-              borderColor: theme.border,
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderRadius: 20,
-            },
+        <FlatList
+          data={comments}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.commentsList,
+            { paddingTop: headerHeight + Spacing.md },
+            comments.length === 0 && { flex: 1 },
           ]}
-          placeholder="Комментарий..."
-          placeholderTextColor={theme.textSecondary}
-          value={comment}
-          onChangeText={setComment}
-          multiline
-          maxLength={500}
+          ListEmptyComponent={<EmptyComments />}
+          showsVerticalScrollIndicator={false}
         />
-        <Pressable
-          onPress={handleSubmit}
-          disabled={!comment.trim() || addCommentMutation.isPending}
+
+        <View
+          style={{
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
+            paddingTop: Spacing.sm,
+          }}
         >
-          <ThemedText
-            type="link"
-            style={{
-              opacity: comment.trim() && !addCommentMutation.isPending ? 1 : 0.5,
-              fontWeight: "600",
-            }}
-          >
-            Отправить
-          </ThemedText>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+          <View style={styles.inputWrapper}>
+            <Avatar emoji={user?.emoji || "🐸"} size={32} />
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  color: theme.text,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  backgroundColor: "rgba(255,255,255,0.05)",
+                  borderRadius: 20,
+                },
+              ]}
+              placeholder="Комментарий..."
+              placeholderTextColor={theme.textSecondary}
+              value={comment}
+              onChangeText={setComment}
+              multiline
+              maxLength={500}
+            />
+            <Pressable
+              onPress={handleSubmit}
+              disabled={!comment.trim() || addCommentMutation.isPending}
+            >
+              <ThemedText
+                type="link"
+                style={{
+                  opacity: comment.trim() && !addCommentMutation.isPending ? 1 : 0.5,
+                  fontWeight: "600",
+                }}
+              >
+                Отправить
+              </ThemedText>
+            </Pressable>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -225,12 +227,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: Spacing["3xl"],
   },
-  inputContainer: {
+  inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.sm,
     gap: Spacing.sm,
+    backgroundColor: "transparent",
   },
   input: {
     flex: 1,
