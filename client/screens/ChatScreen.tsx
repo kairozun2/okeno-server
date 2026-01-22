@@ -197,11 +197,14 @@ function MessageBubble({
           
           {(message as any).reactions && (message as any).reactions.length > 0 && (
             <View style={[
-              styles.reactionsContainer,
-              { backgroundColor: isOwn ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)" }
+              styles.reactionsBadge,
+              { 
+                backgroundColor: isOwn ? "rgba(255,255,255,0.2)" : theme.backgroundSecondary,
+                borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+              }
             ]}>
               {(message as any).reactions.map((r: any, idx: number) => (
-                <ThemedText key={idx} style={{ fontSize: 13 }}>{r.emoji}</ThemedText>
+                <ThemedText key={idx} style={{ fontSize: 11 }}>{r.emoji}</ThemedText>
               ))}
             </View>
           )}
@@ -279,6 +282,8 @@ export default function ChatScreen({ route, navigation }: Props) {
     emojiPickerOpacity.value = withSpring(0, {}, () => {
       runOnJS(setShowEmojiPicker)(false);
     });
+    // Ensure scrolling isn't blocked by resetting selection state
+    setSelectedMessage(null);
   }, []);
 
   const handleReaction = useCallback((emoji: string) => {
@@ -293,6 +298,10 @@ export default function ChatScreen({ route, navigation }: Props) {
           page.map((msg: Message) => {
             if (msg.id === selectedMessage.id) {
               const currentReactions = (msg as any).reactions || [];
+              // Prevent duplicate same-emoji reaction from same user
+              const alreadyReacted = currentReactions.some((r: any) => r.emoji === emoji && r.userId === user?.id);
+              if (alreadyReacted) return msg;
+
               return {
                 ...msg,
                 reactions: [...currentReactions, { emoji, userId: user?.id }]
@@ -307,6 +316,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     closeEmojiPicker();
     setShowActionModal(false);
+    setSelectedMessage(null); // Clear selection to fix scrolling issues
   }, [selectedMessage, closeEmojiPicker, chatId, user?.id, queryClient]);
 
   const emojiPickerStyle = useAnimatedStyle(() => ({
@@ -965,15 +975,18 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
-  reactionsContainer: {
+  reactionsBadge: {
+    position: 'absolute',
+    bottom: -10,
+    left: 10,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 10,
-    marginTop: 4,
-    alignSelf: 'flex-start',
+    borderRadius: 12,
+    borderWidth: 1,
     gap: 2,
+    zIndex: 10,
   },
   emojiPickerContainer: {
     flexDirection: "row",
