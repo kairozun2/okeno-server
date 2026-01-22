@@ -169,7 +169,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             onPress={() => setShowActionSheet(true)} 
             hitSlop={20}
             style={{ 
-              marginRight: Spacing.xs,
+              marginRight: Spacing.md,
               padding: 8,
             }}
           >
@@ -446,15 +446,15 @@ export default function UserProfileScreen({ route, navigation }: Props) {
                   style={[
                     styles.categoryItem,
                     { 
-                      backgroundColor: reportCategory === cat.id ? theme.accentColor + '20' : theme.backgroundSecondary,
-                      borderColor: reportCategory === cat.id ? theme.accentColor : theme.border,
+                      backgroundColor: reportCategory === cat.id ? theme.accent + '20' : theme.backgroundSecondary,
+                      borderColor: reportCategory === cat.id ? theme.accent : theme.border,
                     }
                   ]}
                 >
                   <ThemedText 
                     type="small" 
                     style={{ 
-                      color: reportCategory === cat.id ? theme.accentColor : theme.text,
+                      color: reportCategory === cat.id ? theme.accent : theme.text,
                       fontWeight: reportCategory === cat.id ? "600" : "400",
                     }}
                   >
