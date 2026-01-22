@@ -7,6 +7,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -56,25 +57,25 @@ function SessionItem({
       >
         <Feather
           name={getDeviceIcon(session.deviceInfo)}
-          size={24}
+          size={20}
           color={isCurrentSession ? theme.link : theme.text}
         />
       </View>
       <View style={styles.sessionInfo}>
         <View style={styles.sessionHeader}>
-          <ThemedText type="body" style={styles.deviceName} numberOfLines={1}>
-            {session.deviceInfo || "Unknown Device"}
+          <ThemedText type="small" style={[styles.deviceName, { flex: 1 }]} numberOfLines={1}>
+            {session.deviceInfo || "Устройство"}
           </ThemedText>
           {isCurrentSession ? (
             <View style={[styles.currentBadge, { backgroundColor: theme.success }]}>
-              <ThemedText type="caption" style={{ color: "#fff", fontWeight: "600", fontSize: 10 }}>
-                Active
+              <ThemedText type="caption" style={{ color: "#fff", fontWeight: "700", fontSize: 9 }}>
+                АКТИВНО
               </ThemedText>
             </View>
           ) : null}
         </View>
-        <ThemedText type="small" style={{ color: theme.textSecondary }}>
-          Active {formatDistanceToNow(new Date(session.lastActive), { addSuffix: true })}
+        <ThemedText type="caption" style={{ color: theme.textSecondary, fontSize: 11 }}>
+          Активен {formatDistanceToNow(new Date(session.lastActive), { addSuffix: true, locale: ru })}
         </ThemedText>
       </View>
       {!isCurrentSession ? (
@@ -85,7 +86,7 @@ function SessionItem({
           }}
           style={styles.terminateButton}
         >
-          <Feather name="x" size={20} color={theme.error} />
+          <Feather name="x" size={18} color={theme.error} />
         </Pressable>
       ) : null}
     </Animated.View>
