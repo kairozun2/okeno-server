@@ -88,8 +88,12 @@ export default function QRCodeScreen({ navigation }: Props) {
     setIsProcessing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
-    if (data.startsWith("moments:user:")) {
-      const userId = data.replace("moments:user:", "");
+    // Allow both "moments:user:ID" and just "ID"
+    const userId = data.startsWith("moments:user:") 
+      ? data.replace("moments:user:", "") 
+      : data;
+
+    if (userId.length > 5) { // Basic length check for a UUID-like ID
       if (userId === user?.id) {
         Alert.alert("Это вы!", "Вы отсканировали свой собственный QR-код.");
         setIsProcessing(false);

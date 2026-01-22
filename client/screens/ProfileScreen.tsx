@@ -206,7 +206,9 @@ export default function ProfileScreen({ navigation }: Props) {
       <View style={[styles.customHeader, { height: headerHeight + insets.top }]}>
         <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
         <View style={[styles.headerContent, { paddingTop: insets.top }]}>
-          <View style={styles.headerLeft} />
+          <View style={styles.headerLeft}>
+            <View style={{ width: 40 }} />
+          </View>
           <View style={styles.headerCenter}>
             <Animated.View style={[styles.headerTitleContainer, headerTitleStyle]}>
               <ThemedText style={styles.headerTitleText}>Профиль</ThemedText>
@@ -220,7 +222,7 @@ export default function ProfileScreen({ navigation }: Props) {
               onPress={() => navigation.navigate("QRCode")}
               style={styles.headerIconButton}
             >
-              <Feather name="grid" size={20} color={theme.text} />
+              <Feather name="maximize" size={20} color={theme.text} />
             </Pressable>
             <Pressable
               onPress={() => navigation.navigate("Settings")}
@@ -247,6 +249,7 @@ export default function ProfileScreen({ navigation }: Props) {
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={theme.textSecondary}
+            progressViewOffset={headerHeight + insets.top}
           />
         }
         ListHeaderComponent={headerComponent}
@@ -275,9 +278,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.md,
+    width: "100%",
   },
   headerLeft: {
-    width: 40,
+    width: 80,
   },
   headerCenter: {
     flex: 1,
@@ -286,8 +290,10 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   headerRight: {
+    width: 80,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "flex-end",
     gap: Spacing.xs,
   },
   headerTitleContainer: {
@@ -305,6 +311,10 @@ const styles = StyleSheet.create({
   },
   headerIconButton: {
     padding: Spacing.sm,
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
   header: {
     alignItems: "center",
