@@ -167,11 +167,11 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           {currentUser?.id !== userId && (
             <Pressable 
-              onPress={() => navigation.navigate("Chat", { 
-                otherUserId: userId,
-                otherUserName: profileUser?.username,
-                otherUserEmoji: profileUser?.emoji 
-              })} 
+              onPress={() => {
+                if (profileUser) {
+                  startChatMutation.mutate();
+                }
+              }} 
               hitSlop={20}
               style={{ 
                 padding: 8,

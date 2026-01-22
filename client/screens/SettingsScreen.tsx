@@ -214,7 +214,7 @@ export default function SettingsScreen({ navigation }: Props) {
               "Choose your preferred language / Выберите предпочтительный язык",
               [
                 { text: "English", onPress: () => Alert.alert("Settings", "Language set to English") },
-                { text: "Русский", onPress: () => Alert.alert("Настройки", "Выбран русский язык (бета)") },
+                { text: "Русский", onPress: () => Alert.alert("Настройки", "Выбран русский язык") },
                 { text: "Cancel / Отмена", style: "cancel" }
               ]
             );
