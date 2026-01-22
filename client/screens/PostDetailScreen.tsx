@@ -30,6 +30,7 @@ interface Post {
   id: string;
   userId: string;
   imageUrl: string;
+  caption: string | null;
   location: string | null;
   createdAt: string;
 }
@@ -382,6 +383,14 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             </View>
           ) : null}
 
+          {post.caption ? (
+            <View style={styles.captionRow}>
+              <ThemedText type="body" style={{ color: theme.text, lineHeight: 22 }}>
+                {post.caption}
+              </ThemedText>
+            </View>
+          ) : null}
+
           <View style={styles.actions}>
             <AnimatedPressable onPress={handleLike} style={[styles.actionButton, likeAnimatedStyle]}>
               <Feather
@@ -474,6 +483,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Spacing.md,
+  },
+  captionRow: {
+    marginBottom: Spacing.md,
+    paddingTop: Spacing.xs,
   },
   actions: {
     flexDirection: "row",
