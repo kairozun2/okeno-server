@@ -326,7 +326,7 @@ type Props = CompositeScreenProps<
 >;
 
 export default function FeedScreen({ navigation }: Props) {
-  const { theme, language, isDark, setFeedRefreshing } = useTheme();
+  const { theme, language, isDark } = useTheme();
   const { user: currentUser } = useAuth();
   const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
@@ -431,11 +431,11 @@ export default function FeedScreen({ navigation }: Props) {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setFeedRefreshing(true);
+    setRefreshStatus(true);
     await queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     setRefreshing(false);
-    setFeedRefreshing(false);
-  }, [queryClient, setFeedRefreshing]);
+    setRefreshStatus(false);
+  }, [queryClient, setRefreshStatus]);
 
   const renderItem = useCallback(
     ({ item }: { item: PostWithUser }) => (
