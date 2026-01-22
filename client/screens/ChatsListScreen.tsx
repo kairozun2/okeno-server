@@ -81,10 +81,10 @@ function ChatItem({
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
-              <ThemedText type="body" style={styles.chatName} truncate maxLength={15}>
+              <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
                 {chat.otherUser?.username || "Пользователь"}
               </ThemedText>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={20}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={15}>
                 @{chat.otherUser?.username || "user"}
               </ThemedText>
             </View>
@@ -338,10 +338,10 @@ export default function ChatsListScreen({ navigation }: Props) {
                 >
                   <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
                   <View style={styles.chatSelectInfo}>
-                    <ThemedText type="body" style={{ fontWeight: "500" }}>
+                    <ThemedText type="body" style={{ fontWeight: "500" }} truncate maxLength={15}>
                       {chat.otherUser?.username || "Пользователь"}
                     </ThemedText>
-                    <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={20}>
                       @{chat.otherUser?.username}
                     </ThemedText>
                   </View>
@@ -367,7 +367,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                   <Feather name="chevron-left" size={24} color={theme.text} />
                 </Pressable>
                 <Avatar emoji={selectedChat.otherUser?.emoji || "🐸"} size={48} />
-                <ThemedText type="h3" style={{ marginTop: Spacing.sm }}>
+                <ThemedText type="h3" style={{ marginTop: Spacing.sm }} truncate maxLength={20}>
                   {selectedChat.otherUser?.username}
                 </ThemedText>
               </View>

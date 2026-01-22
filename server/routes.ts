@@ -735,6 +735,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           backgroundImage,
           isGlobal: true,
         });
+      } else {
+        // If global is disabled, make sure to disable it for the other user too if they had it
+        const otherExisting = await storage.getChatSettings(otherUserId, req.params.id);
+        if (otherExisting && otherExisting.isGlobal) {
+          await storage.updateChatSettings(otherExisting.id, { isGlobal: false });
+        }
       }
 
       res.json(settings);
