@@ -1,20 +1,302 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { sql, relations } from "drizzle-orm";
+import { pgTable, text, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Users table - registration with username + 4-digit PIN, unique emoji avatar
 export const users = pgTable("users", {
   id: varchar("id")
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  username: text("username").notNull(),
+  pin: text("pin").notNull(),
+  emoji: text("emoji").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastSeen: timestamp("last_seen").defaultNow().notNull(),
 });
 
+// Posts table - photos with location
+export const posts = pgTable("posts", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  imageUrl: text("image_url").notNull(),
+  location: text("location"),
+  latitude: text("latitude"),
+  longitude: text("longitude"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Likes table
+export const likes = pgTable("likes", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  postId: varchar("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Saves (bookmarks) table
+export const saves = pgTable("saves", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  postId: varchar("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Comments table
+export const comments = pgTable("comments", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  postId: varchar("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Chats table (conversation between two users)
+export const chats = pgTable("chats", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  user1Id: varchar("user1_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  user2Id: varchar("user2_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Messages table
+export const messages = pgTable("messages", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  chatId: varchar("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
+  senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+});
+
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // 'like', 'comment', 'message'
+  fromUserId: varchar("from_user_id").references(() => users.id, { onDelete: "cascade" }),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }),
+  chatId: varchar("chat_id").references(() => chats.id, { onDelete: "cascade" }),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Sessions table for active sessions
+export const sessions = pgTable("sessions", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  deviceInfo: text("device_info"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastActive: timestamp("last_active").defaultNow().notNull(),
+});
+
+// Hidden users table
+export const hiddenUsers = pgTable("hidden_users", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  hiddenUserId: varchar("hidden_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Archived posts table
+export const archivedPosts = pgTable("archived_posts", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  postId: varchar("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  posts: many(posts),
+  likes: many(likes),
+  saves: many(saves),
+  comments: many(comments),
+  sentMessages: many(messages),
+  notifications: many(notifications),
+  sessions: many(sessions),
+}));
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [posts.userId],
+    references: [users.id],
+  }),
+  likes: many(likes),
+  saves: many(saves),
+  comments: many(comments),
+}));
+
+export const likesRelations = relations(likes, ({ one }) => ({
+  user: one(users, {
+    fields: [likes.userId],
+    references: [users.id],
+  }),
+  post: one(posts, {
+    fields: [likes.postId],
+    references: [posts.id],
+  }),
+}));
+
+export const savesRelations = relations(saves, ({ one }) => ({
+  user: one(users, {
+    fields: [saves.userId],
+    references: [users.id],
+  }),
+  post: one(posts, {
+    fields: [saves.postId],
+    references: [posts.id],
+  }),
+}));
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+  user: one(users, {
+    fields: [comments.userId],
+    references: [users.id],
+  }),
+  post: one(posts, {
+    fields: [comments.postId],
+    references: [posts.id],
+  }),
+}));
+
+export const chatsRelations = relations(chats, ({ one, many }) => ({
+  user1: one(users, {
+    fields: [chats.user1Id],
+    references: [users.id],
+  }),
+  user2: one(users, {
+    fields: [chats.user2Id],
+    references: [users.id],
+  }),
+  messages: many(messages),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  chat: one(chats, {
+    fields: [messages.chatId],
+    references: [chats.id],
+  }),
+  sender: one(users, {
+    fields: [messages.senderId],
+    references: [users.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+  fromUser: one(users, {
+    fields: [notifications.fromUserId],
+    references: [users.id],
+  }),
+  post: one(posts, {
+    fields: [notifications.postId],
+    references: [posts.id],
+  }),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
-  password: true,
+  pin: true,
+  emoji: true,
 });
 
+export const insertPostSchema = createInsertSchema(posts).pick({
+  userId: true,
+  imageUrl: true,
+  location: true,
+  latitude: true,
+  longitude: true,
+});
+
+export const insertLikeSchema = createInsertSchema(likes).pick({
+  userId: true,
+  postId: true,
+});
+
+export const insertSaveSchema = createInsertSchema(saves).pick({
+  userId: true,
+  postId: true,
+});
+
+export const insertCommentSchema = createInsertSchema(comments).pick({
+  userId: true,
+  postId: true,
+  content: true,
+});
+
+export const insertChatSchema = createInsertSchema(chats).pick({
+  user1Id: true,
+  user2Id: true,
+});
+
+export const insertMessageSchema = createInsertSchema(messages).pick({
+  chatId: true,
+  senderId: true,
+  content: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).pick({
+  userId: true,
+  type: true,
+  fromUserId: true,
+  postId: true,
+  chatId: true,
+});
+
+export const insertSessionSchema = createInsertSchema(sessions).pick({
+  userId: true,
+  deviceInfo: true,
+});
+
+// Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type InsertPost = z.infer<typeof insertPostSchema>;
+export type Post = typeof posts.$inferSelect;
+export type InsertLike = z.infer<typeof insertLikeSchema>;
+export type Like = typeof likes.$inferSelect;
+export type InsertSave = z.infer<typeof insertSaveSchema>;
+export type Save = typeof saves.$inferSelect;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type Comment = typeof comments.$inferSelect;
+export type InsertChat = z.infer<typeof insertChatSchema>;
+export type Chat = typeof chats.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type Session = typeof sessions.$inferSelect;
