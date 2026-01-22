@@ -83,7 +83,7 @@ export default function QRCodeScreen({ navigation }: Props) {
   };
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
-    if (isProcessing || scannedData === data) return;
+    if (isProcessing || scannedData) return;
     
     setScannedData(data);
     setIsProcessing(true);
