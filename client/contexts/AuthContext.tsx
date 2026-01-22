@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { User, getStoredAuth, register as authRegister, login as authLogin, logout as authLogout } from "@/lib/auth";
+import { User, getStoredAuth, storeAuth, register as authRegister, login as authLogin, logout as authLogout } from "@/lib/auth";
+import { getApiUrl } from "@/lib/query-client";
 
 interface AuthContextType {
   user: User | null;
@@ -25,8 +26,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadStoredAuth = async () => {
     try {
       const { user: storedUser, sessionId: storedSessionId } = await getStoredAuth();
-      setUser(storedUser);
-      setSessionId(storedSessionId);
+      
+      if (storedUser && storedSessionId) {
+        // Refresh user data from server to get latest fields (isAdmin, isVerified, etc.)
+        try {
+          const url = new URL(`/api/users/${storedUser.id}`, getApiUrl());
+          const response = await fetch(url.toString(), { credentials: "include" });
+          if (response.ok) {
+            const freshUserData = await response.json();
+            const updatedUser = { ...storedUser, ...freshUserData };
+            setUser(updatedUser);
+            setSessionId(storedSessionId);
+            await storeAuth(updatedUser, storedSessionId);
+          } else {
+            setUser(storedUser);
+            setSessionId(storedSessionId);
+          }
+        } catch {
+          setUser(storedUser);
+          setSessionId(storedSessionId);
+        }
+      } else {
+        setUser(storedUser);
+        setSessionId(storedSessionId);
+      }
     } catch (error) {
       console.error("Failed to load auth:", error);
     } finally {
