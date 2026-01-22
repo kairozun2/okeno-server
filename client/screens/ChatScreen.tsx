@@ -171,6 +171,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             styles.inputContainer,
             {
               paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
+              backgroundColor: "transparent",
             },
           ]}
         >
@@ -252,7 +253,6 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     paddingTop: Spacing.sm,
-    backgroundColor: "transparent",
   },
   inputWrapper: {
     flexDirection: "row",
