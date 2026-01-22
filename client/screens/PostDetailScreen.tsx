@@ -139,42 +139,37 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     navigation.setOptions({
       headerTitle: t("Post", "Пост"),
       headerLeft: () => (
-        <View style={{ marginLeft: 8 }}>
-          <Pressable 
-            onPress={() => navigation.goBack()}
-            hitSlop={20}
-            style={({ pressed }) => ({ 
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : "transparent",
-              alignItems: "center",
-              justifyContent: "center",
-            })}
-          >
-            <Feather name="chevron-left" size={28} color={theme.text} />
-          </Pressable>
-        </View>
+        <Pressable 
+          onPress={() => navigation.goBack()}
+          hitSlop={20}
+          style={{ 
+            width: 32,
+            height: 32,
+            alignItems: "center",
+            justifyContent: "center",
+            marginLeft: 8,
+          }}
+        >
+          <Feather name="chevron-left" size={28} color={theme.text} />
+        </Pressable>
       ),
       headerRight: () => {
         if (!isOwner) return null;
         
         return (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingRight: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginRight: 8 }}>
             {isArchived ? (
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   unarchiveMutation.mutate();
                 }}
-                style={({ pressed }) => ({
+                style={{
                   width: 32,
                   height: 32,
-                  borderRadius: 16,
-                  backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : theme.backgroundSecondary,
                   alignItems: 'center',
                   justifyContent: 'center',
-                })}
+                }}
               >
                 <Feather name="arrow-up" size={20} color={theme.text} />
               </Pressable>
@@ -184,14 +179,12 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 navigation.navigate("EditPost", { postId });
               }}
-              style={({ pressed }) => ({
+              style={{
                 width: 32,
                 height: 32,
-                borderRadius: 16,
-                backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : "transparent",
                 alignItems: 'center',
                 justifyContent: 'center',
-              })}
+              }}
             >
               <Feather name="edit-2" size={20} color={theme.text} />
             </Pressable>
@@ -200,14 +193,12 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 handleDelete();
               }}
-              style={({ pressed }) => ({
+              style={{
                 width: 32,
                 height: 32,
-                borderRadius: 16,
-                backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : "transparent",
                 alignItems: 'center',
                 justifyContent: 'center',
-              })}
+              }}
             >
               <Feather name="trash-2" size={20} color={theme.error} />
             </Pressable>

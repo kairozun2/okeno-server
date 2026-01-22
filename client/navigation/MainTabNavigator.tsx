@@ -150,10 +150,9 @@ export default function MainTabNavigator() {
             borderTopWidth: 0,
             elevation: 0,
             height: 50 + insets.bottom,
-            paddingBottom: 0,
           },
           tabBarItemStyle: {
-            paddingTop: 12,
+            paddingTop: 16,
           },
           tabBarBackground: () =>
             Platform.OS === "ios" ? (
