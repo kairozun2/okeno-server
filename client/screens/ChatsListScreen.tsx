@@ -10,7 +10,7 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Image } from "expo-image";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -85,14 +85,14 @@ function ChatItem({
           <View style={styles.chatHeader}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
               <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
-                {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "Пользователь"}
+                {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
               </ThemedText>
               <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={15}>
                 @{chat.otherUser?.username || "user"}
               </ThemedText>
             </View>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: ru })}
+              {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: enUS })}
             </ThemedText>
           </View>
           <View style={styles.chatPreview}>
@@ -101,7 +101,7 @@ function ChatItem({
               numberOfLines={1}
               style={{ color: theme.textSecondary, flex: 1 }}
             >
-              {chat.lastMessage || "Начните переписку"}
+              {chat.lastMessage || "Start a conversation"}
             </ThemedText>
             {chat.unreadCount && chat.unreadCount > 0 ? (
               <View style={[styles.unreadBadge, { backgroundColor: theme.link }]}>
@@ -124,13 +124,13 @@ function EmptyChats() {
     <View style={styles.emptyContainer}>
       <Feather name="message-circle" size={40} color={theme.textSecondary} />
       <ThemedText type="h3" style={styles.emptyTitle}>
-        Пока нет чатов
+        No chats yet
       </ThemedText>
       <ThemedText
         type="body"
         style={[styles.emptyText, { color: theme.textSecondary }]}
       >
-        Начните переписку, нажав на профиль пользователя
+        Start a conversation by visiting a user's profile
       </ThemedText>
     </View>
   );
@@ -309,7 +309,7 @@ export default function ChatsListScreen({ navigation }: Props) {
           <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.md }]}>
             <View style={styles.modalHeaderButton} />
             <ThemedText type="h3" style={styles.modalTitle}>
-              {selectedChat ? "Настройки чата" : "Выберите чат"}
+              {selectedChat ? "Chat Settings" : "Select Chat"}
             </ThemedText>
             <Pressable 
               onPress={selectedChat ? handleSaveSettings : handleCloseModal} 
@@ -330,7 +330,7 @@ export default function ChatsListScreen({ navigation }: Props) {
               contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
             >
               <ThemedText type="body" style={[styles.selectHint, { color: theme.textSecondary }]}>
-                Выберите чат для настройки
+                Select a chat to customize
               </ThemedText>
               {sortedChats.map((chat) => (
                 <Pressable
@@ -344,7 +344,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                   <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
                   <View style={styles.chatSelectInfo}>
                     <ThemedText type="body" style={{ fontWeight: "500" }} truncate maxLength={15}>
-                      {chat.otherUser?.username || "Пользователь"}
+                      {chat.otherUser?.username || "User"}
                     </ThemedText>
                     <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={20}>
                       @{chat.otherUser?.username}
@@ -357,7 +357,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                 <View style={styles.noChatsContainer}>
                   <Feather name="message-circle" size={40} color={theme.textSecondary} />
                   <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}>
-                    У вас пока нет чатов
+                    You have no chats yet
                   </ThemedText>
                 </View>
               ) : null}
@@ -379,12 +379,12 @@ export default function ChatsListScreen({ navigation }: Props) {
 
               <View style={styles.settingSection}>
                 <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
-                  Никнейм в чате
+                  Chat Nickname
                 </ThemedText>
                 <TextInput
                   value={nickname}
                   onChangeText={setNickname}
-                  placeholder="Введите никнейм..."
+                  placeholder="Enter nickname..."
                   placeholderTextColor={theme.textSecondary}
                   style={[
                     styles.nicknameInput,
@@ -397,13 +397,13 @@ export default function ChatsListScreen({ navigation }: Props) {
                   maxLength={30}
                 />
                 <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
-                  Этот никнейм виден только вам
+                  This nickname is only visible to you
                 </ThemedText>
               </View>
 
               <View style={styles.settingSection}>
                 <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
-                  Готовые фоны
+                  Preset Backgrounds
                 </ThemedText>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.presetsContainer}>
                   {presetBackgrounds.map((url, index) => (
@@ -431,7 +431,7 @@ export default function ChatsListScreen({ navigation }: Props) {
 
               <View style={styles.settingSection}>
                 <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
-                  Фон чата
+                  Chat Background
                 </ThemedText>
                 <Pressable
                   onPress={pickBackgroundImage}
@@ -448,7 +448,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                     <View style={[styles.backgroundPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
                       <Feather name="image" size={40} color={theme.textSecondary} />
                       <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-                        Нажмите для выбора
+                        Tap to choose
                       </ThemedText>
                     </View>
                   )}
@@ -460,7 +460,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                   >
                     <Feather name="trash-2" size={16} color={theme.error} />
                     <ThemedText type="caption" style={{ color: theme.error, marginLeft: Spacing.xs }}>
-                      Удалить фон
+                      Remove background
                     </ThemedText>
                   </Pressable>
                 ) : null}

@@ -8,7 +8,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
@@ -53,11 +53,11 @@ function CommentItem({
         <View style={styles.commentHeader}>
           <Pressable onPress={onUserPress}>
             <ThemedText type="small" style={styles.commentUsername} truncate maxLength={12}>
-              {comment.user?.username || "Пользователь"}
+              {comment.user?.username || "User"}
             </ThemedText>
           </Pressable>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: ru })}
+            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: enUS })}
           </ThemedText>
         </View>
         <ThemedText type="body">{comment.content}</ThemedText>
@@ -73,7 +73,7 @@ function EmptyComments() {
     <View style={styles.emptyContainer}>
       <Feather name="message-square" size={40} color={theme.textSecondary} />
       <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
-        Пока нет комментариев
+        No comments yet
       </ThemedText>
     </View>
   );
@@ -135,7 +135,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
     >
       <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-          <ThemedText type="h3">Комментарии</ThemedText>
+          <ThemedText type="h3">Comments</ThemedText>
           <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
             <Feather name="x" size={24} color={theme.text} />
           </Pressable>
@@ -167,7 +167,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
                   backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
                 },
               ]}
-              placeholder="Комментарий..."
+              placeholder="Comment..."
               placeholderTextColor={theme.textSecondary}
               value={comment}
               onChangeText={setComment}
@@ -185,7 +185,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
                   fontWeight: "600",
                 }}
               >
-                Отправить
+                Send
               </ThemedText>
             </Pressable>
           </View>

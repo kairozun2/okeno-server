@@ -63,7 +63,7 @@ function EmptyPosts() {
     <View style={styles.emptyContainer}>
       <Feather name="image" size={36} color={theme.textSecondary} />
       <ThemedText type="body" style={[styles.emptyText, { color: theme.textSecondary }]}>
-        Пока нет публикаций
+        No posts yet
       </ThemedText>
     </View>
   );
@@ -195,7 +195,7 @@ export default function ProfileScreen({ navigation }: Props) {
         <View style={styles.stat}>
           <ThemedText type="h4">{posts.length}</ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            публикаций
+            posts
           </ThemedText>
         </View>
       </View>
@@ -212,7 +212,7 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
           <View style={styles.headerCenter}>
             <Animated.View style={[styles.headerTitleContainer, headerTitleStyle]}>
-              <ThemedText style={styles.headerTitleText}>Профиль</ThemedText>
+              <ThemedText style={styles.headerTitleText}>Profile</ThemedText>
             </Animated.View>
             <Animated.View style={[styles.headerEmojiContainer, emojiStyle]}>
               <ThemedText style={styles.headerEmojiText}>{user?.emoji || "🐸"}</ThemedText>

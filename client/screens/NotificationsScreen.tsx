@@ -201,7 +201,7 @@ export default function NotificationsScreen({ navigation }: Props) {
         <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
           <Feather name="x" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">Уведомления</ThemedText>
+        <ThemedText type="h3">Notifications</ThemedText>
         <View style={{ width: 24 }} />
       </View>
       {unreadCount > 0 ? (

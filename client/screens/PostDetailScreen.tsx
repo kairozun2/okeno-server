@@ -12,7 +12,7 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -114,18 +114,18 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       navigation.goBack();
     },
     onError: () => {
-      Alert.alert("Ошибка", "Не удалось удалить публикацию");
+      Alert.alert("Error", "Failed to delete post");
     },
   });
 
   const handleDelete = useCallback(() => {
     Alert.alert(
-      "Удалить публикацию?",
-      "Это действие нельзя отменить.",
+      "Delete post?",
+      "This action cannot be undone.",
       [
-        { text: "Отмена", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Удалить",
+          text: "Delete",
           style: "destructive",
           onPress: () => deletePostMutation.mutate(),
         },
@@ -253,7 +253,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Посмотри эту публикацию!`,
+        message: `Check out this post!`,
       });
     } catch (error) {
       console.error("Share error:", error);
@@ -268,13 +268,13 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     
     if (diffInHours < 1) {
       const diffInMins = Math.floor(diffInHours * 60);
-      return `${diffInMins}м`;
+      return `${diffInMins}m`;
     } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}ч`;
+      return `${Math.floor(diffInHours)}h`;
     } else {
       const diffInDays = Math.floor(diffInHours / 24);
-      if (diffInDays < 7) return `${diffInDays}д`;
-      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      if (diffInDays < 7) return `${diffInDays}d`;
+      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
     }
   }, [post?.createdAt]);
 
@@ -282,7 +282,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     return (
       <ThemedView style={[styles.container, styles.loadingContainer]}>
         <ThemedText type="body" style={{ color: theme.textSecondary }}>
-          Загрузка...
+          Loading...
         </ThemedText>
       </ThemedView>
     );
@@ -311,7 +311,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
                 <View style={styles.userInfo}>
                   <ThemedText type="body" style={styles.username} truncate maxLength={15}>
-                    {postUser?.username || "Пользователь"}
+                    {postUser?.username || "User"}
                   </ThemedText>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                     {formattedDate}
@@ -323,7 +323,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             <View style={styles.archiveNotice}>
               <Feather name="archive" size={20} color={theme.textSecondary} />
               <ThemedText type="body" style={{ marginLeft: Spacing.sm, color: theme.textSecondary }}>
-                Публикация находится в архиве
+                This post is archived
               </ThemedText>
             </View>
           </Animated.View>
@@ -357,7 +357,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
               <View style={styles.userInfo}>
                 <ThemedText type="body" style={styles.username} truncate maxLength={15}>
-                  {postUser?.username || "Пользователь"}
+                  {postUser?.username || "User"}
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                   {formattedDate}
@@ -424,7 +424,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           >
             <Feather name="message-square" size={16} color={theme.textSecondary} />
             <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>
-              Комментарии
+              Comments
             </ThemedText>
             <View style={{ flex: 1 }} />
             <ThemedText type="small" style={{ color: theme.textSecondary, marginRight: Spacing.xs }}>

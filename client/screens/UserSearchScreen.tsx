@@ -66,7 +66,7 @@ function UserItem({
         </ThemedText>
         {isCurrentUser ? (
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            Это вы
+            It's you
           </ThemedText>
         ) : null}
       </View>
@@ -90,10 +90,10 @@ function EmptyResults({ query, history, onClearHistory, onSelectHistory }: {
       <View style={styles.historyContainer}>
         <View style={styles.historyHeader}>
           <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600" }}>
-            НЕДАВНИЕ
+            RECENT
           </ThemedText>
           <Pressable onPress={onClearHistory} style={styles.clearButton}>
-            <ThemedText type="caption" style={{ color: theme.link }}>Очистить</ThemedText>
+            <ThemedText type="caption" style={{ color: theme.link }}>Clear</ThemedText>
           </Pressable>
         </View>
         {history.map((user) => (
@@ -114,8 +114,8 @@ function EmptyResults({ query, history, onClearHistory, onSelectHistory }: {
       <Feather name="users" size={40} color={theme.textSecondary} />
       <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: "center" }}>
         {query.length > 0 
-          ? `Пользователи с именем "${query}" не найдены`
-          : "Введите имя пользователя для поиска"
+          ? `No users found with name "${query}"`
+          : "Enter a username to search"
         }
       </ThemedText>
     </View>
@@ -212,7 +212,7 @@ export default function UserSearchScreen({ navigation }: Props) {
           )}
           <Feather name="x" size={20} color={theme.text} />
         </Pressable>
-        <ThemedText type="h4">Поиск</ThemedText>
+        <ThemedText type="h4">Search</ThemedText>
         <View style={{ width: 36 }} />
       </View>
 
@@ -220,7 +220,7 @@ export default function UserSearchScreen({ navigation }: Props) {
         <Feather name="search" size={18} color={theme.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
-          placeholder="Введите имя пользователя..."
+          placeholder="Enter username..."
           placeholderTextColor={theme.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}

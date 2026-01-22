@@ -87,7 +87,7 @@ export default function ArchiveScreen({ navigation }: Props) {
   if (isLoading) {
     return (
       <ThemedView style={styles.center}>
-        <ThemedText>Загрузка...</ThemedText>
+        <ThemedText>Loading...</ThemedText>
       </ThemedView>
     );
   }
@@ -106,7 +106,7 @@ export default function ArchiveScreen({ navigation }: Props) {
           <View style={styles.empty}>
             <Feather name="archive" size={48} color={theme.textSecondary} style={{ marginBottom: Spacing.md }} />
             <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: 'center' }}>
-              В архиве пока ничего нет.{"\n"}Здесь будут храниться ваши скрытые воспоминания.
+              Your archive is empty.{"\n"}Your hidden memories will be stored here.
             </ThemedText>
           </View>
         }

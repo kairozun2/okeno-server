@@ -9,7 +9,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
@@ -70,7 +70,7 @@ function MessageBubble({
           { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary },
         ]}
       >
-        {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: ru })}
+        {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: enUS })}
       </ThemedText>
     </Animated.View>
   );
@@ -99,7 +99,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     return url;
   };
 
-  const displayName = chatSettings?.nickname || otherUserName || "Пользователь";
+  const displayName = chatSettings?.nickname || otherUserName || "User";
   const backgroundImage = chatSettings?.backgroundImage;
 
   const {
@@ -259,7 +259,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                   backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
                 },
               ]}
-              placeholder="Сообщение..."
+              placeholder="Message..."
               placeholderTextColor={theme.textSecondary}
               value={message}
               onChangeText={setMessage}
