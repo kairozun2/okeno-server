@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
-import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert, TextInput } from "react-native";
+import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert, TextInput, ScrollView } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -326,14 +326,14 @@ type Props = CompositeScreenProps<
 >;
 
 export default function FeedScreen({ navigation }: Props) {
-  const { theme, language } = useTheme();
+  const { theme, language, isDark, setFeedRefreshing } = useTheme();
   const { user: currentUser } = useAuth();
   const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
-  const { setFeedRefreshing } = useRefresh();
+  const { setFeedRefreshing: setRefreshStatus } = useRefresh();
 
   const [selectedMessage, setSelectedMessage] = useState<PostWithUser | null>(null);
 
