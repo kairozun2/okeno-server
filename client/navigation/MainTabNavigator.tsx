@@ -94,6 +94,17 @@ export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
+  const headerBackground = () =>
+    Platform.OS === "ios" ? (
+      <BlurView
+        intensity={80}
+        tint={isDark ? "dark" : "light"}
+        style={StyleSheet.absoluteFill}
+      />
+    ) : (
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot }]} />
+    );
+
   return (
     <View style={{ flex: 1 }}>
       <Tab.Navigator
@@ -118,6 +129,7 @@ export default function MainTabNavigator() {
               />
             ) : null,
           headerTransparent: true,
+          headerBackground,
           headerStyle: {
             backgroundColor: "transparent",
           },

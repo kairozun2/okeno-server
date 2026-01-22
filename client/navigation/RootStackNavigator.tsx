@@ -1,6 +1,6 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Pressable, Platform } from "react-native";
+import { Pressable, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
@@ -14,6 +14,8 @@ import CreatePostScreen from "@/screens/CreatePostScreen";
 import SessionsScreen from "@/screens/SessionsScreen";
 import NotificationsScreen from "@/screens/NotificationsScreen";
 import PostDetailScreen from "@/screens/PostDetailScreen";
+import { Avatar } from "@/components/Avatar";
+import { ThemedText } from "@/components/ThemedText";
 import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
@@ -22,7 +24,7 @@ import { Spacing } from "@/constants/theme";
 export type RootStackParamList = {
   Main: undefined;
   Auth: undefined;
-  Chat: { chatId: string };
+  Chat: { chatId: string; otherUserName?: string; otherUserEmoji?: string };
   Comments: { postId: string };
   Settings: undefined;
   UserProfile: { userId: string };
@@ -50,10 +52,29 @@ function CloseButton({ onPress }: { onPress: () => void }) {
   );
 }
 
+function ChatHeaderTitle({ name, emoji }: { name?: string; emoji?: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm }}>
+      <Avatar emoji={emoji || "🐸"} size={28} />
+      <ThemedText type="body" style={{ fontWeight: "600" }}>
+        {name || "Чат"}
+      </ThemedText>
+    </View>
+  );
+}
+
+function ChatHeaderRight({ emoji }: { emoji?: string }) {
+  return (
+    <View style={{ marginRight: Spacing.sm }}>
+      <Avatar emoji={emoji || "🐸"} size={28} />
+    </View>
+  );
+}
+
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const modalOptions = useModalScreenOptions();
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -72,9 +93,17 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Chat"
             component={ChatScreen}
-            options={({ navigation }) => ({
+            options={({ route, navigation }) => ({
               ...modalOptions,
-              headerTitle: "Chat",
+              headerTitle: () => (
+                <ChatHeaderTitle 
+                  name={route.params?.otherUserName} 
+                  emoji={route.params?.otherUserEmoji} 
+                />
+              ),
+              headerRight: () => (
+                <ChatHeaderRight emoji={route.params?.otherUserEmoji} />
+              ),
               gestureEnabled: false,
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
             })}
@@ -82,58 +111,65 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Comments"
             component={CommentsScreen}
-            options={{
+            options={({ navigation }) => ({
               ...modalOptions,
-              headerTitle: "Comments",
-            }}
+              headerTitle: "Комментарии",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            })}
           />
           <Stack.Screen
             name="Settings"
             component={SettingsScreen}
-            options={{
+            options={({ navigation }) => ({
               ...modalOptions,
-              headerTitle: "Settings",
-            }}
+              headerTitle: "Настройки",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            })}
           />
           <Stack.Screen
             name="UserProfile"
             component={UserProfileScreen}
-            options={{
+            options={({ navigation }) => ({
               ...modalOptions,
               headerTitle: "",
-            }}
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            })}
           />
           <Stack.Screen
             name="CreatePost"
             component={CreatePostScreen}
-            options={{
+            options={({ navigation }) => ({
               ...modalOptions,
-              headerTitle: "New Post",
-            }}
+              headerTitle: "Новая публикация",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            })}
           />
           <Stack.Screen
             name="Sessions"
             component={SessionsScreen}
-            options={{
+            options={({ navigation }) => ({
               ...modalOptions,
-              headerTitle: "Active Sessions",
-            }}
+              headerTitle: "Активные сеансы",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            })}
           />
           <Stack.Screen
             name="Notifications"
             component={NotificationsScreen}
-            options={{
+            options={({ navigation }) => ({
               ...modalOptions,
-              headerTitle: "Notifications",
-            }}
+              headerTitle: "Уведомления",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            })}
           />
           <Stack.Screen
             name="PostDetail"
             component={PostDetailScreen}
-            options={{
+            options={({ navigation }) => ({
               ...modalOptions,
               headerTitle: "",
-            }}
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            })}
           />
         </>
       ) : (

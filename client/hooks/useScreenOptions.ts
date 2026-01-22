@@ -32,8 +32,11 @@ export function useScreenOptions({
     return {
       ...baseOptions,
       headerTransparent: true,
+      headerBlurEffect: Platform.OS === "ios" 
+        ? (isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight")
+        : undefined,
       headerStyle: {
-        backgroundColor: "transparent",
+        backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundRoot,
       },
     };
   }
@@ -48,7 +51,7 @@ export function useScreenOptions({
 }
 
 export function useModalScreenOptions(): NativeStackNavigationOptions {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
 
   return {
     presentation: "modal",
@@ -59,8 +62,11 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
       fontSize: 17,
     },
     headerTransparent: true,
+    headerBlurEffect: Platform.OS === "ios"
+      ? (isDark ? "systemThinMaterialDark" : "systemThinMaterialLight")
+      : undefined,
     headerStyle: {
-      backgroundColor: "transparent",
+      backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundRoot,
     },
     contentStyle: {
       backgroundColor: theme.backgroundRoot,

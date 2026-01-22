@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -10,7 +11,6 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/query-client";
@@ -86,13 +86,14 @@ export default function ChatScreen({ route }: Props) {
   const { theme } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const flatListRef = useRef<FlatList>(null);
 
   const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ["/api/chats", chatId, "messages"],
-    refetchInterval: 3000,
+    refetchInterval: 2000,
   });
 
   const sendMutation = useMutation({
@@ -138,7 +139,7 @@ export default function ChatScreen({ route }: Props) {
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       behavior="padding"
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      keyboardVerticalOffset={headerHeight}
     >
       <FlatList
         ref={flatListRef}
@@ -148,6 +149,7 @@ export default function ChatScreen({ route }: Props) {
         inverted={messages.length > 0}
         contentContainerStyle={[
           styles.messagesList,
+          { paddingTop: Spacing.md },
           messages.length === 0 && { flex: 1 },
         ]}
         ListEmptyComponent={<EmptyChat />}
@@ -209,7 +211,7 @@ const styles = StyleSheet.create({
   },
   messagesList: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   messageBubble: {
     maxWidth: "80%",

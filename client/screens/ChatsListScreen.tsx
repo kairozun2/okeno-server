@@ -29,12 +29,14 @@ interface Chat {
   updatedAt: string;
 }
 
+interface User {
+  id: string;
+  username: string;
+  emoji: string;
+}
+
 interface ChatWithDetails extends Chat {
-  otherUser?: {
-    id: string;
-    username: string;
-    emoji: string;
-  };
+  otherUser?: User;
   lastMessage?: string;
   unreadCount?: number;
 }
@@ -130,6 +132,7 @@ export default function ChatsListScreen({ navigation }: Props) {
   const { data: chats = [] } = useQuery<Chat[]>({
     queryKey: ["/api/users", user?.id, "chats"],
     enabled: !!user?.id,
+    refetchInterval: 5000,
   });
 
   const onRefresh = useCallback(async () => {
@@ -138,12 +141,18 @@ export default function ChatsListScreen({ navigation }: Props) {
     setRefreshing(false);
   }, [queryClient, user?.id]);
 
+  const getOtherUserId = (chat: Chat) => {
+    return chat.user1Id === user?.id ? chat.user2Id : chat.user1Id;
+  };
+
   const renderItem = useCallback(
     ({ item }: { item: Chat }) => {
+      const otherUserId = getOtherUserId(item);
+      
       const chatWithDetails: ChatWithDetails = {
         ...item,
         otherUser: {
-          id: item.user1Id === user?.id ? item.user2Id : item.user1Id,
+          id: otherUserId,
           username: "Пользователь",
           emoji: "🐸",
         },
@@ -152,7 +161,11 @@ export default function ChatsListScreen({ navigation }: Props) {
       return (
         <ChatItem
           chat={chatWithDetails}
-          onPress={() => navigation.navigate("Chat", { chatId: item.id })}
+          onPress={() => navigation.navigate("Chat", { 
+            chatId: item.id,
+            otherUserName: chatWithDetails.otherUser?.username,
+            otherUserEmoji: chatWithDetails.otherUser?.emoji,
+          })}
         />
       );
     },
@@ -164,6 +177,7 @@ export default function ChatsListScreen({ navigation }: Props) {
       <FlatList
         data={chats}
         renderItem={renderItem}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={{
           paddingTop: headerHeight + Spacing.xs,
           paddingBottom: tabBarHeight + Spacing.lg,
@@ -177,6 +191,7 @@ export default function ChatsListScreen({ navigation }: Props) {
           />
         }
         ListEmptyComponent={<EmptyChats />}
+        showsVerticalScrollIndicator={false}
       />
     </ThemedView>
   );
