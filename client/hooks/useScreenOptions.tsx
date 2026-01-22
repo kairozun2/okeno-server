@@ -64,9 +64,6 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
       fontSize: 17,
     },
     headerTransparent: true,
-    headerBlurEffect: Platform.OS === "ios"
-      ? (isDark ? "systemThinMaterialDark" : "systemThinMaterialLight")
-      : undefined,
     headerStyle: {
       backgroundColor: "transparent",
     },

@@ -170,6 +170,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           style={{
             paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
             paddingTop: Spacing.sm,
+            zIndex: 10,
           }}
         >
           <View style={styles.inputWrapper}>
