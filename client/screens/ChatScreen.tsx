@@ -250,6 +250,36 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [showActionModal, setShowActionModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerTranslateY = useSharedValue(50);
+  const emojiPickerOpacity = useSharedValue(0);
+
+  const REACTION_EMOJIS = ["❤️", "👍", "🔥", "😂", "😮", "😢", "🙏"];
+
+  const openEmojiPicker = useCallback(() => {
+    setShowEmojiPicker(true);
+    emojiPickerTranslateY.value = withSpring(0);
+    emojiPickerOpacity.value = withSpring(1);
+  }, []);
+
+  const closeEmojiPicker = useCallback(() => {
+    emojiPickerTranslateY.value = withSpring(50);
+    emojiPickerOpacity.value = withSpring(0, {}, () => {
+      runOnJS(setShowEmojiPicker)(false);
+    });
+  }, []);
+
+  const handleReaction = useCallback((emoji: string) => {
+    if (!selectedMessage) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    closeEmojiPicker();
+    setShowActionModal(false);
+  }, [selectedMessage, closeEmojiPicker]);
+
+  const emojiPickerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: emojiPickerTranslateY.value }],
+    opacity: emojiPickerOpacity.value,
+  }));
   const flatListRef = useRef<FlatList>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -484,6 +514,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedMessage(msg);
     setShowActionModal(true);
+    openEmojiPicker();
   };
 
   const handleReply = (msg: Message) => {
@@ -704,6 +735,20 @@ export default function ChatScreen({ route, navigation }: Props) {
                 }
               ]}
             >
+              {showEmojiPicker && (
+                <Animated.View style={[styles.emojiPicker, emojiPickerStyle]}>
+                  {REACTION_EMOJIS.map((emoji) => (
+                    <Pressable
+                      key={emoji}
+                      onPress={() => handleReaction(emoji)}
+                      style={styles.emojiButton}
+                    >
+                      <ThemedText style={{ fontSize: 24 }}>{emoji}</ThemedText>
+                    </Pressable>
+                  ))}
+                </Animated.View>
+              )}
+
               <Pressable
                 style={[styles.actionItem, { borderBottomColor: "rgba(255,255,255,0.1)" }]}
                 onPress={() => selectedMessage && handleReply(selectedMessage)}
@@ -877,9 +922,19 @@ const styles = StyleSheet.create({
   actionSheet: {
     borderRadius: 14,
     paddingVertical: Spacing.xs,
-    width: 250,
+    width: 280,
     alignSelf: 'center',
     position: 'absolute',
+  },
+  emojiPicker: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255,255,255,0.1)",
+  },
+  emojiButton: {
+    padding: Spacing.xs,
   },
   actionItem: {
     flexDirection: "row",
