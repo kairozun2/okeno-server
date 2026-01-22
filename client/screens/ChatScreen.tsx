@@ -159,9 +159,18 @@ function MessageBubble({
             </ThemedText>
             {isOwn && (
               <Feather 
-                name={message.isRead ? "check-circle" : "check"} 
-                size={10} 
-                color="rgba(255,255,255,0.7)" 
+                name="check" 
+                size={11} 
+                color={message.isRead ? "#fff" : "rgba(255,255,255,0.5)"} 
+                style={{ marginLeft: 2 }}
+              />
+            )}
+            {isOwn && message.isRead && (
+              <Feather 
+                name="check" 
+                size={11} 
+                color="#fff" 
+                style={{ marginLeft: -6 }}
               />
             )}
           </View>
@@ -313,7 +322,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       await queryClient.cancelQueries({ queryKey: ["/api/chats", chatId, "messages"] });
       const previousMessages = queryClient.getQueryData(["/api/chats", chatId, "messages"]);
       
-      const tempId = Math.random().toString(36).substring(7);
+      const tempId = "temp-" + Date.now();
       const optimisticMessage = {
         id: tempId,
         chatId,
@@ -327,9 +336,11 @@ export default function ChatScreen({ route, navigation }: Props) {
 
       queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
         if (!oldData) return { pages: [[optimisticMessage]], pageParams: [0] };
+        const newPages = [...oldData.pages];
+        newPages[0] = [optimisticMessage, ...newPages[0]];
         return {
           ...oldData,
-          pages: [[optimisticMessage, ...oldData.pages[0]], ...oldData.pages.slice(1)],
+          pages: newPages,
         };
       });
 
@@ -484,7 +495,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
     >
         <View style={[styles.header, { top: Spacing.sm }]}>
           <Pressable
