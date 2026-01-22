@@ -117,12 +117,20 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     if (isOwner) {
       navigation.setOptions({
         headerRight: () => (
-          <Pressable
-            onPress={handleDelete}
-            style={{ marginRight: Spacing.sm }}
-          >
-            <Feather name="trash-2" size={22} color={theme.error} />
-          </Pressable>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Pressable
+              onPress={() => navigation.navigate("EditPost", { postId })}
+              style={{ marginRight: Spacing.sm, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Feather name="edit-2" size={22} color={theme.text} />
+            </Pressable>
+            <Pressable
+              onPress={handleDelete}
+              style={{ marginRight: Spacing.sm, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Feather name="trash-2" size={22} color={theme.error} />
+            </Pressable>
+          </View>
         ),
       });
     } else {
@@ -130,7 +138,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         headerRight: undefined
       });
     }
-  }, [isOwner, navigation, theme.error, handleDelete]);
+  }, [isOwner, navigation, theme.error, theme.text, handleDelete, postId]);
 
   const likeMutation = useMutation({
     mutationFn: async () => {
@@ -260,17 +268,19 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               ) : null}
             </AnimatedPressable>
 
-            <Pressable
-              onPress={() => navigation.navigate("Comments", { postId })}
-              style={styles.actionButton}
-            >
-              <Feather name="message-circle" size={24} color={theme.textSecondary} />
-              {commentsData && commentsData.count > 0 ? (
-                <ThemedText type="small" style={[styles.actionCount, { color: theme.textSecondary }]}>
-                  {commentsData.count}
-                </ThemedText>
-              ) : null}
-            </Pressable>
+            {!isOwner && (
+              <Pressable
+                onPress={() => navigation.navigate("Comments", { postId })}
+                style={styles.actionButton}
+              >
+                <Feather name="message-circle" size={24} color={theme.textSecondary} />
+                {commentsData && commentsData.count > 0 ? (
+                  <ThemedText type="small" style={[styles.actionCount, { color: theme.textSecondary }]}>
+                    {commentsData.count}
+                  </ThemedText>
+                ) : null}
+              </Pressable>
+            )}
 
             <Pressable onPress={handleShare} style={styles.actionButton}>
               <Feather name="share" size={24} color={theme.textSecondary} />
@@ -287,19 +297,20 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             </AnimatedPressable>
           </View>
 
-          {!isOwner && (
-            <Pressable
-              onPress={() => navigation.navigate("Comments", { postId })}
-              style={[styles.viewCommentsButton, { backgroundColor: theme.cardBackground }]}
-            >
-              <Feather name="message-square" size={16} color={theme.textSecondary} />
-              <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>
-                Комментарии
-              </ThemedText>
-              <View style={{ flex: 1 }} />
-              <Feather name="chevron-right" size={18} color={theme.textSecondary} />
-            </Pressable>
-          )}
+          <Pressable
+            onPress={() => navigation.navigate("Comments", { postId })}
+            style={[styles.viewCommentsButton, { backgroundColor: theme.cardBackground }]}
+          >
+            <Feather name="message-square" size={16} color={theme.textSecondary} />
+            <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>
+              Комментарии
+            </ThemedText>
+            <View style={{ flex: 1 }} />
+            <ThemedText type="small" style={{ color: theme.textSecondary, marginRight: Spacing.xs }}>
+              {commentsData?.count || 0}
+            </ThemedText>
+            <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+          </Pressable>
         </Animated.View>
       </ScrollView>
     </ThemedView>

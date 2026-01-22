@@ -19,6 +19,7 @@ import QRCodeScreen from "@/screens/QRCodeScreen";
 import UserSearchScreen from "@/screens/UserSearchScreen";
 import PrivacyPolicyScreen from "@/screens/PrivacyPolicyScreen";
 import CacheSettingsScreen from "@/screens/CacheSettingsScreen";
+import EditPostScreen from "@/screens/EditPostScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
@@ -41,6 +42,7 @@ export type RootStackParamList = {
   UserSearch: undefined;
   PrivacyPolicy: undefined;
   CacheSettings: undefined;
+  EditPost: { postId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -230,6 +232,16 @@ export default function RootStackNavigator() {
             options={({ navigation }) => ({
               ...modalOptions,
               headerTitle: "Данные и память",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
+          />
+          <Stack.Screen
+            name="EditPost"
+            component={EditPostScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: "Редактировать",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               headerShadowVisible: false,
             })}
