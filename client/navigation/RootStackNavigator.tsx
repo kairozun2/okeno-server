@@ -54,7 +54,6 @@ function CloseButton({ onPress }: { onPress: () => void }) {
 }
 
 function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; username?: string; emoji?: string; onPress: () => void }) {
-  const { isDark } = useTheme();
   return (
     <Pressable 
       onPress={onPress} 
@@ -63,7 +62,7 @@ function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; us
         alignItems: "center", 
         flex: 1, 
         justifyContent: "flex-end",
-        marginRight: Spacing.md
+        paddingRight: Spacing.sm,
       }}
     >
       <View style={{ marginRight: Spacing.sm, alignItems: "flex-end" }}>

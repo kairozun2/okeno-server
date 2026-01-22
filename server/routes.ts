@@ -378,8 +378,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chats routes
   app.get("/api/users/:id/chats", async (req, res) => {
     try {
-      const chats = await storage.getUserChats(req.params.id);
-      res.json(chats);
+      const userId = req.params.id;
+      const userChats = await storage.getUserChats(userId);
+      
+      // Fetch other user details and last message for each chat
+      const chatsWithDetails = await Promise.all(
+        userChats.map(async (chat) => {
+          const otherUserId = chat.user1Id === userId ? chat.user2Id : chat.user1Id;
+          const otherUser = await storage.getUser(otherUserId);
+          const chatMessages = await storage.getChatMessages(chat.id, 1);
+          const lastMessage = chatMessages[0]?.content || null;
+          const unreadCount = await storage.getUnreadMessagesCount(chat.id, userId);
+          
+          return {
+            ...chat,
+            otherUser: otherUser ? {
+              id: otherUser.id,
+              username: otherUser.username,
+              emoji: otherUser.emoji,
+            } : null,
+            lastMessage,
+            unreadCount,
+          };
+        })
+      );
+      
+      res.json(chatsWithDetails);
     } catch (error) {
       console.error("Get chats error:", error);
       res.status(500).json({ error: "Failed to get chats" });
