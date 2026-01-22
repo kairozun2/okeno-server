@@ -1,7 +1,8 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Pressable, View } from "react-native";
+import { Pressable, View, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 
 import MainTabNavigator from "@/navigation/MainTabNavigator";
@@ -53,8 +54,18 @@ function CloseButton({ onPress }: { onPress: () => void }) {
 }
 
 function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; username?: string; emoji?: string; onPress: () => void }) {
+  const { isDark } = useTheme();
   return (
-    <Pressable onPress={onPress} style={{ flexDirection: "row", alignItems: "center", flex: 1, justifyContent: "flex-end" }}>
+    <Pressable 
+      onPress={onPress} 
+      style={{ 
+        flexDirection: "row", 
+        alignItems: "center", 
+        flex: 1, 
+        justifyContent: "flex-end",
+        marginRight: Spacing.sm
+      }}
+    >
       <View style={{ marginRight: Spacing.sm, alignItems: "flex-end" }}>
         <ThemedText type="body" style={{ fontWeight: "600", lineHeight: 18 }}>
           {name || "Пользователь"}
@@ -73,7 +84,7 @@ function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; us
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const modalOptions = useModalScreenOptions();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -107,6 +118,14 @@ export default function RootStackNavigator() {
                 />
               ),
               headerTitleAlign: "right",
+              headerTransparent: true,
+              headerBackground: () => (
+                <BlurView
+                  intensity={80}
+                  tint={isDark ? "dark" : "light"}
+                  style={StyleSheet.absoluteFill}
+                />
+              ),
               headerRight: () => null,
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               gestureEnabled: false,

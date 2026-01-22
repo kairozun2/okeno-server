@@ -67,9 +67,14 @@ function ChatItem({
         <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
-            <ThemedText type="body" style={styles.chatName}>
-              {chat.otherUser?.username || "Пользователь"}
-            </ThemedText>
+            <View style={{ flex: 1, marginRight: Spacing.sm }}>
+              <ThemedText type="body" style={styles.chatName}>
+                {chat.otherUser?.username || "Пользователь"}
+              </ThemedText>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                @{chat.otherUser?.username || "user"}
+              </ThemedText>
+            </View>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
               {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: ru })}
             </ThemedText>
