@@ -131,12 +131,20 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Chat"
             component={ChatScreen}
-            options={{
+            options={({ route }) => ({
+              headerTitle: () => (
+                <ChatHeaderTitle
+                  name={(route.params as any).otherUserName}
+                  emoji={(route.params as any).otherUserEmoji}
+                  isVerified={(route.params as any).otherUserUsername === "admin"}
+                  onPress={() => {}}
+                />
+              ),
               headerShown: false,
               presentation: "modal",
               animation: "slide_from_bottom",
               gestureEnabled: false,
-            }}
+            })}
           />
           <Stack.Screen
             name="Comments"
