@@ -230,9 +230,7 @@ export default function ProfileScreen({ navigation }: Props) {
               >
                 <Feather name="shield" size={20} color={theme.text} />
               </Pressable>
-            ) : (
-              <View style={{ width: 40 }} />
-            )}
+            ) : null}
           </View>
           <View style={styles.headerCenter}>
             <Animated.View style={[styles.headerTitleContainer, headerTitleStyle]}>

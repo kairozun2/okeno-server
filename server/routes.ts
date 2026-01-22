@@ -30,7 +30,7 @@ export async function registerRoutes(app: express.Express) {
       
       const session = await storage.createSession({
         userId: user.id,
-        deviceName: req.headers["user-agent"] || "Unknown device",
+        deviceInfo: req.headers["user-agent"] || "Unknown device",
       });
 
       res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned }, session });
@@ -61,7 +61,7 @@ export async function registerRoutes(app: express.Express) {
       
       const session = await storage.createSession({
         userId: user.id,
-        deviceName: req.headers["user-agent"] || "Unknown device",
+        deviceInfo: req.headers["user-agent"] || "Unknown device",
       });
 
       res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned }, session });
@@ -688,8 +688,10 @@ export async function registerRoutes(app: express.Express) {
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      const isAdmin = await storage.isUserAdmin(adminId);
-      if (!isAdmin && adminId !== "36277fd7-5211-4715-9411-4401ea120d88") {
+      const user = await storage.getUser(adminId);
+      const isSuperAdmin = adminId === "36277fd7-5211-4715-9411-4401ea120d88";
+      
+      if (!isSuperAdmin && (!user || !user.isAdmin)) {
         return res.status(403).json({ error: "Admin access required" });
       }
       
