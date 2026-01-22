@@ -49,7 +49,7 @@ interface SettingRowProps {
 }
 
 function SettingRow({ item, isLast }: SettingRowProps) {
-  const { theme } = useTheme();
+  const { theme, hapticsEnabled } = useTheme();
 
   return (
     <Pressable

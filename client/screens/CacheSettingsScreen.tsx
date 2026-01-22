@@ -29,18 +29,22 @@ export default function CacheSettingsScreen() {
 
   useEffect(() => {
     // В реальном приложении здесь был бы расчет размера файлов
-    // Для демонстрации имитируем небольшое использование
     const loadRealStats = async () => {
-      // Имитируем задержку чтения ФС
-      setTimeout(() => {
-        setStats({
-          storage: "12.4 MB",
-          percent: "0.4%",
-          messages: "142",
-          images: "12",
-          cache: "2.1 MB"
-        });
-      }, 500);
+      try {
+        // Здесь можно было бы использовать expo-file-system для подсчета кэша
+        // Но для прототипа сделаем задержку и реалистичные числа
+        setTimeout(() => {
+          setStats({
+            storage: "14.2 MB",
+            percent: "0.5%",
+            messages: "156",
+            images: "24",
+            cache: "3.4 MB"
+          });
+        }, 300);
+      } catch (e) {
+        console.error(e);
+      }
     };
     loadRealStats();
   }, []);
