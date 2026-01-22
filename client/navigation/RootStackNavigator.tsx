@@ -15,6 +15,8 @@ import CreatePostScreen from "@/screens/CreatePostScreen";
 import SessionsScreen from "@/screens/SessionsScreen";
 import NotificationsScreen from "@/screens/NotificationsScreen";
 import PostDetailScreen from "@/screens/PostDetailScreen";
+import QRCodeScreen from "@/screens/QRCodeScreen";
+import UserSearchScreen from "@/screens/UserSearchScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
@@ -33,6 +35,8 @@ export type RootStackParamList = {
   Sessions: undefined;
   Notifications: undefined;
   PostDetail: { postId: string };
+  QRCode: undefined;
+  UserSearch: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -187,6 +191,24 @@ export default function RootStackNavigator() {
               headerTitle: "",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
             })}
+          />
+          <Stack.Screen
+            name="QRCode"
+            component={QRCodeScreen}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
+          <Stack.Screen
+            name="UserSearch"
+            component={UserSearchScreen}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
           />
         </>
       ) : (

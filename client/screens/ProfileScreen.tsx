@@ -217,6 +217,12 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
           <View style={styles.headerRight}>
             <Pressable
+              onPress={() => navigation.navigate("QRCode")}
+              style={styles.headerIconButton}
+            >
+              <Feather name="grid" size={20} color={theme.text} />
+            </Pressable>
+            <Pressable
               onPress={() => navigation.navigate("Settings")}
               style={styles.headerIconButton}
             >
@@ -280,8 +286,9 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   headerRight: {
-    width: 40,
-    alignItems: "flex-end",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
   },
   headerTitleContainer: {
     position: "absolute",

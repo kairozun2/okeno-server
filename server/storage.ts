@@ -39,6 +39,7 @@ export interface IStorage {
   getUserByIdAndPin(id: string, pin: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserLastSeen(id: string): Promise<void>;
+  searchUsers(query: string): Promise<User[]>;
   
   // Posts
   getPost(id: string): Promise<Post | undefined>;
@@ -126,6 +127,13 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserLastSeen(id: string): Promise<void> {
     await db.update(users).set({ lastSeen: new Date() }).where(eq(users.id, id));
+  }
+
+  async searchUsers(query: string): Promise<User[]> {
+    const searchQuery = `%${query.toLowerCase()}%`;
+    return db.select().from(users).where(
+      sql`LOWER(${users.username}) LIKE ${searchQuery}`
+    ).limit(20);
   }
 
   // Posts

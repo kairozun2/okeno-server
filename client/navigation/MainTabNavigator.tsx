@@ -56,6 +56,23 @@ function CreatePostButton({ iconOnly = false }: { iconOnly?: boolean }) {
   );
 }
 
+function SearchButton() {
+  const { theme } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        navigation.navigate("UserSearch");
+      }}
+      style={styles.headerButton}
+    >
+      <Feather name="search" size={20} color={theme.text} />
+    </Pressable>
+  );
+}
+
 function NotificationsButton() {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -172,7 +189,12 @@ export default function MainTabNavigator() {
                 ) : null}
               </View>
             ),
-            headerRight: () => <NotificationsButton />,
+            headerRight: () => (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <SearchButton />
+                <NotificationsButton />
+              </View>
+            ),
             tabBarIcon: ({ color }) => (
               <Feather name="home" size={22} color={color} />
             ),
