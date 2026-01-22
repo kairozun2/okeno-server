@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
 import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert, TextInput } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -68,6 +68,7 @@ function PostCard({
   navigation,
   onBlock,
   onReport,
+  t,
 }: {
   post: PostWithUser;
   onLike: () => void;
@@ -78,8 +79,9 @@ function PostCard({
   navigation: any;
   onBlock: () => void;
   onReport: () => void;
+  t: (en: string, ru: string) => string;
 }) {
-  const { theme } = useTheme();
+  const { theme, language } = useTheme();
   const likeScale = useSharedValue(1);
   const saveScale = useSharedValue(1);
 
@@ -131,15 +133,15 @@ function PostCard({
     
     if (diffInHours < 1) {
       const diffInMins = Math.floor(diffInHours * 60);
-      return `${diffInMins}m`;
+      return `${diffInMins}${t("m", "м")}`;
     } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h`;
+      return `${Math.floor(diffInHours)}${t("h", "ч")}`;
     } else {
       const diffInDays = Math.floor(diffInHours / 24);
-      if (diffInDays < 7) return `${diffInDays}d`;
-      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      if (diffInDays < 7) return `${diffInDays}${t("d", "д")}`;
+      return date.toLocaleDateString(language === "ru" ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'short' });
     }
-  }, [post.createdAt]);
+  }, [post.createdAt, language]);
 
   const [showActions, setShowActions] = useState(false);
 
@@ -196,7 +198,7 @@ function PostCard({
               }}
             >
               <Feather name="flag" size={20} color={theme.error} />
-              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Report</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>{t("Report", "Пожаловаться")}</ThemedText>
             </Pressable>
 
             <Pressable 
@@ -207,7 +209,7 @@ function PostCard({
               }}
             >
               <Feather name="slash" size={20} color={theme.error} />
-              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Block</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>{t("Block", "Заблокировать")}</ThemedText>
             </Pressable>
 
             <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
@@ -216,7 +218,7 @@ function PostCard({
               style={[styles.actionSheetItem, { marginTop: Spacing.xs }]}
               onPress={() => setShowActions(false)}
             >
-              <ThemedText style={{ width: "100%", textAlign: "center", color: theme.textSecondary }}>Cancel</ThemedText>
+              <ThemedText style={{ width: "100%", textAlign: "center", color: theme.textSecondary }}>{t("Cancel", "Отмена")}</ThemedText>
             </Pressable>
           </ThemedView>
         </Pressable>
@@ -276,20 +278,20 @@ function PostCard({
   );
 }
 
-function EmptyFeed() {
+function EmptyFeed({ t }: { t: (en: string, ru: string) => string }) {
   const { theme } = useTheme();
 
   return (
     <View style={styles.emptyContainer}>
       <Feather name="camera" size={40} color={theme.textSecondary} />
       <ThemedText type="h3" style={styles.emptyTitle}>
-        No posts yet
+        {t("No posts yet", "Постов пока нет")}
       </ThemedText>
       <ThemedText
         type="body"
         style={[styles.emptyText, { color: theme.textSecondary }]}
       >
-        Be the first to share a moment!
+        {t("Be the first to share a moment!", "Станьте первым, кто поделится моментом!")}
       </ThemedText>
     </View>
   );
@@ -301,13 +303,21 @@ type Props = CompositeScreenProps<
 >;
 
 export default function FeedScreen({ navigation }: Props) {
-  const { theme } = useTheme();
+  const { theme, language } = useTheme();
   const { user: currentUser } = useAuth();
-  const headerHeight = useHeaderHeight();
+  const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: t("Moments", "Моменты"),
+    });
+  }, [navigation, language]);
   const [mapModalVisible, setMapModalVisible] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number, lng: number, name: string } | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -335,7 +345,7 @@ export default function FeedScreen({ navigation }: Props) {
     },
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Report sent", "We will review your report within 24 hours.");
+      Alert.alert(t("Report sent", "Жалоба отправлена"), t("We will review your report within 24 hours.", "Мы рассмотрим вашу жалобу в течение 24 часов."));
       setShowReportModal(false);
       setReportReason("");
       setReportCategory(null);
@@ -352,14 +362,14 @@ export default function FeedScreen({ navigation }: Props) {
     },
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("User blocked", "You will no longer see content from this user.");
+      Alert.alert(t("User blocked", "Пользователь заблокирован"), t("You will no longer see content from this user.", "Вы больше не увидите контент от этого пользователя."));
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     },
   });
 
   const handleReport = () => {
     if (!reportCategory) {
-      Alert.alert("Error", "Please select a report category");
+      Alert.alert(t("Error", "Ошибка"), t("Please select a report category", "Выберите категорию жалобы"));
       return;
     }
     reportMutation.mutate();
@@ -411,13 +421,14 @@ export default function FeedScreen({ navigation }: Props) {
         onSave={() => saveMutation.mutate({ postId: item.id, isSaved: item.isSaved })}
         onComment={() => navigation.navigate("Comments", { postId: item.id })}
         onUserPress={() => navigation.navigate("UserProfile", { userId: item.userId })}
+        t={t}
         onBlock={() => {
           Alert.alert(
-            "Block user?",
-            "You will no longer see content from this user.",
+            t("Block user?", "Заблокировать?"),
+            t("You will no longer see content from this user.", "Вы больше не увидите контент от этого пользователя."),
             [
-              { text: "Cancel", style: "cancel" },
-              { text: "Block", style: "destructive", onPress: () => blockMutation.mutate(item.userId) }
+              { text: t("Cancel", "Отмена"), style: "cancel" },
+              { text: t("Block", "Блок"), style: "destructive", onPress: () => blockMutation.mutate(item.userId) }
             ]
           );
         }}
@@ -455,7 +466,7 @@ export default function FeedScreen({ navigation }: Props) {
         >
           <ThemedView style={[styles.actionSheetContainer, { borderRadius: BorderRadius.xl, paddingBottom: Spacing.xl }]}>
             <View style={[styles.modalHeader, { paddingTop: Spacing.sm }]}>
-              <ThemedText type="h4">Report</ThemedText>
+              <ThemedText type="h4">{t("Report", "Пожаловаться")}</ThemedText>
               <Pressable onPress={() => setShowReportModal(false)} style={styles.closeButton}>
                 <Feather name="x" size={24} color={theme.text} />
               </Pressable>
@@ -463,7 +474,7 @@ export default function FeedScreen({ navigation }: Props) {
 
             <View style={{ padding: Spacing.md }}>
               <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.md }}>
-                Select a report category:
+                {t("Select a report category:", "Выберите категорию жалобы:")}
               </ThemedText>
 
               <View style={styles.categoriesGrid}>
@@ -486,7 +497,7 @@ export default function FeedScreen({ navigation }: Props) {
                         fontWeight: reportCategory === cat.id ? "600" : "400",
                       }}
                     >
-                      {cat.label}
+                      {t(cat.label, cat.id === "spam" ? "Спам" : cat.id === "harassment" ? "Преследование" : cat.id === "sexual" ? "Сексуальный контент" : cat.id === "violence" ? "Насилие" : "Другое")}
                     </ThemedText>
                   </Pressable>
                 ))}
@@ -495,7 +506,7 @@ export default function FeedScreen({ navigation }: Props) {
               <TextInput
                 value={reportReason}
                 onChangeText={setReportReason}
-                placeholder="Additional details (optional)..."
+                placeholder={t("Additional details (optional)...", "Дополнительные детали (необязательно)...")}
                 placeholderTextColor={theme.textSecondary}
                 style={[
                   styles.reportInput,
@@ -515,7 +526,7 @@ export default function FeedScreen({ navigation }: Props) {
                 disabled={reportMutation.isPending}
               >
                 <ThemedText style={{ color: "white", fontWeight: "600" }}>
-                  {reportMutation.isPending ? "Sending..." : "Send"}
+                  {reportMutation.isPending ? t("Sending...", "Отправка...") : t("Send", "Отправить")}
                 </ThemedText>
               </Pressable>
             </View>
@@ -533,7 +544,7 @@ export default function FeedScreen({ navigation }: Props) {
         }}
         onRefresh={onRefresh}
         refreshing={refreshing}
-        ListEmptyComponent={!isLoading ? <EmptyFeed /> : null}
+        ListEmptyComponent={!isLoading ? <EmptyFeed t={t} /> : null}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
       />
 

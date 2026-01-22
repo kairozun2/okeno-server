@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -46,10 +46,12 @@ type Props = NativeStackScreenProps<RootStackParamList, "PostDetail">;
 
 export default function PostDetailScreen({ route, navigation }: Props) {
   const { postId } = route.params;
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, language } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const likeScale = useSharedValue(1);
   const saveScale = useSharedValue(1);
@@ -99,7 +101,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "archived"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigation.navigate("MainTabs", { screen: "Home" } as never);
+      navigation.navigate("MainTabs" as never, { screen: "Home" } as never);
     },
   });
 
@@ -114,27 +116,28 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       navigation.goBack();
     },
     onError: () => {
-      Alert.alert("Error", "Failed to delete post");
+      Alert.alert(t("Error", "Ошибка"), t("Failed to delete post", "Не удалось удалить пост"));
     },
   });
 
   const handleDelete = useCallback(() => {
     Alert.alert(
-      "Delete post?",
-      "This action cannot be undone.",
+      t("Delete post?", "Удалить пост?"),
+      t("This action cannot be undone.", "Это действие нельзя отменить."),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("Cancel", "Отмена"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("Delete", "Удалить"),
           style: "destructive",
           onPress: () => deletePostMutation.mutate(),
         },
       ]
     );
-  }, [deletePostMutation]);
+  }, [deletePostMutation, language]);
 
   useEffect(() => {
     navigation.setOptions({
+      headerTitle: t("Post", "Пост"),
       headerRight: () => {
         if (!isOwner) return null;
         
@@ -197,7 +200,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         );
       },
     });
-  }, [navigation, isOwner, theme, handleDelete, postId, isArchived, unarchiveMutation]);
+  }, [navigation, isOwner, theme, handleDelete, postId, isArchived, unarchiveMutation, language]);
 
   const likeMutation = useMutation({
     mutationFn: async () => {
@@ -253,7 +256,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out this post!`,
+        message: t("Check out this post!", "Посмотрите этот пост!"),
       });
     } catch (error) {
       console.error("Share error:", error);
@@ -268,21 +271,21 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     
     if (diffInHours < 1) {
       const diffInMins = Math.floor(diffInHours * 60);
-      return `${diffInMins}m`;
+      return `${diffInMins}${t("m", "м")}`;
     } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h`;
+      return `${Math.floor(diffInHours)}${t("h", "ч")}`;
     } else {
       const diffInDays = Math.floor(diffInHours / 24);
-      if (diffInDays < 7) return `${diffInDays}d`;
-      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      if (diffInDays < 7) return `${diffInDays}${t("d", "д")}`;
+      return date.toLocaleDateString(language === "ru" ? 'ru-RU' : 'en-US', { day: 'numeric', month: 'short' });
     }
-  }, [post?.createdAt]);
+  }, [post?.createdAt, language]);
 
   if (!post) {
     return (
       <ThemedView style={[styles.container, styles.loadingContainer]}>
         <ThemedText type="body" style={{ color: theme.textSecondary }}>
-          Loading...
+          {t("Loading...", "Загрузка...")}
         </ThemedText>
       </ThemedView>
     );
@@ -311,7 +314,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
                 <View style={styles.userInfo}>
                   <ThemedText type="body" style={styles.username} truncate maxLength={15}>
-                    {postUser?.username || "User"}
+                    {postUser?.username || t("User", "Пользователь")}
                   </ThemedText>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                     {formattedDate}
@@ -323,7 +326,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             <View style={styles.archiveNotice}>
               <Feather name="archive" size={20} color={theme.textSecondary} />
               <ThemedText type="body" style={{ marginLeft: Spacing.sm, color: theme.textSecondary }}>
-                This post is archived
+                {t("This post is archived", "Этот пост в архиве")}
               </ThemedText>
             </View>
           </Animated.View>
@@ -357,7 +360,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
               <View style={styles.userInfo}>
                 <ThemedText type="body" style={styles.username} truncate maxLength={15}>
-                  {postUser?.username || "User"}
+                  {postUser?.username || t("User", "Пользователь")}
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                   {formattedDate}
@@ -424,7 +427,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           >
             <Feather name="message-square" size={16} color={theme.textSecondary} />
             <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>
-              Comments
+              {t("Comments", "Комментарии")}
             </ThemedText>
             <View style={{ flex: 1 }} />
             <ThemedText type="small" style={{ color: theme.textSecondary, marginRight: Spacing.xs }}>

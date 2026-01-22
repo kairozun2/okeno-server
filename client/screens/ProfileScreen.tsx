@@ -75,7 +75,7 @@ type Props = CompositeScreenProps<
 >;
 
 export default function ProfileScreen({ navigation }: Props) {
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, language } = useTheme();
   const { user } = useAuth();
   const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
@@ -83,6 +83,8 @@ export default function ProfileScreen({ navigation }: Props) {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
   const scrollY = useSharedValue(0);
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const { data: posts = [] } = useQuery<Post[]>({
     queryKey: ["/api/users", user?.id, "posts"],
@@ -195,12 +197,12 @@ export default function ProfileScreen({ navigation }: Props) {
         <View style={styles.stat}>
           <ThemedText type="h4">{posts.length}</ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            posts
+            {t("posts", "посты")}
           </ThemedText>
         </View>
       </View>
     </View>
-  ), [user, posts.length, theme, mainAvatarStyle]);
+  ), [user, posts.length, theme, mainAvatarStyle, language]);
 
   return (
     <ThemedView style={styles.container}>
@@ -212,7 +214,7 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
           <View style={styles.headerCenter}>
             <Animated.View style={[styles.headerTitleContainer, headerTitleStyle]}>
-              <ThemedText style={styles.headerTitleText}>Profile</ThemedText>
+              <ThemedText style={styles.headerTitleText}>{t("Profile", "Профиль")}</ThemedText>
             </Animated.View>
             <Animated.View style={[styles.headerEmojiContainer, emojiStyle]}>
               <ThemedText style={styles.headerEmojiText}>{user?.emoji || "🐸"}</ThemedText>
@@ -254,7 +256,14 @@ export default function ProfileScreen({ navigation }: Props) {
           />
         }
         ListHeaderComponent={headerComponent}
-        ListEmptyComponent={<EmptyPosts />}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Feather name="image" size={36} color={theme.textSecondary} />
+            <ThemedText type="body" style={[styles.emptyText, { color: theme.textSecondary }]}>
+              {t("No posts yet", "Постов пока нет")}
+            </ThemedText>
+          </View>
+        }
         showsVerticalScrollIndicator={false}
       />
     </ThemedView>

@@ -141,11 +141,13 @@ function EmptyNotifications() {
 type Props = NativeStackScreenProps<RootStackParamList, "Notifications">;
 
 export default function NotificationsScreen({ navigation }: Props) {
-  const { theme } = useTheme();
+  const { theme, language } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/users", user?.id, "notifications"],
@@ -192,7 +194,7 @@ export default function NotificationsScreen({ navigation }: Props) {
         onPress={() => handleNotificationPress(item)}
       />
     ),
-    [navigation]
+    [navigation, language]
   );
 
   return (
@@ -201,7 +203,7 @@ export default function NotificationsScreen({ navigation }: Props) {
         <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
           <Feather name="x" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3">Notifications</ThemedText>
+        <ThemedText type="h3">{t("Notifications", "Уведомления")}</ThemedText>
         <View style={{ width: 24 }} />
       </View>
       {unreadCount > 0 ? (
@@ -209,7 +211,7 @@ export default function NotificationsScreen({ navigation }: Props) {
           onPress={() => markAllReadMutation.mutate()}
           style={[styles.markAllButton, { backgroundColor: theme.backgroundSecondary }]}
         >
-          <ThemedText type="link">Mark all as read</ThemedText>
+          <ThemedText type="link">{t("Mark all as read", "Прочитать все")}</ThemedText>
         </Pressable>
       ) : null}
       <FlatList
@@ -220,7 +222,20 @@ export default function NotificationsScreen({ navigation }: Props) {
           paddingTop: Spacing.sm,
           paddingBottom: insets.bottom + Spacing.xl,
         }}
-        ListEmptyComponent={<EmptyNotifications />}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Feather name="bell-off" size={64} color={theme.textSecondary} />
+            <ThemedText type="h3" style={styles.emptyTitle}>
+              {t("No Notifications", "Нет уведомлений")}
+            </ThemedText>
+            <ThemedText
+              type="body"
+              style={[styles.emptyText, { color: theme.textSecondary }]}
+            >
+              {t("You're all caught up!", "У вас нет новых уведомлений!")}
+            </ThemedText>
+          </View>
+        }
       />
     </ThemedView>
   );
