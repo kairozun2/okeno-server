@@ -1,0 +1,265 @@
+import React, { useCallback } from "react";
+import { View, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
+import { Feather } from "@expo/vector-icons";
+import Animated, { FadeIn } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { Button } from "@/components/Button";
+import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiRequest } from "@/lib/query-client";
+import { Spacing, BorderRadius } from "@/constants/theme";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+
+interface Session {
+  id: string;
+  userId: string;
+  deviceInfo: string | null;
+  createdAt: string;
+  lastActive: string;
+}
+
+function SessionItem({
+  session,
+  isCurrentSession,
+  onTerminate,
+}: {
+  session: Session;
+  isCurrentSession: boolean;
+  onTerminate: () => void;
+}) {
+  const { theme } = useTheme();
+
+  const getDeviceIcon = (deviceInfo: string | null): keyof typeof Feather.glyphMap => {
+    if (!deviceInfo) return "smartphone";
+    const lower = deviceInfo.toLowerCase();
+    if (lower.includes("iphone") || lower.includes("ipad")) return "smartphone";
+    if (lower.includes("android")) return "smartphone";
+    if (lower.includes("mac") || lower.includes("windows")) return "monitor";
+    return "smartphone";
+  };
+
+  return (
+    <Animated.View
+      entering={FadeIn}
+      style={[styles.sessionItem, { backgroundColor: theme.cardBackground }]}
+    >
+      <View
+        style={[styles.deviceIcon, { backgroundColor: theme.backgroundSecondary }]}
+      >
+        <Feather
+          name={getDeviceIcon(session.deviceInfo)}
+          size={24}
+          color={isCurrentSession ? theme.link : theme.text}
+        />
+      </View>
+      <View style={styles.sessionInfo}>
+        <View style={styles.sessionHeader}>
+          <ThemedText type="body" style={styles.deviceName}>
+            {session.deviceInfo || "Unknown Device"}
+          </ThemedText>
+          {isCurrentSession ? (
+            <View style={[styles.currentBadge, { backgroundColor: theme.success }]}>
+              <ThemedText type="caption" style={{ color: "#fff", fontWeight: "600" }}>
+                Current
+              </ThemedText>
+            </View>
+          ) : null}
+        </View>
+        <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          Active {formatDistanceToNow(new Date(session.lastActive), { addSuffix: true })}
+        </ThemedText>
+      </View>
+      {!isCurrentSession ? (
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            onTerminate();
+          }}
+          style={styles.terminateButton}
+        >
+          <Feather name="x" size={20} color={theme.error} />
+        </Pressable>
+      ) : null}
+    </Animated.View>
+  );
+}
+
+type Props = NativeStackScreenProps<RootStackParamList, "Sessions">;
+
+export default function SessionsScreen({ navigation }: Props) {
+  const { theme } = useTheme();
+  const { user, sessionId } = useAuth();
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const queryClient = useQueryClient();
+
+  const { data: sessions = [] } = useQuery<Session[]>({
+    queryKey: ["/api/users", user?.id, "sessions"],
+    enabled: !!user?.id,
+  });
+
+  const terminateSessionMutation = useMutation({
+    mutationFn: async (sessionIdToTerminate: string) => {
+      await apiRequest("DELETE", `/api/sessions/${sessionIdToTerminate}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "sessions"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+  });
+
+  const terminateAllMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/users/${user?.id}/sessions`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "sessions"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+  });
+
+  const handleTerminateSession = (session: Session) => {
+    Alert.alert(
+      "Terminate Session",
+      "Are you sure you want to terminate this session?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Terminate",
+          style: "destructive",
+          onPress: () => terminateSessionMutation.mutate(session.id),
+        },
+      ]
+    );
+  };
+
+  const handleTerminateAll = () => {
+    Alert.alert(
+      "Terminate All Sessions",
+      "This will sign you out from all devices except this one.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Terminate All",
+          style: "destructive",
+          onPress: () => terminateAllMutation.mutate(),
+        },
+      ]
+    );
+  };
+
+  const otherSessions = sessions.filter((s) => s.id !== sessionId);
+
+  return (
+    <ThemedView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: headerHeight + Spacing.lg,
+          paddingBottom: insets.bottom + Spacing.xl,
+          paddingHorizontal: Spacing.lg,
+        }}
+      >
+        <ThemedText
+          type="caption"
+          style={[styles.sectionTitle, { color: theme.textSecondary }]}
+        >
+          CURRENT SESSION
+        </ThemedText>
+        {sessions
+          .filter((s) => s.id === sessionId)
+          .map((session) => (
+            <SessionItem
+              key={session.id}
+              session={session}
+              isCurrentSession={true}
+              onTerminate={() => {}}
+            />
+          ))}
+
+        {otherSessions.length > 0 ? (
+          <>
+            <ThemedText
+              type="caption"
+              style={[styles.sectionTitle, { color: theme.textSecondary, marginTop: Spacing.xl }]}
+            >
+              OTHER SESSIONS
+            </ThemedText>
+            {otherSessions.map((session) => (
+              <SessionItem
+                key={session.id}
+                session={session}
+                isCurrentSession={false}
+                onTerminate={() => handleTerminateSession(session)}
+              />
+            ))}
+
+            <Button
+              onPress={handleTerminateAll}
+              style={[styles.terminateAllButton, { backgroundColor: theme.error }]}
+            >
+              Terminate All Other Sessions
+            </Button>
+          </>
+        ) : null}
+      </ScrollView>
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  sectionTitle: {
+    marginBottom: Spacing.sm,
+    marginLeft: Spacing.sm,
+    fontWeight: "500",
+    letterSpacing: 0.5,
+  },
+  sessionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.sm,
+  },
+  deviceIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sessionInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  sessionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  deviceName: {
+    fontWeight: "500",
+  },
+  currentBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
+  },
+  terminateButton: {
+    padding: Spacing.sm,
+  },
+  terminateAllButton: {
+    marginTop: Spacing.xl,
+  },
+});
