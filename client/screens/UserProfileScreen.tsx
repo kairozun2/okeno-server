@@ -48,11 +48,11 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: profileUser } = useQuery<User>({
+  const { data: profileUser, isLoading: isUserLoading } = useQuery<User>({
     queryKey: ["/api/users", userId],
   });
 
-  const { data: posts = [] } = useQuery<Post[]>({
+  const { data: posts = [], isLoading: isPostsLoading } = useQuery<Post[]>({
     queryKey: ["/api/users", userId, "posts"],
   });
 
@@ -65,7 +65,12 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       return response.json();
     },
     onSuccess: (chat) => {
-      navigation.navigate("Chat", { chatId: chat.id });
+      navigation.navigate("Chat", { 
+        chatId: chat.id,
+        otherUserId: profileUser?.id,
+        otherUserName: profileUser?.username,
+        otherUserEmoji: profileUser?.emoji,
+      });
     },
   });
 
@@ -108,37 +113,48 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     );
   };
 
-  const renderHeader = () => (
-    <Animated.View entering={FadeIn} style={styles.header}>
-      <Avatar emoji={profileUser?.emoji || "🐸"} size={72} />
-      <ThemedText type="h3" style={styles.username}>
-        {profileUser?.username}
-      </ThemedText>
-
-      <View style={styles.stats}>
-        <View style={styles.stat}>
-          <ThemedText type="h4">{posts.length}</ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            публикаций
-          </ThemedText>
+  const renderHeader = () => {
+    if (isUserLoading && !profileUser) {
+      return (
+        <View style={[styles.header, { opacity: 0.5 }]}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: theme.backgroundSecondary }} />
+          <View style={{ width: 120, height: 20, marginTop: Spacing.sm, backgroundColor: theme.backgroundSecondary, borderRadius: 4 }} />
         </View>
-      </View>
+      );
+    }
 
-      {currentUser?.id !== userId ? (
-        <View style={styles.actions}>
-          <Button onPress={handleMessage} style={styles.messageButton}>
-            Написать
-          </Button>
-          <Pressable
-            onPress={handleHide}
-            style={[styles.hideButton, { backgroundColor: theme.cardBackground }]}
-          >
-            <Feather name="eye-off" size={18} color={theme.textSecondary} />
-          </Pressable>
+    return (
+      <Animated.View entering={FadeIn} style={styles.header}>
+        <Avatar emoji={profileUser?.emoji || "🐸"} size={72} />
+        <ThemedText type="h3" style={styles.username}>
+          {profileUser?.username}
+        </ThemedText>
+
+        <View style={styles.stats}>
+          <View style={styles.stat}>
+            <ThemedText type="h4">{posts.length}</ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              публикаций
+            </ThemedText>
+          </View>
         </View>
-      ) : null}
-    </Animated.View>
-  );
+
+        {currentUser?.id !== userId ? (
+          <View style={styles.actions}>
+            <Button onPress={handleMessage} style={styles.messageButton}>
+              Написать
+            </Button>
+            <Pressable
+              onPress={handleHide}
+              style={[styles.hideButton, { backgroundColor: theme.cardBackground }]}
+            >
+              <Feather name="eye-off" size={18} color={theme.textSecondary} />
+            </Pressable>
+          </View>
+        ) : null}
+      </Animated.View>
+    );
+  };
 
   const renderItem = useCallback(
     ({ item, index }: { item: Post; index: number }) => {
@@ -186,12 +202,14 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         }
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Feather name="image" size={36} color={theme.textSecondary} />
-            <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-              Пока нет публикаций
-            </ThemedText>
-          </View>
+          !isPostsLoading ? (
+            <View style={styles.emptyContainer}>
+              <Feather name="image" size={36} color={theme.textSecondary} />
+              <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+                Пока нет публикаций
+              </ThemedText>
+            </View>
+          ) : null
         }
         showsVerticalScrollIndicator={false}
       />

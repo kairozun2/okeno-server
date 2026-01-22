@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList } from "react-native";
+import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList, Modal } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import MapView, { Marker } from "react-native-maps";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -29,22 +30,26 @@ import type { CompositeScreenProps } from "@react-navigation/native";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { MainTabParamList } from "@/navigation/MainTabNavigator";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface Post {
   id: string;
   userId: string;
   imageUrl: string;
   location: string | null;
+  latitude: string | null;
+  longitude: string | null;
   createdAt: string;
 }
 
+interface User {
+  id: string;
+  username: string;
+  emoji: string;
+}
+
 interface PostWithUser extends Post {
-  user?: {
-    id: string;
-    username: string;
-    emoji: string;
-  };
+  user?: User;
   likesCount: number;
   commentsCount: number;
   isLiked: boolean;
@@ -59,12 +64,14 @@ function PostCard({
   onSave,
   onComment,
   onUserPress,
+  onLocationPress,
 }: {
   post: PostWithUser;
   onLike: () => void;
   onSave: () => void;
   onComment: () => void;
   onUserPress: () => void;
+  onLocationPress: () => void;
 }) {
   const { theme } = useTheme();
   const likeScale = useSharedValue(1);
@@ -94,21 +101,25 @@ function PostCard({
     onSave();
   };
 
+  const truncatedLocation = post.location && post.location.length > 20 
+    ? post.location.substring(0, 20) + "..." 
+    : post.location;
+
   return (
     <Animated.View entering={FadeIn.delay(50)} style={styles.postCard}>
       <Pressable onPress={onUserPress} style={styles.postHeader}>
         <Avatar emoji={post.user?.emoji || "🐸"} size={32} />
         <View style={styles.postHeaderInfo}>
           <ThemedText type="small" style={styles.username}>
-            {post.user?.username || "User"}
+            {post.user?.username || "..."}
           </ThemedText>
           {post.location ? (
-            <View style={styles.locationRow}>
+            <Pressable onPress={onLocationPress} style={styles.locationRow}>
               <Feather name="map-pin" size={10} color={theme.textSecondary} />
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 2 }}>
-                {post.location}
+                {truncatedLocation}
               </ThemedText>
-            </View>
+            </Pressable>
           ) : null}
         </View>
         <ThemedText type="caption" style={{ color: theme.textSecondary }}>
@@ -186,23 +197,25 @@ type Props = CompositeScreenProps<
 
 export default function FeedScreen({ navigation }: Props) {
   const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user: currentUser } = useAuth();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const [mapModalVisible, setMapModalVisible] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number, lng: number, name: string } | null>(null);
 
-  const { data: posts = [] } = useQuery<Post[]>({
+  const { data: posts = [], isLoading } = useQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
   });
 
   const likeMutation = useMutation({
     mutationFn: async ({ postId, isLiked }: { postId: string; isLiked: boolean }) => {
       if (isLiked) {
-        await apiRequest("DELETE", "/api/likes", { userId: user?.id, postId });
+        await apiRequest("DELETE", "/api/likes", { userId: currentUser?.id, postId });
       } else {
-        await apiRequest("POST", "/api/likes", { userId: user?.id, postId });
+        await apiRequest("POST", "/api/likes", { userId: currentUser?.id, postId });
       }
     },
     onSuccess: () => {
@@ -213,9 +226,9 @@ export default function FeedScreen({ navigation }: Props) {
   const saveMutation = useMutation({
     mutationFn: async ({ postId, isSaved }: { postId: string; isSaved: boolean }) => {
       if (isSaved) {
-        await apiRequest("DELETE", "/api/saves", { userId: user?.id, postId });
+        await apiRequest("DELETE", "/api/saves", { userId: currentUser?.id, postId });
       } else {
-        await apiRequest("POST", "/api/saves", { userId: user?.id, postId });
+        await apiRequest("POST", "/api/saves", { userId: currentUser?.id, postId });
       }
     },
     onSuccess: () => {
@@ -230,26 +243,26 @@ export default function FeedScreen({ navigation }: Props) {
   }, [queryClient]);
 
   const renderItem = useCallback(
-    ({ item }: { item: Post }) => {
-      const postWithMeta: PostWithUser = {
-        ...item,
-        likesCount: 0,
-        commentsCount: 0,
-        isLiked: false,
-        isSaved: false,
-      };
-
-      return (
-        <PostCard
-          post={postWithMeta}
-          onLike={() => likeMutation.mutate({ postId: item.id, isLiked: postWithMeta.isLiked })}
-          onSave={() => saveMutation.mutate({ postId: item.id, isSaved: postWithMeta.isSaved })}
-          onComment={() => navigation.navigate("Comments", { postId: item.id })}
-          onUserPress={() => navigation.navigate("UserProfile", { userId: item.userId })}
-        />
-      );
-    },
-    [user, navigation, likeMutation, saveMutation]
+    ({ item }: { item: PostWithUser }) => (
+      <PostCard
+        post={item}
+        onLike={() => likeMutation.mutate({ postId: item.id, isLiked: item.isLiked })}
+        onSave={() => saveMutation.mutate({ postId: item.id, isSaved: item.isSaved })}
+        onComment={() => navigation.navigate("Comments", { postId: item.id })}
+        onUserPress={() => navigation.navigate("UserProfile", { userId: item.userId })}
+        onLocationPress={() => {
+          if (item.latitude && item.longitude) {
+            setSelectedLocation({
+              lat: parseFloat(item.latitude),
+              lng: parseFloat(item.longitude),
+              name: item.location || ""
+            });
+            setMapModalVisible(true);
+          }
+        }}
+      />
+    ),
+    [currentUser, navigation, likeMutation, saveMutation]
   );
 
   return (
@@ -269,9 +282,44 @@ export default function FeedScreen({ navigation }: Props) {
             tintColor={theme.textSecondary}
           />
         }
-        ListEmptyComponent={<EmptyFeed />}
+        ListEmptyComponent={!isLoading ? <EmptyFeed /> : null}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
       />
+
+      <Modal
+        visible={mapModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setMapModalVisible(false)}
+      >
+        <ThemedView style={{ flex: 1 }}>
+          <View style={[styles.modalHeader, { paddingTop: Spacing.md }]}>
+            <ThemedText type="h4">{selectedLocation?.name}</ThemedText>
+            <Pressable onPress={() => setMapModalVisible(false)} style={styles.closeButton}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+          </View>
+          {selectedLocation && (
+            <MapView
+              style={{ flex: 1 }}
+              initialRegion={{
+                latitude: selectedLocation.lat,
+                longitude: selectedLocation.lng,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+            >
+              <Marker
+                coordinate={{
+                  latitude: selectedLocation.lat,
+                  longitude: selectedLocation.lng,
+                }}
+                title={selectedLocation.name}
+              />
+            </MapView>
+          )}
+        </ThemedView>
+      </Modal>
     </ThemedView>
   );
 }
@@ -337,5 +385,15 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: "center",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  closeButton: {
+    padding: Spacing.sm,
   },
 });

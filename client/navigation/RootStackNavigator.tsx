@@ -115,7 +115,7 @@ export default function RootStackNavigator() {
                 />
               ),
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
-              gestureEnabled: true,
+              gestureEnabled: false, // Disable swipe-to-close as requested
             })}
           />
           <Stack.Screen

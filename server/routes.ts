@@ -131,7 +131,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       const posts = await storage.getPosts(limit, offset);
-      res.json(posts);
+      
+      const postsWithUser = await Promise.all(posts.map(async (post) => {
+        const user = await storage.getUser(post.userId);
+        const likesCount = await storage.getPostLikesCount(post.id);
+        const commentsCount = await storage.getPostCommentsCount(post.id);
+        
+        return {
+          ...post,
+          user: user ? { id: user.id, username: user.username, emoji: user.emoji } : undefined,
+          likesCount,
+          commentsCount,
+          isLiked: false, // In a real app, check if currentUser liked it
+          isSaved: false  // In a real app, check if currentUser saved it
+        };
+      }));
+      
+      res.json(postsWithUser);
     } catch (error) {
       console.error("Get posts error:", error);
       res.status(500).json({ error: "Failed to get posts" });
