@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TextInput } from "react-native";
-import { useMutation } from "@tanstack/react-query";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TextInput, Linking } from "react-native";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -263,9 +263,17 @@ export default function SettingsScreen({ navigation }: Props) {
         {
           icon: "mail",
           title: "Связаться с нами",
-          subtitle: "support@moments-app.com",
+          subtitle: "messaconfirmation@gmail.com",
           onPress: () => {
-            Alert.alert("Связаться с нами", "Email: support@moments-app.com\n\nМы отвечаем в течение 24 часов.");
+            Alert.alert("Связаться с нами", "Email: messaconfirmation@gmail.com\nDiscord: FRAZ6PBcH9\n\nМы отвечаем в течение 24 часов.");
+          },
+        },
+        {
+          icon: "message-circle",
+          title: "Наш Discord",
+          subtitle: "Присоединиться к сообществу",
+          onPress: () => {
+            Linking.openURL("https://discord.gg/FRAZ6PBcH9");
           },
         },
         {

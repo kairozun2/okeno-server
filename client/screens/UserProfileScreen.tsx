@@ -148,8 +148,19 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           <Avatar emoji={profileUser?.emoji || "🐸"} size={32} />
         </Animated.View>
       ),
+      headerRight: () => (
+        currentUser?.id !== userId ? (
+          <Pressable 
+            onPress={() => setShowReportModal(true)} 
+            hitSlop={8}
+            style={{ marginRight: Spacing.md }}
+          >
+            <Feather name="more-horizontal" size={24} color={theme.text} />
+          </Pressable>
+        ) : null
+      ),
     });
-  }, [navigation, profileUser?.emoji, headerEmojiStyle]);
+  }, [navigation, profileUser?.emoji, headerEmojiStyle, currentUser?.id, userId, theme.text]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -264,12 +275,6 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             >
               <Feather name="send" size={20} color={theme.text} />
             </Pressable>
-            <Pressable 
-              onPress={() => setShowReportModal(true)}
-              style={[styles.hideButton, { backgroundColor: theme.backgroundSecondary }]}
-            >
-              <Feather name="flag" size={20} color={theme.error} />
-            </Pressable>
           </View>
         ) : (
           <View style={styles.actions}>
@@ -365,6 +370,16 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
               Опишите причину жалобы. Мы рассмотрим её в течение 24 часов.
             </ThemedText>
+
+            <Pressable
+              onPress={handleShareProfile}
+              style={[styles.blockButton, { borderColor: theme.border, marginBottom: Spacing.md }]}
+            >
+              <Feather name="send" size={18} color={theme.text} />
+              <ThemedText type="body" style={{ color: theme.text, fontWeight: "600", marginLeft: Spacing.sm }}>
+                Поделиться профилем
+              </ThemedText>
+            </Pressable>
 
             <TextInput
               value={reportReason}

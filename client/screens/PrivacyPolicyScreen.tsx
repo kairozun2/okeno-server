@@ -55,7 +55,7 @@ export default function PrivacyPolicyScreen({ navigation }: Props) {
     },
     {
       title: "Контакты",
-      content: "По всем вопросам обращайтесь:\nEmail: support@moments-app.com\n\nМы отвечаем в течение 24 часов."
+      content: "По всем вопросам обращайтесь:\nEmail: messaconfirmation@gmail.com\nDiscord: https://discord.gg/FRAZ6PBcH9\n\nМы отвечаем в течение 24 часов."
     }
   ];
 
