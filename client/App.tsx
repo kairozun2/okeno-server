@@ -17,6 +17,30 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { ThemeProvider } from "./hooks/useTheme";
 import { RefreshProvider } from "@/contexts/RefreshContext";
 
+import { Avatar } from "@/components/Avatar";
+import { Button } from "@/components/Button";
+import { ThemedText } from "@/components/ThemedText";
+import { Spacing } from "@/constants/theme";
+
+function BannedScreen() {
+  const { logout, user } = useAuth();
+  
+  return (
+    <View style={[styles.root, { backgroundColor: "#121212", justifyContent: "center", alignItems: "center", padding: Spacing.xl }]}>
+      <Avatar emoji={user?.emoji || "🚫"} size={100} />
+      <ThemedText type="h1" style={{ marginTop: Spacing.xl, color: "#fff", textAlign: "center" }}>
+        Your account has been banned
+      </ThemedText>
+      <ThemedText type="body" style={{ marginTop: Spacing.md, color: "#aaa", textAlign: "center", marginBottom: Spacing.xl }}>
+        You no longer have access to the Moments community.
+      </ThemedText>
+      <Button onPress={logout} style={{ width: "100%", backgroundColor: "#fff" }} textStyle={{ color: "#000" }}>
+        Return to login
+      </Button>
+    </View>
+  );
+}
+
 function AppContent() {
   const { user, isLoading } = useAuth();
   const [showLoading, setShowLoading] = useState(true);
@@ -26,6 +50,10 @@ function AppContent() {
   }, []);
 
   const isReady = !isLoading;
+
+  if (user?.isBanned) {
+    return <BannedScreen />;
+  }
 
   return (
     <View style={styles.root}>

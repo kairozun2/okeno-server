@@ -67,6 +67,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
+      if (user.isBanned) {
+        return res.status(403).json({ error: "Your account is banned" });
+      }
+
       await storage.updateUserLastSeen(user.id);
       
       // Create session
