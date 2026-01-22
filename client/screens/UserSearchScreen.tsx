@@ -40,14 +40,18 @@ function UserItem({
   user, 
   onPress,
   isCurrentUser,
+  language,
   showChatIcon = true,
 }: { 
   user: User; 
   onPress: () => void;
   isCurrentUser: boolean;
+  language: string;
   showChatIcon?: boolean;
 }) {
   const { theme } = useTheme();
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   return (
     <Pressable 
@@ -66,7 +70,7 @@ function UserItem({
         </ThemedText>
         {isCurrentUser ? (
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            It's you
+            {t("It's you", "Это вы")}
           </ThemedText>
         ) : null}
       </View>
@@ -77,23 +81,26 @@ function UserItem({
   );
 }
 
-function EmptyResults({ query, history, onClearHistory, onSelectHistory }: { 
+function EmptyResults({ query, history, onClearHistory, onSelectHistory, language }: { 
   query: string; 
   history: User[];
   onClearHistory: () => void;
   onSelectHistory: (user: User) => void;
+  language: string;
 }) {
   const { theme } = useTheme();
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   if (query.length === 0 && history.length > 0) {
     return (
       <View style={styles.historyContainer}>
         <View style={styles.historyHeader}>
           <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600" }}>
-            RECENT
+            {t("RECENT", "НЕДАВНИЕ")}
           </ThemedText>
           <Pressable onPress={onClearHistory} style={styles.clearButton}>
-            <ThemedText type="caption" style={{ color: theme.link }}>Clear</ThemedText>
+            <ThemedText type="caption" style={{ color: theme.link }}>{t("Clear", "Очистить")}</ThemedText>
           </Pressable>
         </View>
         {history.map((user) => (
@@ -103,6 +110,7 @@ function EmptyResults({ query, history, onClearHistory, onSelectHistory }: {
             onPress={() => onSelectHistory(user)} 
             isCurrentUser={false}
             showChatIcon={false}
+            language={language}
           />
         ))}
       </View>
@@ -114,8 +122,8 @@ function EmptyResults({ query, history, onClearHistory, onSelectHistory }: {
       <Feather name="users" size={40} color={theme.textSecondary} />
       <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: "center" }}>
         {query.length > 0 
-          ? `No users found with name "${query}"`
-          : "Enter a username to search"
+          ? t(`No users found with name "${query}"`, `Пользователи с именем "${query}" не найдены`)
+          : t("Enter a username to search", "Введите имя пользователя для поиска")
         }
       </ThemedText>
     </View>
@@ -194,9 +202,10 @@ export default function UserSearchScreen({ navigation }: Props) {
         user={item} 
         onPress={() => handleUserPress(item)}
         isCurrentUser={item.id === currentUser?.id}
+        language={language}
       />
     </Animated.View>
-  ), [handleUserPress, currentUser?.id]);
+  ), [handleUserPress, currentUser?.id, language]);
 
   return (
     <ThemedView style={styles.container}>
@@ -214,7 +223,7 @@ export default function UserSearchScreen({ navigation }: Props) {
           )}
           <Feather name="x" size={20} color={theme.text} />
         </Pressable>
-        <ThemedText type="h4">Search</ThemedText>
+        <ThemedText type="h4">{t("Search", "Поиск")}</ThemedText>
         <View style={{ width: 36 }} />
       </View>
 
@@ -222,7 +231,7 @@ export default function UserSearchScreen({ navigation }: Props) {
         <Feather name="search" size={18} color={theme.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
-          placeholder="Enter username..."
+          placeholder={t("Enter username...", "Введите имя...")}
           placeholderTextColor={theme.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -252,6 +261,7 @@ export default function UserSearchScreen({ navigation }: Props) {
               history={history}
               onClearHistory={clearHistory}
               onSelectHistory={handleUserPress}
+              language={language}
             />
           ) : null
         }

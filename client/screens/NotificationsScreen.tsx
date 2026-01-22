@@ -7,6 +7,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { ru, enUS } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -32,11 +33,15 @@ interface Notification {
 function NotificationItem({
   notification,
   onPress,
+  language,
 }: {
   notification: Notification;
   onPress: () => void;
+  language: string;
 }) {
   const { theme } = useTheme();
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const getNotificationIcon = (): keyof typeof Feather.glyphMap => {
     switch (notification.type) {
@@ -54,13 +59,13 @@ function NotificationItem({
   const getNotificationText = () => {
     switch (notification.type) {
       case "like":
-        return "liked your post";
+        return t("liked your post", "оценил ваш пост");
       case "comment":
-        return "commented on your post";
+        return t("commented on your post", "прокомментировал ваш пост");
       case "message":
-        return "sent you a message";
+        return t("sent you a message", "отправил вам сообщение");
       default:
-        return "notification";
+        return t("notification", "уведомление");
     }
   };
 
@@ -103,12 +108,15 @@ function NotificationItem({
         <View style={styles.notificationContent}>
           <ThemedText type="body">
             <ThemedText type="body" style={{ fontWeight: "600" }} truncate maxLength={12}>
-              Someone
+              {t("Someone", "Кто-то")}
             </ThemedText>{" "}
             {getNotificationText()}
           </ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+            {formatDistanceToNow(new Date(notification.createdAt), { 
+              addSuffix: true, 
+              locale: language === "ru" ? ru : enUS 
+            })}
           </ThemedText>
         </View>
         {!notification.isRead ? (
@@ -192,9 +200,10 @@ export default function NotificationsScreen({ navigation }: Props) {
       <NotificationItem
         notification={item}
         onPress={() => handleNotificationPress(item)}
+        language={language}
       />
     ),
-    [navigation, language]
+    [handleNotificationPress, language]
   );
 
   return (

@@ -182,7 +182,7 @@ export default function MainTabNavigator() {
               />
             ),
             headerLeft: () => (
-              <View style={{ marginLeft: Spacing.sm }}>
+              <View style={{ marginLeft: Spacing.sm, width: 40 }}>
                 {showPlus ? (
                   <Animated.View entering={FadeIn} exiting={FadeOut}>
                     <CreatePostButton iconOnly />

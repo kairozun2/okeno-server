@@ -9,7 +9,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { ru, enUS } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
@@ -40,9 +40,11 @@ interface ChatSettings {
 function MessageBubble({
   message,
   isOwn,
+  language,
 }: {
   message: Message;
   isOwn: boolean;
+  language: string;
 }) {
   const { theme } = useTheme();
 
@@ -70,7 +72,10 @@ function MessageBubble({
           { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary },
         ]}
       >
-        {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: enUS })}
+        {formatDistanceToNow(new Date(message.createdAt), { 
+          addSuffix: true, 
+          locale: language === "ru" ? ru : enUS 
+        })}
       </ThemedText>
     </Animated.View>
   );
@@ -80,12 +85,14 @@ type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
 export default function ChatScreen({ route, navigation }: Props) {
   const { chatId, otherUserName, otherUserUsername, otherUserEmoji, otherUserId } = route.params;
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, language } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const flatListRef = useRef<FlatList>(null);
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const { data: chatSettings } = useQuery<ChatSettings | null>({
     queryKey: ["/api/users", user?.id, "chat-settings", otherUserId],
@@ -99,7 +106,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     return url;
   };
 
-  const displayName = chatSettings?.nickname || otherUserName || "User";
+  const displayName = chatSettings?.nickname || otherUserName || t("User", "Пользователь");
   const backgroundImage = chatSettings?.backgroundImage;
 
   const {
@@ -161,9 +168,9 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const renderItem = useCallback(
     ({ item }: { item: Message }) => (
-      <MessageBubble message={item} isOwn={item.senderId === user?.id} />
+      <MessageBubble message={item} isOwn={item.senderId === user?.id} language={language} />
     ),
-    [user?.id]
+    [user?.id, language]
   );
 
   const sortedMessages = [...messages].sort(
@@ -259,7 +266,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                   backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
                 },
               ]}
-              placeholder="Message..."
+              placeholder={t("Message...", "Сообщение...")}
               placeholderTextColor={theme.textSecondary}
               value={message}
               onChangeText={setMessage}

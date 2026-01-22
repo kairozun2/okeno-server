@@ -8,7 +8,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { ru, enUS } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
@@ -38,9 +38,11 @@ interface CommentWithUser extends Comment {
 function CommentItem({
   comment,
   onUserPress,
+  language,
 }: {
   comment: CommentWithUser;
   onUserPress: () => void;
+  language: string;
 }) {
   const { theme } = useTheme();
 
@@ -53,11 +55,14 @@ function CommentItem({
         <View style={styles.commentHeader}>
           <Pressable onPress={onUserPress}>
             <ThemedText type="small" style={styles.commentUsername} truncate maxLength={12}>
-              {comment.user?.username || "User"}
+              {comment.user?.username || (language === "ru" ? "Пользователь" : "User")}
             </ThemedText>
           </Pressable>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: enUS })}
+            {formatDistanceToNow(new Date(comment.createdAt), { 
+              addSuffix: true, 
+              locale: language === "ru" ? ru : enUS 
+            })}
           </ThemedText>
         </View>
         <ThemedText type="body">{comment.content}</ThemedText>
@@ -123,10 +128,11 @@ export default function CommentsScreen({ route, navigation }: Props) {
         <CommentItem
           comment={item}
           onUserPress={() => navigation.navigate("UserProfile", { userId: item.userId })}
+          language={language}
         />
       );
     },
-    [navigation]
+    [navigation, language]
   );
 
   return (

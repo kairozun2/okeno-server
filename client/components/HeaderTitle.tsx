@@ -27,10 +27,10 @@ export function HeaderTitle({ title, onFadeComplete }: HeaderTitleProps) {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 6) return t("Good night", "Доброй ночи");
-    if (hour < 12) return t("Good morning", "Доброе утро");
-    if (hour < 18) return t("Good afternoon", "Добрый день");
-    return t("Good evening", "Добрый вечер");
+    if (hour < 6) return t("Welcome", "Добро пожаловать");
+    if (hour < 12) return t("Welcome", "Добро пожаловать");
+    if (hour < 18) return t("Welcome", "Добро пожаловать");
+    return t("Welcome", "Добро пожаловать");
   };
 
   const greeting = `${getGreeting()}, ${user?.username || t("guest", "гость")}`;
