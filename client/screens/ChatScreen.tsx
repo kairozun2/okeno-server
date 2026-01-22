@@ -823,7 +823,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                       style={styles.emojiButton}
                       hitSlop={8}
                     >
-                      <ThemedText style={{ fontSize: 32 }}>{emoji}</ThemedText>
+                      <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
                     </Pressable>
                   ))}
                 </View>
@@ -1018,12 +1018,13 @@ const styles = StyleSheet.create({
   },
   emojiPickerRow: {
     flexDirection: "row",
+    flexWrap: "wrap", // Allow wrapping to prevent going off screen
     justifyContent: "flex-start",
     paddingHorizontal: Spacing.sm,
     paddingVertical: 10,
     marginBottom: Spacing.sm,
     alignItems: 'center',
-    gap: 8,
+    gap: 4, // Reduced gap
   },
   actionSheetContent: {
     borderRadius: 14,
@@ -1031,10 +1032,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   emojiButton: {
-    width: 44,
-    height: 44,
+    width: 36, // Smaller buttons
+    height: 36, // Smaller buttons
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  emojiText: {
+    fontSize: 26, // Slightly smaller text
+    lineHeight: 32, // Controlled line height
+    textAlign: 'center',
+    includeFontPadding: false, // Android specific
+    textAlignVertical: 'center', // Android specific
   },
   actionItem: {
     flexDirection: "row",
