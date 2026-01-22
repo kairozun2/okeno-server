@@ -142,7 +142,7 @@ type Props = CompositeScreenProps<
 >;
 
 export default function ChatsListScreen({ navigation }: Props) {
-  const { theme } = useTheme();
+  const { theme, language } = useTheme();
   const { user } = useAuth();
   const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
@@ -154,6 +154,8 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [nickname, setNickname] = useState("");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [isGlobal, setIsGlobal] = useState(false);
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const presetBackgrounds = [
     "https://www.imgbly.com/7LrPlX4Iji8B7My.png",
@@ -174,7 +176,7 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: "Chats",
+      headerTitle: language === "ru" ? "Чаты" : "Chats",
       headerRight: () => (
         <Pressable
           onPress={() => {
@@ -187,7 +189,7 @@ export default function ChatsListScreen({ navigation }: Props) {
         </Pressable>
       ),
     });
-  }, [navigation, theme.text]);
+  }, [navigation, theme.text, language]);
 
   const { data: chatsData = [], isLoading } = useQuery<ChatWithDetails[]>({
     queryKey: ["/api/users", user?.id, "chats"],
@@ -307,9 +309,15 @@ export default function ChatsListScreen({ navigation }: Props) {
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.md }]}>
-            <View style={styles.modalHeaderButton} />
+            <View style={styles.modalHeaderButton}>
+              {selectedChat && (
+                <Pressable onPress={() => setSelectedChat(null)} style={styles.modalHeaderBackButton}>
+                  <Feather name="chevron-left" size={24} color={theme.text} />
+                </Pressable>
+              )}
+            </View>
             <ThemedText type="h3" style={styles.modalTitle}>
-              {selectedChat ? "Chat Settings" : "Select Chat"}
+              {selectedChat ? t("Chat Settings", "Настройки чата") : t("Select Chat", "Выберите чат")}
             </ThemedText>
             <Pressable 
               onPress={selectedChat ? handleSaveSettings : handleCloseModal} 
@@ -330,7 +338,7 @@ export default function ChatsListScreen({ navigation }: Props) {
               contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
             >
               <ThemedText type="body" style={[styles.selectHint, { color: theme.textSecondary }]}>
-                Select a chat to customize
+                {t("Select a chat to customize", "Выберите чат для настройки")}
               </ThemedText>
               {sortedChats.map((chat) => (
                 <Pressable
@@ -354,12 +362,12 @@ export default function ChatsListScreen({ navigation }: Props) {
                 </Pressable>
               ))}
               {sortedChats.length === 0 ? (
-                <View style={styles.noChatsContainer}>
-                  <Feather name="message-circle" size={40} color={theme.textSecondary} />
-                  <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}>
-                    You have no chats yet
-                  </ThemedText>
-                </View>
+                  <View style={styles.noChatsContainer}>
+                    <Feather name="message-circle" size={40} color={theme.textSecondary} />
+                    <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}>
+                      {t("You have no chats yet", "У вас пока нет чатов")}
+                    </ThemedText>
+                  </View>
               ) : null}
             </ScrollView>
           ) : (
@@ -368,9 +376,6 @@ export default function ChatsListScreen({ navigation }: Props) {
               contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
             >
               <View style={styles.selectedUserHeader}>
-                <Pressable onPress={() => setSelectedChat(null)} style={styles.backButton}>
-                  <Feather name="chevron-left" size={24} color={theme.text} />
-                </Pressable>
                 <Avatar emoji={selectedChat.otherUser?.emoji || "🐸"} size={48} />
                 <ThemedText type="h3" style={{ marginTop: Spacing.sm }} truncate maxLength={20}>
                   {selectedChat.otherUser?.username}
@@ -379,12 +384,12 @@ export default function ChatsListScreen({ navigation }: Props) {
 
               <View style={styles.settingSection}>
                 <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
-                  Chat Nickname
+                  {t("Chat Nickname", "Никнейм в чате")}
                 </ThemedText>
                 <TextInput
                   value={nickname}
                   onChangeText={setNickname}
-                  placeholder="Enter nickname..."
+                  placeholder={t("Enter nickname...", "Введите никнейм...")}
                   placeholderTextColor={theme.textSecondary}
                   style={[
                     styles.nicknameInput,
@@ -397,13 +402,13 @@ export default function ChatsListScreen({ navigation }: Props) {
                   maxLength={30}
                 />
                 <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
-                  This nickname is only visible to you
+                  {t("This nickname is only visible to you", "Этот никнейм виден только вам")}
                 </ThemedText>
               </View>
 
               <View style={styles.settingSection}>
                 <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
-                  Preset Backgrounds
+                  {t("Preset Backgrounds", "Готовые фоны")}
                 </ThemedText>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.presetsContainer}>
                   {presetBackgrounds.map((url, index) => (
@@ -431,7 +436,7 @@ export default function ChatsListScreen({ navigation }: Props) {
 
               <View style={styles.settingSection}>
                 <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
-                  Chat Background
+                  {t("Chat Background", "Фон чата")}
                 </ThemedText>
                 <Pressable
                   onPress={pickBackgroundImage}
@@ -448,7 +453,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                     <View style={[styles.backgroundPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
                       <Feather name="image" size={40} color={theme.textSecondary} />
                       <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-                        Tap to choose
+                        {t("Tap to choose", "Нажмите, чтобы выбрать")}
                       </ThemedText>
                     </View>
                   )}
@@ -460,7 +465,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                   >
                     <Feather name="trash-2" size={16} color={theme.error} />
                     <ThemedText type="caption" style={{ color: theme.error, marginLeft: Spacing.xs }}>
-                      Remove background
+                      {t("Remove background", "Удалить фон")}
                     </ThemedText>
                   </Pressable>
                 ) : null}
@@ -540,6 +545,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  modalHeaderBackButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   modalTitle: {
     flex: 1,
     textAlign: "center",
@@ -572,15 +583,6 @@ const styles = StyleSheet.create({
   selectedUserHeader: {
     alignItems: "center",
     paddingVertical: Spacing.lg,
-  },
-  backButton: {
-    position: "absolute",
-    left: Spacing.lg,
-    top: Spacing.lg,
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
   },
   settingSection: {
     paddingHorizontal: Spacing.lg,
