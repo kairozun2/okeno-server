@@ -20,6 +20,7 @@ import { enUS } from "date-fns/locale";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/query-client";
@@ -47,6 +48,7 @@ interface User {
   id: string;
   username: string;
   emoji: string;
+  isVerified?: boolean;
 }
 
 interface PostWithUser extends Post {
@@ -152,9 +154,12 @@ function PostCard({
         <Pressable onPress={onUserPress} style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
           <Avatar emoji={post.user?.emoji || "🐸"} size={32} />
           <View style={styles.postHeaderInfo}>
-            <ThemedText type="small" style={styles.username} truncate maxLength={12}>
-              {post.user?.username || "..."}
-            </ThemedText>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <ThemedText type="small" style={styles.username} truncate maxLength={12}>
+                {post.user?.username || "..."}
+              </ThemedText>
+              {post.user?.isVerified ? <VerifiedBadge size={14} /> : null}
+            </View>
             {post.location ? (
               <Pressable onPress={onLocationPress} style={styles.locationRow}>
                 <Feather name="map-pin" size={10} color={theme.textSecondary} />

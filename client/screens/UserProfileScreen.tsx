@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +29,7 @@ interface User {
   id: string;
   username: string;
   emoji: string;
+  isVerified?: boolean;
   createdAt: string;
 }
 
@@ -287,9 +289,12 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     return (
       <Animated.View entering={FadeIn} style={styles.header}>
         <Avatar emoji={profileUser?.emoji || "🐸"} size={72} />
-        <ThemedText type="h3" style={styles.username} truncate maxLength={15}>
-          {profileUser?.username}
-        </ThemedText>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <ThemedText type="h3" style={styles.username} truncate maxLength={15}>
+            {profileUser?.username}
+          </ThemedText>
+          {profileUser?.isVerified ? <VerifiedBadge size={18} /> : null}
+        </View>
 
         <View style={styles.stats}>
           <View style={styles.stat}>

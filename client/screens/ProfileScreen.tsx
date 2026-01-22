@@ -22,6 +22,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -199,9 +200,12 @@ export default function ProfileScreen({ navigation }: Props) {
       <Animated.View style={[styles.avatarContainer, mainAvatarStyle]}>
         <Avatar emoji={user?.emoji || "🐸"} size={80} />
       </Animated.View>
-      <ThemedText type="h3" style={styles.username} truncate maxLength={15}>
-        {user?.username}
-      </ThemedText>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <ThemedText type="h3" style={styles.username} truncate maxLength={15}>
+          {user?.username}
+        </ThemedText>
+        {user?.isVerified ? <VerifiedBadge size={18} /> : null}
+      </View>
       <Pressable onPress={handleCopyId} style={styles.idButton}>
         <ThemedText type="caption" style={{ color: theme.textSecondary }}>
           ID: {user?.id?.slice(0, 8)}...

@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return {
           ...post,
-          user: user ? { id: user.id, username: user.username, emoji: user.emoji } : undefined,
+          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined,
           likesCount,
           commentsCount,
           isLiked: false, 
@@ -378,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(comment.userId);
         return {
           ...comment,
-          user: user ? { id: user.id, username: user.username, emoji: user.emoji } : undefined,
+          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined,
         };
       }));
       res.json(commentsWithUser);
@@ -457,6 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               id: otherUser.id,
               username: otherUser.username,
               emoji: otherUser.emoji,
+              isVerified: otherUser.isVerified,
             } : null,
             lastMessage,
             unreadCount,

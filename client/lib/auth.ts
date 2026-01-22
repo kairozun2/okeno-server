@@ -9,6 +9,9 @@ export interface User {
   username: string;
   pin: string;
   emoji: string;
+  isAdmin: boolean;
+  isVerified: boolean;
+  isBanned: boolean;
   createdAt: string;
   lastSeen: string;
 }

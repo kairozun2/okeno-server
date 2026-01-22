@@ -16,6 +16,7 @@ import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing } from "@/constants/theme";
@@ -48,6 +49,7 @@ interface User {
   id: string;
   username: string;
   emoji: string;
+  isVerified?: boolean;
 }
 
 interface ChatWithDetails extends Chat {
@@ -85,9 +87,12 @@ function ChatItem({
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
-              <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
-                {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
-              </ThemedText>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
+                  {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
+                </ThemedText>
+                {chat.otherUser?.isVerified ? <VerifiedBadge size={14} /> : null}
+              </View>
               <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={15}>
                 @{chat.otherUser?.username || "user"}
               </ThemedText>
