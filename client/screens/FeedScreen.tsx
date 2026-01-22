@@ -13,7 +13,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 
@@ -376,10 +376,26 @@ export default function FeedScreen({ navigation }: Props) {
     reportMutation.mutate();
   };
 
-  const { data: posts = [], isLoading } = useQuery<PostWithUser[]>({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await apiRequest("GET", `/api/posts?limit=10&offset=${pageParam}`, null);
+      return response.json();
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === 10 ? allPages.length * 10 : undefined;
+    },
+    initialPageParam: 0,
+    staleTime: 1000 * 60 * 5,
   });
+
+  const posts = useMemo(() => data?.pages.flat() || [], [data]);
 
   const likeMutation = useMutation({
     mutationFn: async ({ postId, isLiked }: { postId: string; isLiked: boolean }) => {
@@ -547,6 +563,9 @@ export default function FeedScreen({ navigation }: Props) {
         }}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={isFetchingNextPage ? <View style={{ padding: Spacing.md }}><ThemedText type="caption" style={{ textAlign: 'center' }}>{t("Loading...", "Загрузка...")}</ThemedText></View> : null}
         ListEmptyComponent={!isLoading ? <EmptyFeed t={t} /> : null}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
       />

@@ -177,8 +177,40 @@ export default function ChatScreen({ route, navigation }: Props) {
     return url;
   };
 
-  const displayName = chatSettings?.nickname || otherUserName || t("User", "Пользователь");
+  useEffect(() => {
+    if (otherUserId && (!otherUserName || !otherUserEmoji)) {
+      queryClient.prefetchQuery({
+        queryKey: ["/api/users", otherUserId],
+        queryFn: async () => {
+          const response = await apiRequest("GET", `/api/users/${otherUserId}`, null);
+          const userData = await response.json();
+          // Update navigation params with actual data if we're on this screen
+          navigation.setParams({
+            otherUserName: userData.username,
+            otherUserUsername: userData.username,
+            otherUserEmoji: userData.emoji,
+          } as any);
+          return userData;
+        }
+      });
+    }
+  }, [otherUserId]);
+
+  const { data: userData } = useInfiniteQuery({
+    queryKey: ["/api/users", otherUserId],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/users/${otherUserId}`, null);
+      return response.json();
+    },
+    enabled: !!otherUserId,
+    initialPageParam: 0,
+    getNextPageParam: () => undefined,
+  }) as any;
+
   const backgroundImage = chatSettings?.backgroundImage;
+  const displayName = chatSettings?.nickname || userData?.username || otherUserName || t("User", "Пользователь");
+  const displayEmoji = userData?.emoji || otherUserEmoji || "🐸";
+  const displayUsername = userData?.username || otherUserUsername;
 
   const {
     data,
@@ -396,11 +428,11 @@ export default function ChatScreen({ route, navigation }: Props) {
               <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
               {isOtherUserTyping ? (
                 <ThemedText type="caption" style={{ color: theme.link }}>{t("typing...", "печатает...")}</ThemedText>
-              ) : otherUserUsername ? (
-                <ThemedText type="caption" style={{ opacity: 0.6 }} truncate maxLength={15}>@{otherUserUsername}</ThemedText>
+              ) : displayUsername ? (
+                <ThemedText type="caption" style={{ opacity: 0.6 }} truncate maxLength={15}>@{displayUsername}</ThemedText>
               ) : null}
             </View>
-            <Avatar emoji={otherUserEmoji || "🐸"} size={32} />
+            <Avatar emoji={displayEmoji} size={32} />
           </Pressable>
         </View>
 
