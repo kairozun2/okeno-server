@@ -133,16 +133,8 @@ export default function CommentsScreen({ route, navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
     >
-      <LinearGradient
-        colors={[
-          isDark ? theme.backgroundRoot : theme.backgroundRoot,
-          isDark ? theme.backgroundRoot : theme.backgroundRoot,
-          isDark ? theme.cardBackground : theme.cardBackground,
-        ]}
-        locations={[0, 0.7, 1]}
-        style={{ flex: 1 }}
-      >
-        <View style={styles.header}>
+      <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
+        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
           <ThemedText type="h3">Комментарии</ThemedText>
           <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
             <Feather name="x" size={24} color={theme.text} />
@@ -198,7 +190,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
             </Pressable>
           </View>
         </View>
-      </LinearGradient>
+      </View>
     </KeyboardAvoidingView>
   );
 }
