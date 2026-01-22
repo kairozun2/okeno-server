@@ -141,7 +141,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       <KeyboardAvoidingView
         style={styles.container}
         behavior="padding"
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
       >
         <FlatList
           ref={flatListRef}
@@ -151,7 +151,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           inverted={messages.length > 0}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: headerHeight + Spacing.md },
+            { paddingTop: Spacing.md },
             messages.length === 0 && { flex: 1 },
           ]}
           ListEmptyComponent={<EmptyChat />}

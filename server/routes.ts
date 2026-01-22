@@ -314,7 +314,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/posts/:id/comments", async (req, res) => {
     try {
       const comments = await storage.getPostComments(req.params.id);
-      res.json(comments);
+      const commentsWithUser = await Promise.all(comments.map(async (comment) => {
+        const user = await storage.getUser(comment.userId);
+        return {
+          ...comment,
+          user: user ? { id: user.id, username: user.username, emoji: user.emoji } : undefined,
+        };
+      }));
+      res.json(commentsWithUser);
     } catch (error) {
       console.error("Get comments error:", error);
       res.status(500).json({ error: "Failed to get comments" });

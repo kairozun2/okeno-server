@@ -24,7 +24,7 @@ import { Spacing } from "@/constants/theme";
 export type RootStackParamList = {
   Main: undefined;
   Auth: undefined;
-  Chat: { chatId: string; otherUserId?: string; otherUserName?: string; otherUserEmoji?: string };
+  Chat: { chatId: string; otherUserId?: string; otherUserName?: string; otherUserEmoji?: string; otherUserUsername?: string };
   Comments: { postId: string };
   Settings: undefined;
   UserProfile: { userId: string };
@@ -52,12 +52,17 @@ function CloseButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-function ChatHeaderTitle({ name, onPress }: { name?: string; onPress: () => void }) {
+function ChatHeaderTitle({ name, username, onPress }: { name?: string; username?: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress}>
       <ThemedText type="body" style={{ fontWeight: "600" }}>
-        {name || "Чат"}
+        {name || "Пользователь"}
       </ThemedText>
+      {username ? (
+        <ThemedText type="caption" style={{ opacity: 0.7 }}>
+          @{username}
+        </ThemedText>
+      ) : null}
     </Pressable>
   );
 }
@@ -96,7 +101,8 @@ export default function RootStackNavigator() {
               ...modalOptions,
               headerTitle: () => (
                 <ChatHeaderTitle 
-                  name={route.params?.otherUserName} 
+                  name={route.params?.otherUserName}
+                  username={route.params?.otherUserUsername}
                   onPress={() => {
                     if (route.params?.otherUserId) {
                       navigation.navigate("UserProfile", { userId: route.params.otherUserId });

@@ -118,14 +118,10 @@ export default function CommentsScreen({ route, navigation }: Props) {
   };
 
   const renderItem = useCallback(
-    ({ item }: { item: Comment }) => {
-      const commentWithUser: CommentWithUser = {
-        ...item,
-      };
-
+    ({ item }: { item: CommentWithUser }) => {
       return (
         <CommentItem
-          comment={commentWithUser}
+          comment={item}
           onUserPress={() => navigation.navigate("UserProfile", { userId: item.userId })}
         />
       );
@@ -137,7 +133,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       behavior="padding"
-      keyboardVerticalOffset={0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
     >
       <FlatList
         data={comments}
@@ -145,7 +141,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.commentsList,
-          { paddingTop: headerHeight + Spacing.md },
+          { paddingTop: Spacing.md },
           comments.length === 0 && { flex: 1 },
         ]}
         ListEmptyComponent={<EmptyComments />}
