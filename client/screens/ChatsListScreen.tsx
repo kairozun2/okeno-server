@@ -85,9 +85,9 @@ function ChatItem({
       >
         <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
         <View style={styles.chatInfo}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-              <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1 }}>
+              <ThemedText type="body" style={[styles.chatName, { flex: 0 }]} truncate maxLength={12}>
                 {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
               </ThemedText>
               {chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
@@ -506,7 +506,6 @@ const styles = StyleSheet.create({
   },
   chatName: {
     fontWeight: "500",
-    flex: 1,
   },
   chatPreview: {
     flexDirection: "row",
