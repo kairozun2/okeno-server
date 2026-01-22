@@ -5,7 +5,7 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import Animated, { FadeInDown, FadeIn, FadeOut } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -60,8 +60,7 @@ function MessageBubble({
 
   return (
     <Pressable onLongPress={onLongPress} delayLongPress={300}>
-      <Animated.View
-        entering={FadeInDown.springify().damping(18).stiffness(150)}
+      <View
         style={[
           styles.messageBubble,
           isOwn ? styles.ownMessage : styles.otherMessage,
@@ -105,7 +104,7 @@ function MessageBubble({
             {formatMessageTime(new Date(message.createdAt))}
           </ThemedText>
         </View>
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -124,8 +123,47 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [showActionModal, setShowActionModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
+  // Poll for typing status
+  const { data: typingData } = useQuery<{ isTyping: boolean }>({
+    queryKey: ["/api/chats", chatId, "typing", otherUserId],
+    queryFn: async () => {
+      if (!otherUserId) return { isTyping: false };
+      const url = new URL(`/api/chats/${chatId}/typing/${otherUserId}`, getApiUrl());
+      const response = await fetch(url.toString(), { credentials: "include" });
+      if (!response.ok) return { isTyping: false };
+      return response.json();
+    },
+    enabled: !!otherUserId,
+    refetchInterval: 1500,
+  });
+
+  const isOtherUserTyping = typingData?.isTyping || false;
+
+  // Send typing status when user types
+  const sendTypingStatus = useCallback(() => {
+    if (!user?.id) return;
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    apiRequest("POST", `/api/chats/${chatId}/typing`, { oderId: user.id }).catch(() => {});
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      typingTimeoutRef.current = null;
+    }, 2000);
+  }, [chatId, user?.id]);
+
+  const handleTextChange = (text: string) => {
+    setMessage(text);
+    if (text.length > 0) {
+      sendTypingStatus();
+    }
+  };
 
   const { data: chatSettings } = useQuery<ChatSettings | null>({
     queryKey: ["/api/users", user?.id, "chat-settings", otherUserId],
@@ -183,7 +221,6 @@ export default function ChatScreen({ route, navigation }: Props) {
           pages: [[newMessage, ...oldData.pages[0]], ...oldData.pages.slice(1)],
         };
       });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     },
   });
 
@@ -205,7 +242,6 @@ export default function ChatScreen({ route, navigation }: Props) {
           ),
         };
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
   });
 
@@ -226,7 +262,6 @@ export default function ChatScreen({ route, navigation }: Props) {
           ),
         };
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
   });
 
@@ -359,7 +394,11 @@ export default function ChatScreen({ route, navigation }: Props) {
             )}
             <View style={{ marginRight: Spacing.sm }}>
               <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
-              {otherUserUsername ? <ThemedText type="caption" style={{ opacity: 0.6 }} truncate maxLength={15}>@{otherUserUsername}</ThemedText> : null}
+              {isOtherUserTyping ? (
+                <ThemedText type="caption" style={{ color: theme.link }}>{t("typing...", "печатает...")}</ThemedText>
+              ) : otherUserUsername ? (
+                <ThemedText type="caption" style={{ opacity: 0.6 }} truncate maxLength={15}>@{otherUserUsername}</ThemedText>
+              ) : null}
             </View>
             <Avatar emoji={otherUserEmoji || "🐸"} size={32} />
           </Pressable>
@@ -436,7 +475,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               placeholder={t("Message...", "Сообщение...")}
               placeholderTextColor={theme.textSecondary}
               value={message}
-              onChangeText={setMessage}
+              onChangeText={handleTextChange}
               multiline
               maxLength={1000}
             />

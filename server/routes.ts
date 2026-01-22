@@ -615,6 +615,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Typing status (in-memory, expires after 3 seconds)
+  const typingStatus = new Map<string, number>();
+
+  app.post("/api/chats/:id/typing", async (req, res) => {
+    try {
+      const { oderId } = req.body;
+      const chatId = req.params.id;
+      const key = `${chatId}:${oderId}`;
+      typingStatus.set(key, Date.now());
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Set typing error:", error);
+      res.status(500).json({ error: "Failed to set typing status" });
+    }
+  });
+
+  app.get("/api/chats/:id/typing/:oderId", async (req, res) => {
+    try {
+      const chatId = req.params.id;
+      const otherUserId = req.params.oderId;
+      const key = `${chatId}:${otherUserId}`;
+      const timestamp = typingStatus.get(key);
+      
+      // Typing expires after 3 seconds
+      const isTyping = timestamp && (Date.now() - timestamp) < 3000;
+      
+      if (!isTyping && timestamp) {
+        typingStatus.delete(key);
+      }
+      
+      res.json({ isTyping: !!isTyping });
+    } catch (error) {
+      console.error("Get typing error:", error);
+      res.status(500).json({ error: "Failed to get typing status" });
+    }
+  });
+
   // Notifications routes
   app.get("/api/users/:id/notifications", async (req, res) => {
     try {
