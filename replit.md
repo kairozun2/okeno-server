@@ -79,3 +79,81 @@ UPDATE users SET is_admin = true, is_verified = true WHERE id = 'USER_ID_HERE';
 - Development: `npm run expo:dev` (Expo) + `npm run server:dev` (Express)
 - Database sync: `npm run db:push` (Drizzle Kit push)
 - Production build: `npm run expo:static:build` + `npm run server:build`
+
+---
+
+## Apple App Store Submission Checklist
+
+### Content Rating
+- **Age Rating**: 17+ (contains user-generated content)
+- **Content Flags**: Unrestricted Web Access, User-Generated Content
+
+### App Store Connect Metadata
+- **App Name**: Moments
+- **Bundle ID**: com.moments.app
+- **Primary Category**: Social Networking
+- **Secondary Category**: Photo & Video
+
+### Required App Store Connect Info
+1. **Privacy Policy URL**: https://skaisay.github.io/App-Privacy/
+2. **Support URL**: https://discord.gg/FRAZ6PBcH9
+3. **Marketing URL**: (optional)
+
+### App Review Notes (Demo Credentials)
+```
+Username: reviewer
+User ID: (create a test account and provide ID)
+PIN: 1234
+
+To test features:
+1. Create posts using the camera or photo library
+2. Like/comment on posts in the feed
+3. Search users and start chats
+4. Report/Block users from their profile (3-dot menu)
+5. View Privacy Policy in Settings
+6. Delete account in Settings (bottom of page)
+```
+
+### Compliance Status ✅
+
+| Requirement | Status | Location |
+|-------------|--------|----------|
+| Report button on posts | ✅ | FeedScreen.tsx, PostDetailScreen.tsx |
+| Report button on profiles | ✅ | UserProfileScreen.tsx |
+| Block button on profiles | ✅ | UserProfileScreen.tsx |
+| Privacy Policy in-app | ✅ | PrivacyPolicyScreen.tsx |
+| Privacy Policy link | ✅ | https://skaisay.github.io/App-Privacy/ |
+| Account deletion flow | ✅ | SettingsScreen.tsx |
+| Age restriction (18+) | ✅ | RegisterScreen.tsx |
+| Support contact info | ✅ | messaconfirmation@gmail.com |
+| Content moderation | ✅ | Reports processed within 24h |
+| No third-party tracking | ✅ | No analytics/ads SDKs |
+| No AI data sharing | ✅ | No AI features |
+| Privacy manifests | ✅ | app.json (privacyManifests) |
+| Encryption compliance | ✅ | ITSAppUsesNonExemptEncryption: false |
+
+### iOS Privacy Manifest (app.json)
+- NSPrivacyTracking: false
+- No tracking domains
+- Camera: App functionality only
+- Location: App functionality only
+- Photo Library: App functionality only
+
+### Permission Descriptions (app.json)
+- NSCameraUsageDescription: Capture photos and videos
+- NSPhotoLibraryUsageDescription: Select photos to share
+- NSPhotoLibraryAddUsageDescription: Save photos to library
+- NSLocationWhenInUseUsageDescription: Tag posts with location
+- NSMicrophoneUsageDescription: Record audio in videos
+
+### Before Submission
+1. Create EAS build: `eas build --platform ios`
+2. Submit to App Store: `eas submit --platform ios`
+3. Complete age rating questionnaire in App Store Connect
+4. Add app previews and screenshots
+5. Fill in localized descriptions (EN/RU)
+
+### Known Limitations
+- No in-app purchases (free app)
+- No push notifications yet
+- No background location tracking
