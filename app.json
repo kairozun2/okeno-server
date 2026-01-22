@@ -12,9 +12,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.moments.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "This app uses the camera to take photos for your posts.",
-        "NSPhotoLibraryUsageDescription": "This app accesses your photos to let you share them in posts.",
-        "NSLocationWhenInUseUsageDescription": "This app uses your location to add location tags to your posts."
+        "NSCameraUsageDescription": "This app uses the camera to take photos and video for your moments.",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photos to let you share moments from your library.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to add beautiful place tags to your moments.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone for videos."
       }
     },
     "android": {

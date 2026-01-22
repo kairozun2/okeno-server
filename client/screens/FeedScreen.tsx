@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList, Modal, Platform } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -267,7 +267,7 @@ export default function FeedScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <FlatList
+      <FlashList
         data={posts}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
@@ -275,15 +275,9 @@ export default function FeedScreen({ navigation }: Props) {
           paddingTop: headerHeight + Spacing.xs,
           paddingBottom: tabBarHeight + Spacing.lg,
         }}
-        scrollIndicatorInsets={{ bottom: insets.bottom }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.textSecondary}
-            progressViewOffset={0}
-          />
-        }
+        estimatedItemSize={450}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
         ListEmptyComponent={!isLoading ? <EmptyFeed /> : null}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
       />

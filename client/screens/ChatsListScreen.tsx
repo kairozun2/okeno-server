@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
-import { View, StyleSheet, RefreshControl, Pressable, FlatList, Modal, TextInput, ScrollView, Dimensions } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -283,7 +283,7 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <FlatList
+      <FlashList
         data={sortedChats}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
@@ -291,14 +291,9 @@ export default function ChatsListScreen({ navigation }: Props) {
           paddingTop: headerHeight + Spacing.xs,
           paddingBottom: tabBarHeight + Spacing.lg,
         }}
-        scrollIndicatorInsets={{ bottom: insets.bottom }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.textSecondary}
-          />
-        }
+        estimatedItemSize={70}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
         ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
         showsVerticalScrollIndicator={false}
       />
