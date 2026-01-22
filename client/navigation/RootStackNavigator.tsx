@@ -54,9 +54,8 @@ function CloseButton({ onPress }: { onPress: () => void }) {
 
 function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; username?: string; emoji?: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} style={{ flexDirection: "row", alignItems: "center" }}>
-      <Avatar emoji={emoji || "🐸"} size={32} />
-      <View style={{ marginLeft: Spacing.sm }}>
+    <Pressable onPress={onPress} style={{ flexDirection: "row", alignItems: "center", flex: 1, justifyContent: "flex-end" }}>
+      <View style={{ marginRight: Spacing.sm, alignItems: "flex-end" }}>
         <ThemedText type="body" style={{ fontWeight: "600", lineHeight: 18 }}>
           {name || "Пользователь"}
         </ThemedText>
@@ -66,6 +65,7 @@ function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; us
           </ThemedText>
         ) : null}
       </View>
+      <Avatar emoji={emoji || "🐸"} size={32} />
     </Pressable>
   );
 }
@@ -106,9 +106,10 @@ export default function RootStackNavigator() {
                   }}
                 />
               ),
+              headerTitleAlign: "right",
               headerRight: () => null,
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
-              gestureEnabled: false, // Disable swipe-to-close as requested
+              gestureEnabled: false,
             })}
           />
           <Stack.Screen

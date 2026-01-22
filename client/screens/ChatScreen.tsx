@@ -149,8 +149,8 @@ export default function ChatScreen({ route, navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior="padding"
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={0}
       >
         <FlatList
           ref={flatListRef}
@@ -165,6 +165,9 @@ export default function ChatScreen({ route, navigation }: Props) {
           ]}
           ListEmptyComponent={EmptyChatState}
           showsVerticalScrollIndicator={false}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+          }}
         />
 
         <View
