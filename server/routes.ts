@@ -694,6 +694,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat settings routes
+  app.get("/api/users/:id/chat-settings", async (req, res) => {
+    try {
+      const settings = await storage.getAllChatSettings(req.params.id);
+      res.json(settings);
+    } catch (error) {
+      console.error("Get chat settings error:", error);
+      res.status(500).json({ error: "Failed to get chat settings" });
+    }
+  });
+
+  app.get("/api/users/:id/chat-settings/:otherUserId", async (req, res) => {
+    try {
+      const settings = await storage.getChatSettings(req.params.id, req.params.otherUserId);
+      res.json(settings || null);
+    } catch (error) {
+      console.error("Get chat settings error:", error);
+      res.status(500).json({ error: "Failed to get chat settings" });
+    }
+  });
+
+  app.post("/api/users/:id/chat-settings", async (req, res) => {
+    try {
+      const { otherUserId, nickname, backgroundImage } = req.body;
+      const settings = await storage.upsertChatSettings({
+        userId: req.params.id,
+        otherUserId,
+        nickname,
+        backgroundImage,
+      });
+      res.json(settings);
+    } catch (error) {
+      console.error("Update chat settings error:", error);
+      res.status(500).json({ error: "Failed to update chat settings" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

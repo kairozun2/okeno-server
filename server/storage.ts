@@ -10,6 +10,7 @@ import {
   sessions,
   hiddenUsers,
   archivedPosts,
+  chatSettings,
   type User,
   type InsertUser,
   type Post,
@@ -28,6 +29,8 @@ import {
   type InsertNotification,
   type Session,
   type InsertSession,
+  type ChatSettings,
+  type InsertChatSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -102,6 +105,11 @@ export interface IStorage {
   archivePost(userId: string, postId: string): Promise<void>;
   unarchivePost(userId: string, postId: string): Promise<void>;
   getArchivedPosts(userId: string): Promise<string[]>;
+  
+  // Chat settings
+  getChatSettings(userId: string, otherUserId: string): Promise<ChatSettings | undefined>;
+  getAllChatSettings(userId: string): Promise<ChatSettings[]>;
+  upsertChatSettings(settings: InsertChatSettings): Promise<ChatSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -352,6 +360,37 @@ export class DatabaseStorage implements IStorage {
   async getArchivedPosts(userId: string): Promise<string[]> {
     const result = await db.select({ postId: archivedPosts.postId }).from(archivedPosts).where(eq(archivedPosts.userId, userId));
     return result.map(r => r.postId);
+  }
+
+  // Chat settings
+  async getChatSettings(userId: string, otherUserId: string): Promise<ChatSettings | undefined> {
+    const [settings] = await db.select().from(chatSettings).where(
+      and(eq(chatSettings.userId, userId), eq(chatSettings.otherUserId, otherUserId))
+    );
+    return settings || undefined;
+  }
+
+  async getAllChatSettings(userId: string): Promise<ChatSettings[]> {
+    return db.select().from(chatSettings).where(eq(chatSettings.userId, userId));
+  }
+
+  async upsertChatSettings(settings: InsertChatSettings): Promise<ChatSettings> {
+    const existing = await this.getChatSettings(settings.userId, settings.otherUserId);
+    
+    if (existing) {
+      const [updated] = await db.update(chatSettings)
+        .set({ 
+          nickname: settings.nickname,
+          backgroundImage: settings.backgroundImage,
+          updatedAt: new Date()
+        })
+        .where(eq(chatSettings.id, existing.id))
+        .returning();
+      return updated;
+    }
+    
+    const [created] = await db.insert(chatSettings).values(settings).returning();
+    return created;
   }
 }
 
