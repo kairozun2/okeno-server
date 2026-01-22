@@ -575,9 +575,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     const content = message.trim();
     setMessage("");
     
-    // Immediate height reset and clear replyingTo/editingMessage
-    setHeight(40);
-
+    // Immediate clear replyingTo/editingMessage
     if (editingMessage) {
       editMutation.mutate({ messageId: editingMessage.id, content });
       setEditingMessage(null);
