@@ -45,8 +45,8 @@ export default function QRCodeScreen({ navigation }: Props) {
   const createChatMutation = useMutation({
     mutationFn: async (otherUserId: string) => {
       const response = await apiRequest("POST", "/api/chats", {
-        participant1Id: user?.id,
-        participant2Id: otherUserId,
+        user1Id: user?.id,
+        user2Id: otherUserId,
       });
       return response.json();
     },
@@ -56,7 +56,7 @@ export default function QRCodeScreen({ navigation }: Props) {
       setIsScannerOpen(false);
       navigation.navigate("Chat", { 
         chatId: data.id,
-        otherUserId: data.participant1Id === user?.id ? data.participant2Id : data.participant1Id,
+        otherUserId: data.user1Id === user?.id ? data.user2Id : data.user1Id,
       });
     },
     onError: (error) => {
