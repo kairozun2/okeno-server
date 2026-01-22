@@ -12,8 +12,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import QRCode from "react-native-qrcode-svg";
 import Animated, { FadeIn, FadeInDown, FadeInUp } from "react-native-reanimated";
+import { QRCodeDisplay } from "@/components/QRCodeDisplay";
 import * as Haptics from "expo-haptics";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -138,7 +138,7 @@ export default function QRCodeScreen({ navigation }: Props) {
           entering={FadeIn.delay(200)}
           style={[styles.qrContainer, { backgroundColor: "#fff" }]}
         >
-          <QRCode
+          <QRCodeDisplay
             value={qrValue}
             size={QR_SIZE}
             backgroundColor="#fff"
