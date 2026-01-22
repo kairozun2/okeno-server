@@ -210,7 +210,7 @@ export default function NotificationsScreen({ navigation }: Props) {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.xs,
+          paddingTop: headerHeight,
           paddingBottom: insets.bottom + Spacing.xl,
         }}
         ListEmptyComponent={<EmptyNotifications />}
