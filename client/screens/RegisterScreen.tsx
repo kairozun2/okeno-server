@@ -33,7 +33,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
   const [step, setStep] = useState<"username" | "pin" | "confirm">("username");
-  const [previewEmoji] = useState(getRandomEmoji());
+  const [previewEmoji] = useState("✨");
 
   const handleNext = () => {
     if (step === "username") {

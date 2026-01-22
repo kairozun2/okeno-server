@@ -17,6 +17,7 @@ export default function AuthStackNavigator() {
 
   return (
     <Stack.Navigator
+      initialRouteName="Register"
       screenOptions={{
         ...screenOptions,
         headerShown: false,

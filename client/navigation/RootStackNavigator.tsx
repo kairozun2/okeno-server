@@ -73,8 +73,13 @@ export default function RootStackNavigator() {
             options={({ navigation }) => ({
               presentation: "modal",
               headerTitle: "Chat",
+              headerTransparent: true,
+              headerBlurEffect: "dark",
               gestureEnabled: false,
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerStyle: {
+                backgroundColor: 'transparent',
+              },
             })}
           />
           <Stack.Screen
@@ -83,6 +88,8 @@ export default function RootStackNavigator() {
             options={{
               presentation: "modal",
               headerTitle: "Comments",
+              headerTransparent: true,
+              headerBlurEffect: "dark",
             }}
           />
           <Stack.Screen
@@ -91,6 +98,8 @@ export default function RootStackNavigator() {
             options={{
               presentation: "modal",
               headerTitle: "Settings",
+              headerTransparent: true,
+              headerBlurEffect: "dark",
             }}
           />
           <Stack.Screen
