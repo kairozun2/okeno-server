@@ -153,10 +153,10 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         currentUser?.id !== userId ? (
           <Pressable 
             onPress={() => setShowActionSheet(true)} 
-            hitSlop={15}
+            hitSlop={20}
             style={{ 
-              marginRight: Spacing.sm,
-              padding: 4,
+              marginRight: -Spacing.xs,
+              padding: 8,
             }}
           >
             <Feather name="more-horizontal" size={24} color={theme.text} />
@@ -273,21 +273,16 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             <Button onPress={handleMessage} style={styles.messageButton}>
               Написать
             </Button>
-            <Pressable 
-              onPress={handleShareProfile}
-              style={[styles.hideButton, { backgroundColor: theme.backgroundSecondary }]}
-            >
-              <Feather name="send" size={20} color={theme.text} />
-            </Pressable>
           </View>
         ) : (
           <View style={styles.actions}>
-            <Pressable 
+            <Button 
               onPress={handleShareProfile}
-              style={[styles.hideButton, { backgroundColor: theme.backgroundSecondary }]}
+              style={[styles.messageButton, { backgroundColor: theme.backgroundSecondary }]}
+              textStyle={{ color: theme.text }}
             >
-              <Feather name="send" size={20} color={theme.text} />
-            </Pressable>
+              Поделиться профилем
+            </Button>
           </View>
         )}
       </Animated.View>
@@ -359,7 +354,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       <Modal
         visible={showActionSheet}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowActionSheet(false)}
       >
         <Pressable 
@@ -428,16 +423,6 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
               Опишите причину жалобы. Мы рассмотрим её в течение 24 часов.
             </ThemedText>
-
-            <Pressable
-              onPress={handleShareProfile}
-              style={[styles.blockButton, { borderColor: theme.border, marginBottom: Spacing.md }]}
-            >
-              <Feather name="send" size={18} color={theme.text} />
-              <ThemedText type="body" style={{ color: theme.text, fontWeight: "600", marginLeft: Spacing.sm }}>
-                Поделиться профилем
-              </ThemedText>
-            </Pressable>
 
             <TextInput
               value={reportReason}
@@ -570,15 +555,14 @@ const styles = StyleSheet.create({
   actionSheetOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: Spacing.xl,
+    justifyContent: "flex-end",
   },
   actionSheetContainer: {
     width: "100%",
-    borderRadius: BorderRadius.xl,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.sm,
-    overflow: "hidden",
+    paddingBottom: Spacing.xl,
   },
   actionSheetItem: {
     flexDirection: "row",
