@@ -123,11 +123,13 @@ function EmptyResults({ query, history, onClearHistory, onSelectHistory }: {
 }
 
 export default function UserSearchScreen({ navigation }: Props) {
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, language } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
   const [history, setHistory] = useState<User[]>([]);
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   useEffect(() => {
     loadHistory();

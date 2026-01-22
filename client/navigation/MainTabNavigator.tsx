@@ -124,7 +124,7 @@ function EditChatButton({ onPress }: { onPress: () => void }) {
 }
 
 export default function MainTabNavigator() {
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, language } = useTheme();
   const insets = useSafeAreaInsets();
   const [showPlus, setShowPlus] = useState(false);
 
@@ -177,7 +177,7 @@ export default function MainTabNavigator() {
           options={{
             headerTitle: () => (
               <HeaderTitle 
-                title="Moments" 
+                title={language === "ru" ? "Моменты" : "Moments"} 
                 onFadeComplete={() => setShowPlus(true)} 
               />
             ),
@@ -205,7 +205,7 @@ export default function MainTabNavigator() {
           name="ChatsTab"
           component={ChatsListScreen}
           options={{
-            headerTitle: "Чаты",
+            headerTitle: language === "ru" ? "Чаты" : "Chats",
             tabBarIcon: ({ color }) => (
               <Feather name="message-circle" size={22} color={color} />
             ),

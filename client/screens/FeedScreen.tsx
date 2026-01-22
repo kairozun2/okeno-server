@@ -314,9 +314,8 @@ export default function FeedScreen({ navigation }: Props) {
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: t("Moments", "Моменты"),
-    });
+    // We let MainTabNavigator handle the headerTitle with HeaderTitle component
+    // but we can still set headerLeft here if needed, or just let the navigator handle it.
   }, [navigation, language]);
   const [mapModalVisible, setMapModalVisible] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number, lng: number, name: string } | null>(null);

@@ -83,11 +83,13 @@ type Props = NativeStackScreenProps<RootStackParamList, "Comments">;
 
 export default function CommentsScreen({ route, navigation }: Props) {
   const { postId } = route.params;
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, language } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const { data: comments = [] } = useQuery<Comment[]>({
     queryKey: ["/api/posts", postId, "comments"],
@@ -135,7 +137,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
     >
       <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-          <ThemedText type="h3">Comments</ThemedText>
+          <ThemedText type="h3">{t("Comments", "Комментарии")}</ThemedText>
           <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
             <Feather name="x" size={24} color={theme.text} />
           </Pressable>
@@ -150,7 +152,14 @@ export default function CommentsScreen({ route, navigation }: Props) {
             styles.commentsList,
             comments.length === 0 && { flex: 1 },
           ]}
-          ListEmptyComponent={<EmptyComments />}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Feather name="message-square" size={40} color={theme.textSecondary} />
+              <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
+                {t("No comments yet", "Пока нет комментариев")}
+              </ThemedText>
+            </View>
+          }
           showsVerticalScrollIndicator={false}
         />
 
@@ -167,7 +176,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
                   backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
                 },
               ]}
-              placeholder="Comment..."
+              placeholder={t("Comment...", "Комментарий...")}
               placeholderTextColor={theme.textSecondary}
               value={comment}
               onChangeText={setComment}
@@ -185,7 +194,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
                   fontWeight: "600",
                 }}
               >
-                Send
+                {t("Send", "Отправить")}
               </ThemedText>
             </Pressable>
           </View>
