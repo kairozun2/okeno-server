@@ -118,7 +118,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       navigation.setOptions({
         headerRight: () => (
           <View style={{ flexDirection: "row", alignItems: "center", paddingRight: -8 }}>
-            {isArchived && (
+            {isArchived ? (
               <Pressable
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -137,7 +137,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               >
                 <Feather name="arrow-up" size={18} color="#FFF" />
               </Pressable>
-            )}
+            ) : null}
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
