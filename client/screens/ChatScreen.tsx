@@ -2,9 +2,9 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeInDown, useAnimatedStyle } from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -135,16 +135,6 @@ export default function ChatScreen({ route, navigation }: Props) {
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
-  const bottomPadding = insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl;
-  
-  const animatedContainerStyle = useAnimatedStyle(() => {
-    const kbHeight = -keyboardHeight.value;
-    return {
-      paddingBottom: Math.max(kbHeight, bottomPadding),
-    };
-  });
-
   const EmptyChatState = () => (
     <View style={styles.emptyContainer}>
       <Feather name="message-circle" size={40} color={theme.textSecondary} />
@@ -156,7 +146,11 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
-      <Animated.View style={[styles.container, animatedContainerStyle]}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior="padding"
+        keyboardVerticalOffset={0}
+      >
         <FlatList
           ref={flatListRef}
           data={sortedMessages}
@@ -174,7 +168,9 @@ export default function ChatScreen({ route, navigation }: Props) {
 
         <View
           style={{
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
             paddingTop: Spacing.sm,
+            backgroundColor: "transparent",
           }}
         >
           <View style={styles.inputWrapper}>
@@ -214,7 +210,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             </Pressable>
           </View>
         </View>
-      </Animated.View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -259,7 +255,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
     gap: Spacing.sm,
-    backgroundColor: "transparent",
   },
   input: {
     flex: 1,

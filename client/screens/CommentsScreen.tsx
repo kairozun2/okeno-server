@@ -129,6 +129,10 @@ export default function CommentsScreen({ route, navigation }: Props) {
     [navigation]
   );
 
+  const sortedComments = [...comments].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
       <KeyboardAvoidingView
@@ -137,9 +141,10 @@ export default function CommentsScreen({ route, navigation }: Props) {
         keyboardVerticalOffset={0}
       >
         <FlatList
-          data={comments}
+          data={sortedComments}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
+          inverted={comments.length > 0}
           contentContainerStyle={[
             styles.commentsList,
             { paddingTop: headerHeight + Spacing.md },
@@ -226,6 +231,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing["3xl"],
+    transform: [{ scaleY: -1 }],
   },
   inputWrapper: {
     flexDirection: "row",
