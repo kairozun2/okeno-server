@@ -441,6 +441,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { user1Id, user2Id } = req.body;
       
+      if (!user1Id || !user2Id) {
+        return res.status(400).json({ error: "Missing user IDs" });
+      }
+
       // Check if chat already exists
       const existingChat = await storage.getChatByUsers(user1Id, user2Id);
       if (existingChat) {

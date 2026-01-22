@@ -244,6 +244,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createChat(chat: InsertChat): Promise<Chat> {
+    console.log('Storage creating chat:', chat);
     const [newChat] = await db.insert(chats).values(chat).returning();
     return newChat;
   }

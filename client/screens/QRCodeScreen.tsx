@@ -44,6 +44,7 @@ export default function QRCodeScreen({ navigation }: Props) {
 
   const createChatMutation = useMutation({
     mutationFn: async (otherUserId: string) => {
+      console.log('Creating chat with:', { user1Id: user?.id, user2Id: otherUserId });
       const response = await apiRequest("POST", "/api/chats", {
         user1Id: user?.id,
         user2Id: otherUserId,
