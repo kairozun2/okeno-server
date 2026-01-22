@@ -279,47 +279,23 @@ function PostCard({
 
       {post.caption ? (
         <Pressable 
-          onPress={() => setShowCaptionModal(true)}
+          onPress={() => setSelectedMessage(post as any)}
           style={styles.captionContainer}
         >
           <ThemedText 
             type="small" 
-            style={{ color: theme.text }}
+            style={{ color: theme.text, flexShrink: 1 }}
             numberOfLines={1}
           >
-            {post.caption.length > 50 ? post.caption.substring(0, 50) + "..." : post.caption}
+            {post.caption}
           </ThemedText>
           {post.caption.length > 50 ? (
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
+            <ThemedText type="caption" style={{ color: theme.link, marginLeft: Spacing.xs, fontWeight: "600" }}>
               {t("more", "ещё")}
             </ThemedText>
           ) : null}
         </Pressable>
       ) : null}
-
-      <Modal
-        visible={showCaptionModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowCaptionModal(false)}
-      >
-        <Pressable 
-          style={styles.captionModalOverlay} 
-          onPress={() => setShowCaptionModal(false)}
-        >
-          <View style={[styles.captionModalContent, { backgroundColor: theme.cardBackground }]}>
-            <View style={styles.captionModalHeader}>
-              <ThemedText type="body" style={{ fontWeight: "600" }}>{t("Caption", "Описание")}</ThemedText>
-              <Pressable onPress={() => setShowCaptionModal(false)}>
-                <Feather name="x" size={24} color={theme.text} />
-              </Pressable>
-            </View>
-            <ThemedText type="body" style={{ color: theme.text, lineHeight: 22 }}>
-              {post.caption}
-            </ThemedText>
-          </View>
-        </Pressable>
-      </Modal>
     </Animated.View>
   );
 }
@@ -618,6 +594,27 @@ export default function FeedScreen({ navigation }: Props) {
                </ThemedText>
              )}
           </View>
+        </ThemedView>
+      </Modal>
+
+      <Modal
+        visible={!!selectedMessage}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSelectedMessage(null)}
+      >
+        <ThemedView style={{ flex: 1 }}>
+          <View style={[styles.modalHeader, { paddingTop: Spacing.md }]}>
+            <ThemedText type="h4">{t("Description", "Описание")}</ThemedText>
+            <Pressable onPress={() => setSelectedMessage(null)} style={styles.closeButton}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: Spacing.lg }}>
+            <ThemedText type="body" style={{ lineHeight: 24 }}>
+              {selectedMessage?.caption}
+            </ThemedText>
+          </ScrollView>
         </ThemedView>
       </Modal>
     </ThemedView>
