@@ -93,7 +93,6 @@ function MessageBubble({
       );
     }
 
-    let matchIndex = 0;
     return (
       <ThemedText
         type="body"
@@ -226,35 +225,33 @@ export default function ChatScreen({ route, navigation }: Props) {
     refetchInterval: 1500,
   });
 
-    const isOtherUserTyping = typingData?.isTyping || false;
+  const isOtherUserTyping = typingData?.isTyping || false;
 
-    // Send typing status when user types
-    const sendTypingStatus = useCallback(() => {
-        if (!user?.id) return;
-        
-        if (typingTimeoutRef.current) {
-            clearTimeout(typingTimeoutRef.current);
-        }
+  const sendTypingStatus = useCallback(() => {
+    if (!user?.id) return;
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
-        // Use a simple fetch with no-cache to be as fast as possible
-        fetch(new URL(`/api/chats/${chatId}/typing`, getApiUrl()).toString(), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user.id }),
-            credentials: "include"
-        }).catch(() => {});
+    fetch(new URL(`/api/chats/${chatId}/typing`, getApiUrl()).toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id }),
+      credentials: "include"
+    }).catch(() => {});
 
-        typingTimeoutRef.current = setTimeout(() => {
-            typingTimeoutRef.current = null;
-        }, 2000);
-    }, [chatId, user?.id]);
+    typingTimeoutRef.current = setTimeout(() => {
+      typingTimeoutRef.current = null;
+    }, 2000);
+  }, [chatId, user?.id]);
 
-    const handleTextChange = (text: string) => {
-        setMessage(text);
-        if (text.length > 0) {
-            sendTypingStatus();
-        }
-    };
+  const handleTextChange = (text: string) => {
+    setMessage(text);
+    if (text.length > 0) {
+      sendTypingStatus();
+    }
+  };
 
   const { data: chatSettings } = useQuery<ChatSettings | null>({
     queryKey: ["/api/users", user?.id, "chat-settings", otherUserId],
@@ -280,7 +277,6 @@ export default function ChatScreen({ route, navigation }: Props) {
         queryFn: async () => {
           const response = await apiRequest("GET", `/api/users/${otherUserId}`, null);
           const userData = await response.json();
-          // Update navigation params with actual data if we're on this screen
           navigation.setParams({
             otherUserName: userData.username,
             otherUserUsername: userData.username,
@@ -303,7 +299,6 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const displayName = chatSettings?.nickname || userData?.username || otherUserName || t("User", "Пользователь");
   const displayEmoji = userData?.emoji || otherUserEmoji || "🐸";
-  const displayUsername = userData?.username || otherUserUsername;
   const backgroundImage = chatSettings?.backgroundImage;
 
   const {
@@ -311,7 +306,6 @@ export default function ChatScreen({ route, navigation }: Props) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
   } = useInfiniteQuery({
     queryKey: ["/api/chats", chatId, "messages"],
     queryFn: async ({ pageParam = 0 }) => {
@@ -364,7 +358,6 @@ export default function ChatScreen({ route, navigation }: Props) {
         };
       });
 
-      // Play haptic feedback immediately for perceived speed
       if (hapticsEnabled) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
@@ -425,8 +418,6 @@ export default function ChatScreen({ route, navigation }: Props) {
     const content = message.trim();
     setMessage("");
     
-    // Add a tiny delay to allow the state to clear before mutation
-    // This helps with perceived smoothness on some devices
     requestAnimationFrame(() => {
       if (editingMessage) {
         editMutation.mutate({ messageId: editingMessage.id, content });
@@ -501,7 +492,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   );
 
   const chatContent = (
-    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundRoot, flex: 1 }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -648,20 +639,22 @@ export default function ChatScreen({ route, navigation }: Props) {
           animationType="fade"
           onRequestClose={() => setShowActionModal(false)}
         >
-          <Pressable style={styles.modalOverlay} onPress={() => setShowActionModal(false)}>
-            <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+          <Pressable 
+            style={styles.modalOverlay} 
+            onPress={() => setShowActionModal(false)}
+          >
+            <BlurView
+              intensity={20}
+              tint="dark"
+              style={StyleSheet.absoluteFill}
+            />
             <Animated.View 
               entering={FadeIn.duration(200)}
               style={[
                 styles.actionSheet, 
                 { 
-                  backgroundColor: "#1c1c1e",
-                  width: 250,
-                  borderRadius: 14,
-                  overflow: 'hidden',
-                  position: 'absolute',
-                  bottom: insets.bottom + 100,
-                  right: Spacing.xl,
+                  backgroundColor: isDark ? "rgba(28,28,30,0.95)" : "rgba(255,255,255,0.95)",
+                  bottom: insets.bottom + Spacing.xl,
                 }
               ]}
             >
@@ -669,16 +662,16 @@ export default function ChatScreen({ route, navigation }: Props) {
                 style={[styles.actionItem, { borderBottomColor: "rgba(255,255,255,0.1)" }]}
                 onPress={() => selectedMessage && handleReply(selectedMessage)}
               >
-                <ThemedText type="body" style={{ flex: 1, color: "#fff", fontSize: 17 }}>{t("Reply", "Ответить")}</ThemedText>
-                <Feather name="corner-up-left" size={20} color="#fff" />
+                <ThemedText type="body" style={{ flex: 1, color: isDark ? "#fff" : "#000", fontSize: 17 }}>{t("Reply", "Ответить")}</ThemedText>
+                <Feather name="corner-up-left" size={20} color={isDark ? "#fff" : "#000"} />
               </Pressable>
 
               <Pressable
                 style={[styles.actionItem, { borderBottomColor: "rgba(255,255,255,0.1)" }]}
                 onPress={() => selectedMessage && handleCopy(selectedMessage.content)}
               >
-                <ThemedText type="body" style={{ flex: 1, color: "#fff", fontSize: 17 }}>{t("Copy", "Скопировать")}</ThemedText>
-                <Feather name="copy" size={20} color="#fff" />
+                <ThemedText type="body" style={{ flex: 1, color: isDark ? "#fff" : "#000", fontSize: 17 }}>{t("Copy", "Скопировать")}</ThemedText>
+                <Feather name="copy" size={20} color={isDark ? "#fff" : "#000"} />
               </Pressable>
               
               {selectedMessage?.senderId === user?.id ? (
@@ -687,8 +680,8 @@ export default function ChatScreen({ route, navigation }: Props) {
                     style={[styles.actionItem, { borderBottomColor: "rgba(255,255,255,0.1)" }]}
                     onPress={() => selectedMessage && handleEdit(selectedMessage)}
                   >
-                    <ThemedText type="body" style={{ flex: 1, color: "#fff", fontSize: 17 }}>{t("Edit", "Изменить")}</ThemedText>
-                    <Feather name="edit-2" size={20} color="#fff" />
+                    <ThemedText type="body" style={{ flex: 1, color: isDark ? "#fff" : "#000", fontSize: 17 }}>{t("Edit", "Изменить")}</ThemedText>
+                    <Feather name="edit-2" size={20} color={isDark ? "#fff" : "#000"} />
                   </Pressable>
                   
                   <Pressable
@@ -704,6 +697,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           </Pressable>
         </Modal>
       </KeyboardAvoidingView>
+    </View>
   );
 
   return (
@@ -724,6 +718,9 @@ export default function ChatScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   header: {
     position: 'absolute',
     left: 0,
@@ -836,6 +833,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     width: 250,
     alignSelf: 'center',
+    position: 'absolute',
   },
   actionItem: {
     flexDirection: "row",
