@@ -82,8 +82,8 @@ function EmptyChat() {
 
 type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
-export default function ChatScreen({ route, navigation }: Props) {
-  const { chatId, otherUserName, otherUserEmoji } = route.params;
+export default function ChatScreen({ route }: Props) {
+  const { chatId } = route.params;
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
