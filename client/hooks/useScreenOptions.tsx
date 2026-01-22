@@ -56,7 +56,7 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
   const { theme, isDark } = useTheme();
 
   return {
-    presentation: "fullScreenModal",
+    presentation: "modal",
     headerTitleAlign: "center",
     headerTintColor: theme.text,
     headerTitleStyle: {
@@ -65,7 +65,7 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
     },
     headerTransparent: true,
     headerBlurEffect: Platform.OS === "ios"
-      ? (isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight")
+      ? (isDark ? "systemThinMaterialDark" : "systemThinMaterialLight")
       : undefined,
     headerStyle: {
       backgroundColor: "transparent",

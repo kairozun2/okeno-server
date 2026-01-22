@@ -169,7 +169,6 @@ export default function ChatScreen({ route, navigation }: Props) {
         <View
           style={{
             paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
-            backgroundColor: "transparent",
             paddingTop: Spacing.sm,
           }}
         >
