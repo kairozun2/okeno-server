@@ -241,37 +241,40 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     },
   });
 
-  if (!post || isArchived) {
-    if (isArchived) {
-      return (
-        <ThemedView style={[styles.container, styles.loadingContainer]}>
-          <Feather name="archive" size={48} color={theme.textSecondary} style={{ marginBottom: Spacing.md }} />
-          <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
-            Публикация в архиве
-          </ThemedText>
-          <Pressable
-            onPress={() => unarchiveMutation.mutate()}
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              backgroundColor: theme.cardBackground,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 1,
-              borderColor: theme.border,
-            }}
-          >
-            <Feather name="rotate-ccw" size={24} color={theme.link} />
-          </Pressable>
-        </ThemedView>
-      );
-    }
+  if (!post) {
     return (
       <ThemedView style={[styles.container, styles.loadingContainer]}>
         <ThemedText type="body" style={{ color: theme.textSecondary }}>
           Загрузка...
         </ThemedText>
+      </ThemedView>
+    );
+  }
+
+  if (isArchived) {
+    return (
+      <ThemedView style={[styles.container, styles.loadingContainer]}>
+        <Feather name="archive" size={48} color={theme.textSecondary} style={{ marginBottom: Spacing.md }} />
+        <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
+          Публикация в архиве
+        </ThemedText>
+        <Pressable
+          onPress={() => unarchiveMutation.mutate()}
+          style={({ pressed }) => ({
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            backgroundColor: theme.cardBackground,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: theme.border,
+            opacity: pressed ? 0.7 : 1,
+            transform: [{ scale: pressed ? 0.95 : 1 }]
+          })}
+        >
+          <Feather name="rotate-ccw" size={24} color={theme.link} />
+        </Pressable>
       </ThemedView>
     );
   }
