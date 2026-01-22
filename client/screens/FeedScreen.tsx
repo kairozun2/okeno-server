@@ -29,15 +29,6 @@ import type { CompositeScreenProps } from "@react-navigation/native";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { MainTabParamList } from "@/navigation/MainTabNavigator";
 
-// Conditionally import MapView to avoid web bundling issues
-let MapView: any;
-let Marker: any;
-if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  MapView = Maps.default;
-  Marker = Maps.Marker;
-}
-
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface Post {
@@ -307,32 +298,17 @@ export default function FeedScreen({ navigation }: Props) {
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
           </View>
-          {selectedLocation && Platform.OS !== 'web' ? (
-            <MapView
-              style={{ flex: 1 }}
-              initialRegion={{
-                latitude: selectedLocation.lat,
-                longitude: selectedLocation.lng,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-            >
-              <Marker
-                coordinate={{
-                  latitude: selectedLocation.lat,
-                  longitude: selectedLocation.lng,
-                }}
-                title={selectedLocation.name}
-              />
-            </MapView>
-          ) : (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl }}>
-               <Feather name="map" size={48} color={theme.textSecondary} />
-               <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: 'center' }}>
-                 Карты доступны только на мобильных устройствах. Откройте приложение в Expo Go.
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl }}>
+             <Feather name="map" size={48} color={theme.textSecondary} />
+             <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: 'center' }}>
+               Карты доступны в приложении Moments через Expo Go на вашем устройстве.
+             </ThemedText>
+             {selectedLocation && (
+               <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: 'center' }}>
+                 Координаты: {selectedLocation.lat.toFixed(4)}, {selectedLocation.lng.toFixed(4)}
                </ThemedText>
-            </View>
-          )}
+             )}
+          </View>
         </ThemedView>
       </Modal>
     </ThemedView>
