@@ -25,6 +25,7 @@ import AdminPanelScreen from "@/screens/AdminPanelScreen";
 import BlockedUsersScreen from "@/screens/BlockedUsersScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
@@ -112,7 +113,7 @@ function ChatHeaderTitle({ name, username, onPress, emoji, isVerified }: { name?
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const modalOptions = useModalScreenOptions();
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, chatFullscreen } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -141,9 +142,9 @@ export default function RootStackNavigator() {
                 />
               ),
               headerShown: false,
-              presentation: "modal",
-              animation: "slide_from_bottom",
-              gestureEnabled: false,
+              presentation: chatFullscreen ? "card" : "modal",
+              animation: chatFullscreen ? "default" : "slide_from_bottom",
+              gestureEnabled: chatFullscreen,
             })}
           />
           <Stack.Screen

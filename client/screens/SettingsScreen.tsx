@@ -99,7 +99,7 @@ function SettingRow({ item, isLast }: SettingRowProps) {
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 
 export default function SettingsScreen({ navigation }: Props) {
-  const { theme, accentColor, setAccentColor, language, setLanguage, hapticsEnabled, toggleHaptics } = useTheme();
+  const { theme, accentColor, setAccentColor, language, setLanguage, hapticsEnabled, toggleHaptics, chatFullscreen, toggleChatFullscreen } = useTheme();
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -258,6 +258,17 @@ export default function SettingsScreen({ navigation }: Props) {
           title: t("App Color", "Цвет приложения"),
           subtitle: ACCENT_COLORS.find(c => c.color === (accentColor || "#5C7A5C"))?.name || t("Default", "По умолчанию"),
           onPress: () => setShowColorPicker(true),
+        },
+        {
+          icon: chatFullscreen ? "maximize-2" : "minimize-2",
+          title: t("Chat Display", "Вид чата"),
+          subtitle: chatFullscreen ? t("Full screen", "Во весь экран") : t("Modal window", "Модальное окно"),
+          onPress: async () => {
+            await toggleChatFullscreen();
+            if (hapticsEnabled) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }
+          },
         },
       ],
     },

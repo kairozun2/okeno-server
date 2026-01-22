@@ -9,9 +9,11 @@ type ThemeContextType = {
   accentColor: string | null;
   language: "en" | "ru";
   hapticsEnabled: boolean;
+  chatFullscreen: boolean;
   setAccentColor: (color: string | null) => Promise<void>;
   setLanguage: (lang: "en" | "ru") => Promise<void>;
   toggleHaptics: () => Promise<void>;
+  toggleChatFullscreen: () => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -19,25 +21,29 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_ACCENT_KEY = "theme_accent_color";
 const THEME_LANGUAGE_KEY = "theme_language";
 const THEME_HAPTICS_KEY = "theme_haptics_enabled";
+const THEME_CHAT_FULLSCREEN_KEY = "theme_chat_fullscreen";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const colorScheme = useColorScheme();
   const [accentColor, setAccentState] = useState<string | null>(null);
   const [language, setLanguageState] = useState<"en" | "ru">("ru");
   const [hapticsEnabled, setHapticsEnabled] = useState<boolean>(true);
+  const [chatFullscreen, setChatFullscreen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadSettings() {
       try {
-        const [savedAccent, savedLang, savedHaptics] = await Promise.all([
+        const [savedAccent, savedLang, savedHaptics, savedChatFullscreen] = await Promise.all([
           AsyncStorage.getItem(THEME_ACCENT_KEY),
           AsyncStorage.getItem(THEME_LANGUAGE_KEY),
           AsyncStorage.getItem(THEME_HAPTICS_KEY),
+          AsyncStorage.getItem(THEME_CHAT_FULLSCREEN_KEY),
         ]);
         if (savedAccent) setAccentState(savedAccent);
         if (savedLang) setLanguageState(savedLang as "en" | "ru");
         if (savedHaptics !== null) setHapticsEnabled(savedHaptics === "true");
+        if (savedChatFullscreen !== null) setChatFullscreen(savedChatFullscreen === "true");
       } catch {
         // Silent fail - use defaults
       } finally {
@@ -79,6 +85,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const toggleChatFullscreen = async () => {
+    try {
+      const newState = !chatFullscreen;
+      await AsyncStorage.setItem(THEME_CHAT_FULLSCREEN_KEY, newState.toString());
+      setChatFullscreen(newState);
+    } catch {
+      // Silent fail
+    }
+  };
+
   const isDark = colorScheme === "dark";
   const baseTheme = Colors[colorScheme ?? "light"];
 
@@ -112,7 +128,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   if (isLoading) return null;
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, hapticsEnabled, setAccentColor, setLanguage, toggleHaptics }}>
+    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, hapticsEnabled, chatFullscreen, setAccentColor, setLanguage, toggleHaptics, toggleChatFullscreen }}>
       {children}
     </ThemeContext.Provider>
   );

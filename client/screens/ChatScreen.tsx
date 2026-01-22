@@ -184,7 +184,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
 export default function ChatScreen({ route, navigation }: Props) {
   const { chatId, otherUserName, otherUserUsername, otherUserEmoji, otherUserId } = route.params;
-  const { theme, isDark, language, hapticsEnabled } = useTheme();
+  const { theme, isDark, language, hapticsEnabled, chatFullscreen } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -512,7 +512,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 45 : 0}
     >
-        <View style={[styles.header, { top: Spacing.sm }]}>
+        <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
             onPress={() => navigation.goBack()}
             style={styles.headerButton}
@@ -524,7 +524,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                 style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
               />
             )}
-            <Feather name="x" size={20} color={theme.text} />
+            <Feather name={chatFullscreen ? "arrow-left" : "x"} size={20} color={theme.text} />
           </Pressable>
 
           <Pressable
@@ -538,18 +538,16 @@ export default function ChatScreen({ route, navigation }: Props) {
                 style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
               />
             )}
-            <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end', justifyContent: 'center' }}>
+            <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end' }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
                 {userData?.isVerified ? <VerifiedBadge size={14} /> : null}
               </View>
-              <View style={{ height: 12 }}>
-                {isOtherUserTyping ? (
-                  <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut.duration(400)}>
-                    <ThemedText type="caption" style={{ color: theme.link, fontSize: 10, lineHeight: 12 }}>{t("typing...", "печатает...")}</ThemedText>
-                  </Animated.View>
-                ) : null}
-              </View>
+              {isOtherUserTyping ? (
+                <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)}>
+                  <ThemedText type="caption" style={{ color: theme.link, fontSize: 10 }}>{t("typing...", "печатает...")}</ThemedText>
+                </Animated.View>
+              ) : null}
             </View>
             <Avatar emoji={displayEmoji} size={32} />
           </Pressable>
