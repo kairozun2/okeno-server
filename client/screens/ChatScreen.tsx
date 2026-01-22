@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -7,7 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -27,6 +27,14 @@ interface Message {
   content: string;
   createdAt: string;
   isRead: boolean;
+}
+
+interface ChatSettings {
+  id: string;
+  userId: string;
+  otherUserId: string;
+  nickname: string | null;
+  backgroundImage: string | null;
 }
 
 function MessageBubble({
@@ -78,6 +86,14 @@ export default function ChatScreen({ route, navigation }: Props) {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const flatListRef = useRef<FlatList>(null);
+
+  const { data: chatSettings } = useQuery<ChatSettings | null>({
+    queryKey: ["/api/users", user?.id, "chat-settings", otherUserId],
+    enabled: !!user?.id && !!otherUserId,
+  });
+
+  const displayName = chatSettings?.nickname || otherUserName || "Пользователь";
+  const backgroundImage = chatSettings?.backgroundImage;
 
   const {
     data,
@@ -147,13 +163,12 @@ export default function ChatScreen({ route, navigation }: Props) {
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  return (
-    <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
-      >
+  const chatContent = (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
+    >
         <View style={[styles.header, { top: Spacing.sm }]}>
           <Pressable
             onPress={() => navigation.goBack()}
@@ -181,7 +196,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               />
             )}
             <View style={{ marginRight: Spacing.sm }}>
-              <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{otherUserName || "Пользователь"}</ThemedText>
+              <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
               {otherUserUsername ? <ThemedText type="caption" style={{ opacity: 0.6 }} truncate maxLength={15}>@{otherUserUsername}</ThemedText> : null}
             </View>
             <Avatar emoji={otherUserEmoji || "🐸"} size={32} />
@@ -264,6 +279,21 @@ export default function ChatScreen({ route, navigation }: Props) {
           <View style={{ height: insets.bottom > 0 ? insets.bottom : Spacing.md }} />
         </View>
       </KeyboardAvoidingView>
+  );
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
+      {backgroundImage ? (
+        <ImageBackground
+          source={{ uri: backgroundImage }}
+          style={{ flex: 1 }}
+          resizeMode="cover"
+        >
+          {chatContent}
+        </ImageBackground>
+      ) : (
+        chatContent
+      )}
     </View>
   );
 }
