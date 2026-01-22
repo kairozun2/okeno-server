@@ -86,13 +86,15 @@ function ChatItem({
         <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
         <View style={styles.chatInfo}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <View style={{ flexDirection: "row", alignItems: "center", flex: 1, marginRight: Spacing.sm }}>
-              <ThemedText type="body" style={[styles.chatName, { flexShrink: 1 }]} truncate maxLength={12}>
-                {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
-              </ThemedText>
-              {chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
+            <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1, flexGrow: 1 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1 }}>
+                <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
+                  {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
+                </ThemedText>
+                {chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
+              </View>
             </View>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, flexShrink: 0 }}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, flexShrink: 0, marginLeft: Spacing.xs }}>
               {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: enUS })}
             </ThemedText>
           </View>
