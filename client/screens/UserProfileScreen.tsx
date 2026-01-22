@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useLayoutEffect } from "react";
-import { View, StyleSheet, RefreshControl, Pressable, Dimensions, Alert, FlatList } from "react-native";
+import { Share, View, StyleSheet, RefreshControl, Pressable, Dimensions, Alert, FlatList } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -157,6 +157,19 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     );
   };
 
+  const handleShareProfile = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const shareUrl = `https://${process.env.EXPO_PUBLIC_DOMAIN}/user/${userId}`;
+      await Share.share({
+        message: `Посмотри профиль ${profileUser?.username} в приложении Moments: ${shareUrl}`,
+        url: shareUrl,
+      });
+    } catch (error) {
+      console.error("Error sharing profile:", error);
+    }
+  };
+
   const renderHeader = () => {
     if (isUserLoading && !profileUser) {
       return (
@@ -188,8 +201,23 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             <Button onPress={handleMessage} style={styles.messageButton}>
               Написать
             </Button>
+            <Pressable 
+              onPress={handleShareProfile}
+              style={[styles.hideButton, { backgroundColor: theme.backgroundSecondary }]}
+            >
+              <Feather name="send" size={20} color={theme.text} />
+            </Pressable>
           </View>
-        ) : null}
+        ) : (
+          <View style={styles.actions}>
+            <Pressable 
+              onPress={handleShareProfile}
+              style={[styles.hideButton, { backgroundColor: theme.backgroundSecondary }]}
+            >
+              <Feather name="send" size={20} color={theme.text} />
+            </Pressable>
+          </View>
+        )}
       </Animated.View>
     );
   };
