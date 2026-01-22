@@ -82,7 +82,7 @@ function ChatItem({
           <View style={styles.chatHeader}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
               <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
-                {chat.otherUser?.username || "Пользователь"}
+                {allChatSettings.find(s => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "Пользователь"}
               </ThemedText>
               <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={15}>
                 @{chat.otherUser?.username || "user"}
@@ -308,9 +308,7 @@ export default function ChatsListScreen({ navigation }: Props) {
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.md }]}>
-            <Pressable onPress={handleCloseModal} style={styles.modalHeaderButton}>
-              <Feather name="x" size={24} color={theme.text} />
-            </Pressable>
+            <View style={styles.modalHeaderButton} />
             <ThemedText type="h3" style={styles.modalTitle}>
               {selectedChat ? "Настройки чата" : "Выберите чат"}
             </ThemedText>
@@ -323,7 +321,9 @@ export default function ChatsListScreen({ navigation }: Props) {
                 <Feather name="check" size={24} color={theme.link} />
               </Pressable>
             ) : (
-              <View style={styles.modalHeaderButton} />
+              <Pressable onPress={handleCloseModal} style={styles.modalHeaderButton}>
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
             )}
           </View>
 
@@ -401,26 +401,6 @@ export default function ChatsListScreen({ navigation }: Props) {
                 />
                 <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
                   Этот никнейм виден только вам
-                </ThemedText>
-              </View>
-
-              <View style={styles.settingSection}>
-                <View style={styles.toggleRow}>
-                  <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary, marginBottom: 0 }]}>
-                    Видно обоим пользователям
-                  </ThemedText>
-                  <Pressable
-                    onPress={() => setIsGlobal(!isGlobal)}
-                    style={[
-                      styles.toggle,
-                      { backgroundColor: isGlobal ? theme.link : theme.backgroundSecondary }
-                    ]}
-                  >
-                    <View style={[styles.toggleThumb, isGlobal && { transform: [{ translateX: 14 }] }]} />
-                  </Pressable>
-                </View>
-                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
-                  Если включено, другой пользователь тоже увидит этот фон и ваш никнейм для него
                 </ThemedText>
               </View>
 
