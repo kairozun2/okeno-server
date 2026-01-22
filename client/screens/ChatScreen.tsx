@@ -200,7 +200,8 @@ function MessageBubble({
               styles.reactionsBadge,
               { 
                 backgroundColor: 'transparent',
-                left: isOwn ? -15 : 10,
+                right: isOwn ? 10 : undefined,
+                left: !isOwn ? 10 : undefined,
               }
             ]}>
               {(message as any).reactions.map((r: any, idx: number) => (
@@ -313,10 +314,32 @@ export default function ChatScreen({ route, navigation }: Props) {
       };
     });
 
+    // Schedule removal after 5 seconds
+    setTimeout(() => {
+      queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: Message[]) =>
+            page.map((msg: Message) => {
+              if (msg.id === selectedMessage.id) {
+                const currentReactions = (msg as any).reactions || [];
+                return {
+                  ...msg,
+                  reactions: currentReactions.filter((r: any) => !(r.emoji === emoji && r.userId === user?.id))
+                };
+              }
+              return msg;
+            })
+          ),
+        };
+      });
+    }, 5000);
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     closeEmojiPicker();
     setShowActionModal(false);
-    setSelectedMessage(null); // Clear selection to fix scrolling issues
+    setSelectedMessage(null);
   }, [selectedMessage, closeEmojiPicker, chatId, user?.id, queryClient]);
 
   const emojiPickerStyle = useAnimatedStyle(() => ({
@@ -566,6 +589,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     setReplyTo(msg);
     setEditingMessage(null);
     setShowActionModal(false);
+    setSelectedMessage(null); // Clear selection
   };
 
   const handleEdit = (msg: Message) => {
@@ -573,11 +597,13 @@ export default function ChatScreen({ route, navigation }: Props) {
     setMessage(msg.content);
     setReplyTo(null);
     setShowActionModal(false);
+    setSelectedMessage(null); // Clear selection
   };
 
   const handleDelete = (msg: Message) => {
     deleteMutation.mutate(msg.id);
     setShowActionModal(false);
+    setSelectedMessage(null); // Clear selection
   };
 
   const cancelReplyOrEdit = () => {
