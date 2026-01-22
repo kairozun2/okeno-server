@@ -1,0 +1,175 @@
+Ключевые слова:
+1. НЕ используйте стандартный iOS Blur в качестве основного фонового модалки.
+
+// ❌ НЕПРАВИЛЬНО - весь экран в BlurView
+<BlurView style={{ flex: 1 }}>
+  <Content />
+</BlurView>
+
+// ✅ ПРАВИЛЬНО - обычный View как фон, BlurView только для кнопок/элементов
+<View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+  <Content />
+</View>
+2. Конфигурация _layout.tsx:
+
+<Stack.Screen 
+  name="chat" 
+  options={{ 
+    presentation: 'modal', 
+    animation: 'slide_from_bottom', 
+    gestureEnabled: false,  // Отключи для чата!
+    animationDuration: 300,
+    gestureDirection: 'vertical' 
+  }} 
+/>
+
+<Stack.Screen 
+  name="comments" 
+  options={{ 
+    presentation: 'modal', 
+    animation: 'slide_from_bottom', 
+    gestureEnabled: true, 
+    animationDuration: 300 
+  }} 
+/>
+3. Структура модалки чата:
+
+<View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+  {/* Градиент сверху - чтобы сообщения красиво скрывались */}
+  <LinearGradient
+    colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.2)', 'transparent']}
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: insets.top + 120,
+      zIndex: 99,
+      pointerEvents: 'none',
+    }}
+  />
+
+  <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
+  >
+    {/* Плавающие кнопки в хедере */}
+    <View style={{
+      position: 'absolute',
+      top: insets.top - 20,
+      left: 0,
+      right: 0,
+      zIndex: 100,
+      paddingHorizontal: 16,
+    }}>
+      {/* Кнопки с локальным блюром */}
+      <Pressable style={{
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        backgroundColor: `${theme.colors.primaryLight}E0`,
+        borderWidth: 1,
+        borderColor: `${theme.colors.text}10`,
+      }}>
+        {Platform.OS === 'ios' && (
+          <BlurView
+            intensity={30}
+            tint="dark"
+            style={{
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              borderRadius: 20,
+              overflow: 'hidden',
+            }}
+          />
+        )}
+        <Text>Имя</Text>
+      </Pressable>
+    </View>
+
+    {/* Список сообщений */}
+    <FlatList
+      data={messages}
+      inverted  // ВАЖНО! Сообщения идут снизу вверх
+      keyboardDismissMode="interactive"
+      contentContainerStyle={{ 
+        paddingTop: 8, 
+        paddingBottom: insets.top + 100 
+      }}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      windowSize={21}
+    />
+
+    {/* Инпут снизу */}
+    <View style={{ backgroundColor: theme.colors.background }}>
+      ...
+    </View>
+  </KeyboardAvoidingView>
+</View>
+4. Структура модалки комментариев (подробнее):
+
+<KeyboardAvoidingView
+  style={{ flex: 1 }}
+  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
+  style={{ backgroundColor: theme.colors.background }}
+>
+  <LinearGradient
+    colors={[theme.colors.primaryLight, theme.colors.primaryLight, theme.colors.primaryDark]}
+    locations={[0, 0.7, 1]}
+    style={{ flex: 1 }}
+  >
+    {/* Хедер */}
+    <View style={{ paddingTop: insets.top + 8 }}>
+      <Text>Комментарии</Text>
+      <Pressable onPress={router.back}>
+        <X />
+      </Pressable>
+    </View>
+
+    {/* Список (НЕ inverted) */}
+    <FlatList
+      data={comments}
+      keyboardDismissMode="interactive"
+    />
+
+    {/* Инпут */}
+    <View style={{ paddingBottom: insets.bottom || 20 }}>
+      ...
+    </View>
+  </LinearGradient>
+</KeyboardAvoidingView>
+5. Основные особенности чата и комментариев:
+
+Чат	Комментарии
+FlatList	inverted={true}	обычный
+gestureEnabled	false	true
+Хедер	плавающий абсолют	обычный статический
+бек	сплошной + градиентное наложение	LinearGradient на всем экране
+6. BlurView — только для маленьких элементов:
+
+// ✅ Используй только для кнопок, меню, контекстных окон
+<Pressable style={{ borderRadius: 20 }}>
+  {Platform.OS === 'ios' && (
+    <BlurView
+      intensity={30}  // НЕ больше 40!
+      tint="dark"
+      style={{
+        position: 'absolute',
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 20,
+        overflow: 'hidden',  // ОБЯЗАТЕЛЬНО!
+      }}
+    />
+  )}
+  <Content />
+</Pressable>
+7. Провайдеры в корневых приложениях:
+
+<GestureHandlerRootView style={{ flex: 1 }}>
+  <KeyboardProvider>
+    <AppContent />
+  </KeyboardProvider>
+</GestureHandlerRootView>

@@ -117,33 +117,22 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Chat"
             component={ChatScreen}
-            options={({ route, navigation }) => ({
-              ...modalOptions,
-              headerTitle: () => (
-                <ChatHeaderTitle 
-                  name={route.params?.otherUserName}
-                  username={route.params?.otherUserUsername}
-                  emoji={route.params?.otherUserEmoji}
-                  onPress={() => {
-                    if (route.params?.otherUserId) {
-                      navigation.navigate("UserProfile", { userId: route.params.otherUserId });
-                    }
-                  }}
-                />
-              ),
-              headerRight: () => null,
-              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
               gestureEnabled: false,
-            })}
+            }}
           />
           <Stack.Screen
             name="Comments"
             component={CommentsScreen}
-            options={({ navigation }) => ({
-              ...modalOptions,
-              headerTitle: "Комментарии",
-              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
-            })}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+              gestureEnabled: true,
+            }}
           />
           <Stack.Screen
             name="Settings"
