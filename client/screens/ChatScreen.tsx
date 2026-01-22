@@ -76,6 +76,7 @@ function MessageBubble({
 
   const gesture = Gesture.Pan()
     .activeOffsetX(isOwn ? [-10, 0] : [0, 10]) // Swipe left for own, right for others
+    .failOffsetY([-10, 10]) // Fail gesture if vertical movement is detected to prevent scroll conflict
     .onUpdate((event) => {
       const translation = event.translationX;
       if (isOwn) {
@@ -162,7 +163,7 @@ function MessageBubble({
 
   return (
     <GestureDetector gesture={gesture}>
-      <Animated.View style={[{ zIndex: isSelected ? 1001 : 1 }, animatedStyle]}>
+      <Animated.View style={[{ zIndex: isSelected ? 1001 : 1, width: '100%' }, animatedStyle]}>
         <Pressable 
           onLongPress={() => onLongPress(message)}
           delayLongPress={150}
