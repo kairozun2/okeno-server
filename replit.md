@@ -33,13 +33,24 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Models
 Core entities defined in Drizzle schema:
-- **Users**: username, 4-digit PIN, emoji avatar
+- **Users**: username, 4-digit PIN, emoji avatar, isAdmin, isVerified, isBanned
 - **Posts**: image URL, optional location data (name, lat/long)
 - **Likes/Saves**: user-post relationships
 - **Comments**: text content on posts
 - **Chats/Messages**: direct messaging between users
 - **Sessions**: device-based auth sessions
 - **Notifications**: activity alerts
+
+### Admin System
+- Main admin: User ID `36277fd7-5211-4715-9411-4401ea120d88`
+- Admin panel accessible via shield icon in profile header (only visible to admins)
+- Admins can: ban/unban users, verify/unverify users, grant/revoke admin rights
+- Verified users display a blue checkmark badge next to their username
+
+**Emergency Admin SQL** (run in database console if needed):
+```sql
+UPDATE users SET is_admin = true, is_verified = true WHERE id = 'USER_ID_HERE';
+```
 
 ### Authentication Flow
 1. Register with username + 4-digit PIN → server assigns random emoji
