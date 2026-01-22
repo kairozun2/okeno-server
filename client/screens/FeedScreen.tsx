@@ -397,7 +397,10 @@ export default function FeedScreen({ navigation }: Props) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const posts = useMemo(() => data?.pages.flat() || [], [data]);
+  const posts = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flat().filter(post => post !== null);
+  }, [data]);
 
   const likeMutation = useMutation({
     mutationFn: async ({ postId, isLiked }: { postId: string; isLiked: boolean }) => {

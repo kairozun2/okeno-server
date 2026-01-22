@@ -58,12 +58,19 @@ function MessageBubble({
   const { theme } = useTheme();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
-  const handleUrlPress = useCallback((url: string) => {
-    let supportedUrl = url;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      supportedUrl = `https://${url}`;
+  const handleUrlPress = useCallback(async (url: string) => {
+    try {
+      let supportedUrl = url;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        supportedUrl = `https://${url}`;
+      }
+      const supported = await Linking.canOpenURL(supportedUrl);
+      if (supported) {
+        await Linking.openURL(supportedUrl);
+      }
+    } catch (err) {
+      console.error("Couldn't load page", err);
     }
-    Linking.openURL(supportedUrl).catch(err => console.error("Couldn't load page", err));
   }, []);
 
   const renderContent = (content: string, isOwn: boolean) => {
