@@ -11,7 +11,7 @@ import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getApiUrl } from "@/lib/query-client";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -40,10 +40,12 @@ export default function AdminPanelScreen({ navigation }: Props) {
   const { data: users = [], isLoading, refetch } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""}/api/admin/users`, {
+      const url = new URL("/api/admin/users", getApiUrl());
+      const response = await fetch(url.toString(), {
         headers: {
           "x-user-id": user?.id || "",
         },
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to fetch users");
       return response.json();
@@ -53,13 +55,15 @@ export default function AdminPanelScreen({ navigation }: Props) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ userId, action, value }: { userId: string; action: "admin" | "verify" | "ban"; value: boolean }) => {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""}/api/admin/users/${userId}/${action}`, {
+      const url = new URL(`/api/admin/users/${userId}/${action}`, getApiUrl());
+      const response = await fetch(url.toString(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-user-id": user?.id || "",
         },
         body: JSON.stringify({ value }),
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to update user");
       return response.json();
