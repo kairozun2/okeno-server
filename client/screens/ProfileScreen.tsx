@@ -222,7 +222,7 @@ export default function ProfileScreen({ navigation }: Props) {
               onPress={() => navigation.navigate("QRCode")}
               style={styles.headerIconButton}
             >
-              <Feather name="maximize" size={20} color={theme.text} />
+              <Feather name="aperture" size={20} color={theme.text} />
             </Pressable>
             <Pressable
               onPress={() => navigation.navigate("Settings")}
