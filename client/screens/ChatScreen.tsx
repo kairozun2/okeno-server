@@ -184,7 +184,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
 export default function ChatScreen({ route, navigation }: Props) {
   const { chatId, otherUserName, otherUserUsername, otherUserEmoji, otherUserId } = route.params;
-  const { theme, isDark, language } = useTheme();
+  const { theme, isDark, language, hapticsEnabled } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -218,6 +218,10 @@ export default function ChatScreen({ route, navigation }: Props) {
     const sendTypingStatus = useCallback(() => {
         if (!user?.id) return;
         
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+
         // Use a simple fetch with no-cache to be as fast as possible
         fetch(new URL(`/api/chats/${chatId}/typing`, getApiUrl()).toString(), {
             method: "POST",
@@ -225,6 +229,10 @@ export default function ChatScreen({ route, navigation }: Props) {
             body: JSON.stringify({ userId: user.id }),
             credentials: "include"
         }).catch(() => {});
+
+        typingTimeoutRef.current = setTimeout(() => {
+            typingTimeoutRef.current = null;
+        }, 2000);
     }, [chatId, user?.id]);
 
     const handleTextChange = (text: string) => {
@@ -336,11 +344,9 @@ export default function ChatScreen({ route, navigation }: Props) {
 
       queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
         if (!oldData) return { pages: [[optimisticMessage]], pageParams: [0] };
-        const newPages = [...oldData.pages];
-        newPages[0] = [optimisticMessage, ...newPages[0]];
         return {
           ...oldData,
-          pages: newPages,
+          pages: [[optimisticMessage, ...oldData.pages[0]], ...oldData.pages.slice(1)],
         };
       });
 
