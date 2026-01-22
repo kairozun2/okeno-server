@@ -523,9 +523,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       queryClient.setQueryData(["/api/chats", chatId, "messages"], context?.previousMessages);
     },
     onSettled: () => {
-      // Don't invalidate immediately if we want to keep optimistic state longer
-      // or ensure the server actually supports reactions in the schema
-      // For now, let's keep it and ensure we're not clearing it accidentally
+      queryClient.invalidateQueries({ queryKey: ["/api/chats", chatId, "messages"] });
     },
   });
 
@@ -675,12 +673,12 @@ export default function ChatScreen({ route, navigation }: Props) {
             <Feather name={chatFullscreen ? "arrow-left" : "x"} size={20} color={theme.text} />
           </Pressable>
 
-          <View style={styles.headerCenter} pointerEvents="none">
+          <View style={[styles.headerCenter, { backgroundColor: 'transparent' }]} pointerEvents="none">
             {isOtherUserTyping ? (
               <Animated.View 
                 entering={FadeIn.duration(400)} 
                 exiting={FadeOut.duration(400)}
-                style={styles.typingIndicator}
+                style={[styles.typingIndicator, { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 20 }]}
               >
                 <ThemedText type="caption" style={{ color: theme.link, fontSize: 13, fontWeight: "700" }}>
                   {t("typing...", "печатает...")}
@@ -895,11 +893,11 @@ export default function ChatScreen({ route, navigation }: Props) {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#000', overflow: 'hidden' }}>
+    <View style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff', overflow: 'hidden' }}>
       {backgroundImage ? (
         <ImageBackground
           source={{ uri: getDirectLink(backgroundImage) }}
-          style={{ flex: 1, backgroundColor: '#000' }}
+          style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff' }}
           resizeMode="cover"
         >
           {chatContent}
@@ -914,6 +912,7 @@ export default function ChatScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   header: {
     position: 'absolute',
