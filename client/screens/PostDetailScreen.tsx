@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -85,6 +85,37 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   });
 
   const isOwner = currentUser?.id === post?.userId;
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editedCaption, setEditedCaption] = useState("");
+
+  const editMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const response = await apiRequest("PATCH", `/api/posts/${postId}`, {
+        caption: content,
+        userId: currentUser?.id,
+      });
+      return response.json();
+    },
+    onSuccess: (updatedPost) => {
+      queryClient.setQueryData(["/api/posts", postId], updatedPost);
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowEditModal(false);
+    },
+    onError: () => {
+      Alert.alert(t("Error", "Ошибка"), t("Failed to update post", "Не удалось обновить пост"));
+    },
+  });
+
+  const handleEdit = () => {
+    setEditedCaption(post?.caption || "");
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = () => {
+    editMutation.mutate(editedCaption.trim());
+  };
 
   const { data: archivedData } = useQuery<string[]>({
     queryKey: ["/api/users", currentUser?.id, "archived"],
@@ -178,7 +209,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigation.navigate("EditPost", { postId });
+                handleEdit();
               }}
               style={{
                 width: 32,
@@ -341,112 +372,158 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={{
-          paddingTop: Spacing.lg,
-          paddingBottom: insets.bottom + Spacing.xl,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <Image
-          source={{ uri: post.imageUrl }}
-          style={styles.image}
-          contentFit="cover"
-          transition={200}
-        />
+    <>
+      <ThemedView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={{
+            paddingTop: Spacing.lg,
+            paddingBottom: insets.bottom + Spacing.xl,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Image
+            source={{ uri: post.imageUrl }}
+            style={styles.image}
+            contentFit="cover"
+            transition={200}
+          />
 
-        <Animated.View entering={FadeIn} style={styles.content}>
-          <View style={styles.userRow}>
-            <Pressable
-              onPress={() => navigation.navigate("UserProfile", { userId: post.userId })}
-              style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
-            >
-              <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
-              <View style={styles.userInfo}>
-                <ThemedText type="body" style={styles.username} truncate maxLength={15}>
-                  {postUser?.username || t("User", "Пользователь")}
-                </ThemedText>
-                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  {formattedDate}
+          <Animated.View entering={FadeIn} style={styles.content}>
+            <View style={styles.userRow}>
+              <Pressable
+                onPress={() => navigation.navigate("UserProfile", { userId: post.userId })}
+                style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+              >
+                <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
+                <View style={styles.userInfo}>
+                  <ThemedText type="body" style={styles.username} truncate maxLength={15}>
+                    {postUser?.username || t("User", "Пользователь")}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    {formattedDate}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            </View>
+
+            {post.location ? (
+              <View style={styles.locationRow}>
+                <Feather name="map-pin" size={14} color={theme.textSecondary} />
+                <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
+                  {post.location}
                 </ThemedText>
               </View>
-            </Pressable>
-          </View>
+            ) : null}
 
-          {post.location ? (
-            <View style={styles.locationRow}>
-              <Feather name="map-pin" size={14} color={theme.textSecondary} />
-              <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
-                {post.location}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          {post.caption ? (
-            <View style={styles.captionRow}>
-              <ThemedText type="body" style={{ color: theme.text, lineHeight: 22 }}>
-                {post.caption}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          <View style={styles.actions}>
-            <AnimatedPressable onPress={handleLike} style={[styles.actionButton, likeAnimatedStyle]}>
-              <Feather
-                name="heart"
-                size={24}
-                color={likedData?.liked ? theme.error : theme.textSecondary}
-              />
-              {likesData && likesData.count > 0 ? (
-                <ThemedText type="small" style={[styles.actionCount, { color: theme.textSecondary }]}>
-                  {likesData.count}
+            {post.caption ? (
+              <View style={styles.captionRow}>
+                <ThemedText type="body" style={{ color: theme.text, lineHeight: 22 }}>
+                  {post.caption}
                 </ThemedText>
-              ) : null}
-            </AnimatedPressable>
+              </View>
+            ) : null}
 
-            {!isOwner && (
-              <Pressable
-                onPress={() => navigation.navigate("Comments", { postId })}
-                style={styles.actionButton}
-              >
-                <Feather name="message-circle" size={24} color={theme.textSecondary} />
-                {commentsData && commentsData.count > 0 ? (
+            <View style={styles.actions}>
+              <AnimatedPressable onPress={handleLike} style={[styles.actionButton, likeAnimatedStyle]}>
+                <Feather
+                  name="heart"
+                  size={24}
+                  color={likedData?.liked ? theme.error : theme.textSecondary}
+                />
+                {likesData && likesData.count > 0 ? (
                   <ThemedText type="small" style={[styles.actionCount, { color: theme.textSecondary }]}>
-                    {commentsData.count}
+                    {likesData.count}
                   </ThemedText>
                 ) : null}
+              </AnimatedPressable>
+
+              {!isOwner && (
+                <Pressable
+                  onPress={() => navigation.navigate("Comments", { postId })}
+                  style={styles.actionButton}
+                >
+                  <Feather name="message-circle" size={24} color={theme.textSecondary} />
+                  {commentsData && commentsData.count > 0 ? (
+                    <ThemedText type="small" style={[styles.actionCount, { color: theme.textSecondary }]}>
+                      {commentsData.count}
+                    </ThemedText>
+                  ) : null}
+                </Pressable>
+              )}
+
+              <View style={{ flex: 1 }} />
+
+              <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle]}>
+                <Feather
+                  name="bookmark"
+                  size={24}
+                  color={savedData?.saved ? theme.link : theme.textSecondary}
+                />
+              </AnimatedPressable>
+            </View>
+
+            <Pressable
+              onPress={() => navigation.navigate("Comments", { postId })}
+              style={[styles.viewCommentsButton, { backgroundColor: theme.cardBackground }]}
+            >
+              <Feather name="message-square" size={16} color={theme.textSecondary} />
+              <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>
+                {t("Comments", "Комментарии")}
+              </ThemedText>
+              <View style={{ flex: 1 }} />
+              <ThemedText type="small" style={{ color: theme.textSecondary, marginRight: Spacing.xs }}>
+                {commentsData?.count || 0}
+              </ThemedText>
+              <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+            </Pressable>
+          </Animated.View>
+        </ScrollView>
+      </ThemedView>
+
+      <Modal
+        visible={showEditModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setShowEditModal(false)}
+        >
+          <ThemedView style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <ThemedText type="h4">{t("Edit caption", "Изменить описание")}</ThemedText>
+              <Pressable onPress={() => setShowEditModal(false)}>
+                <Feather name="x" size={24} color={theme.text} />
               </Pressable>
-            )}
-
-            <View style={{ flex: 1 }} />
-
-            <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle]}>
-              <Feather
-                name="bookmark"
-                size={24}
-                color={savedData?.saved ? theme.link : theme.textSecondary}
-              />
-            </AnimatedPressable>
-          </View>
-
-          <Pressable
-            onPress={() => navigation.navigate("Comments", { postId })}
-            style={[styles.viewCommentsButton, { backgroundColor: theme.cardBackground }]}
-          >
-            <Feather name="message-square" size={16} color={theme.textSecondary} />
-            <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>
-              {t("Comments", "Комментарии")}
-            </ThemedText>
-            <View style={{ flex: 1 }} />
-            <ThemedText type="small" style={{ color: theme.textSecondary, marginRight: Spacing.xs }}>
-              {commentsData?.count || 0}
-            </ThemedText>
-            <Feather name="chevron-right" size={18} color={theme.textSecondary} />
-          </Pressable>
-        </Animated.View>
-      </ScrollView>
-    </ThemedView>
+            </View>
+            <TextInput
+              value={editedCaption}
+              onChangeText={setEditedCaption}
+              placeholder={t("Enter new caption...", "Введите новое описание...")}
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.editInput, { color: theme.text, backgroundColor: theme.backgroundSecondary }]}
+              multiline
+              maxLength={500}
+              autoFocus
+            />
+            <View style={styles.modalFooter}>
+              <Pressable 
+                onPress={handleSaveEdit}
+                disabled={editMutation.isPending}
+                style={[styles.saveButton, { backgroundColor: theme.link }]}
+              >
+                {editMutation.isPending ? (
+                  <ThemedText style={{ color: '#fff' }}>...</ThemedText>
+                ) : (
+                  <ThemedText style={{ color: '#fff', fontWeight: '600' }}>{t("Save", "Сохранить")}</ThemedText>
+                )}
+              </Pressable>
+            </View>
+          </ThemedView>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -517,5 +594,42 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.03)",
     borderRadius: BorderRadius.lg,
     marginTop: Spacing.md,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.xl,
+  },
+  modalContent: {
+    width: "100%",
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  editInput: {
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    fontSize: 16,
+    minHeight: 100,
+    textAlignVertical: "top",
+    marginBottom: Spacing.lg,
+  },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  saveButton: {
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

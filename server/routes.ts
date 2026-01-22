@@ -220,6 +220,27 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
+  app.patch("/api/posts/:id", async (req, res) => {
+    try {
+      const { caption, userId } = req.body;
+      const post = await storage.getPost(req.params.id);
+      
+      if (!post) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+
+      if (post.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      const updatedPost = await storage.updatePost(req.params.id, { caption });
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Update post error:", error);
+      res.status(500).json({ error: "Failed to update post" });
+    }
+  });
+
   app.delete("/api/posts/:id", async (req, res) => {
     try {
       await storage.deletePost(req.params.id);

@@ -58,7 +58,7 @@ export interface IStorage {
   getPosts(limit?: number, offset?: number): Promise<Post[]>;
   getUserPosts(userId: string): Promise<Post[]>;
   createPost(post: InsertPost): Promise<Post>;
-  updatePost(id: string, data: Partial<InsertPost>): Promise<Post | undefined>;
+  updatePost(id: string, data: Partial<Post>): Promise<Post | undefined>;
   deletePost(id: string): Promise<void>;
   
   // Likes
@@ -193,7 +193,7 @@ export class DatabaseStorage implements IStorage {
     return newPost;
   }
 
-  async updatePost(id: string, data: Partial<InsertPost>): Promise<Post | undefined> {
+  async updatePost(id: string, data: Partial<Post>): Promise<Post | undefined> {
     const [updatedPost] = await db.update(posts).set(data).where(eq(posts.id, id)).returning();
     return updatedPost || undefined;
   }
