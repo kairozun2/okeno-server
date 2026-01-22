@@ -117,7 +117,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     if (isOwner) {
       navigation.setOptions({
         headerRight: () => (
-          <View style={{ flexDirection: "row", alignItems: "center", paddingRight: 4 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", paddingRight: -8 }}>
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -129,7 +129,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: 12,
-                marginRight: 4,
+                marginRight: -2,
                 backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
               })}
             >

@@ -126,7 +126,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/:id/posts", async (req, res) => {
     try {
       const posts = await storage.getUserPosts(req.params.id);
-      res.json(posts);
+      const archivedIds = await storage.getArchivedPosts(req.params.id);
+      res.json(posts.filter(p => !archivedIds.includes(p.id)));
     } catch (error) {
       console.error("Get user posts error:", error);
       res.status(500).json({ error: "Failed to get posts" });
@@ -161,6 +162,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const posts = await storage.getPosts(limit, offset);
       
       const postsWithUser = await Promise.all(posts.map(async (post) => {
+        const archivedIds = await storage.getArchivedPosts(post.userId);
+        if (archivedIds.includes(post.id)) return null;
+
         const user = await storage.getUser(post.userId);
         const likesCount = await storage.getPostLikesCount(post.id);
         const commentsCount = await storage.getPostCommentsCount(post.id);
@@ -170,12 +174,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user: user ? { id: user.id, username: user.username, emoji: user.emoji } : undefined,
           likesCount,
           commentsCount,
-          isLiked: false, // In a real app, check if currentUser liked it
-          isSaved: false  // In a real app, check if currentUser saved it
+          isLiked: false, 
+          isSaved: false  
         };
       }));
       
-      res.json(postsWithUser);
+      res.json(postsWithUser.filter(p => p !== null));
     } catch (error) {
       console.error("Get posts error:", error);
       res.status(500).json({ error: "Failed to get posts" });
