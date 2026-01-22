@@ -147,7 +147,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             height: 32,
             alignItems: "center",
             justifyContent: "center",
-            marginLeft: 8,
+            marginLeft: 0,
           }}
         >
           <Feather name="chevron-left" size={28} color={theme.text} />
@@ -157,7 +157,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         if (!isOwner) return null;
         
         return (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginRight: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginRight: 0 }}>
             {isArchived ? (
               <Pressable
                 onPress={() => {

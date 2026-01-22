@@ -46,7 +46,7 @@ export default function ArchiveScreen({ navigation }: Props) {
             height: 32,
             alignItems: "center",
             justifyContent: "center",
-            marginLeft: 8,
+            marginLeft: 0,
           }}
         >
           <Feather name="chevron-left" size={28} color={theme.text} />

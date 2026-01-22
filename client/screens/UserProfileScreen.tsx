@@ -172,7 +172,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             height: 32,
             alignItems: "center",
             justifyContent: "center",
-            marginLeft: 8,
+            marginLeft: 0,
           }}
         >
           <Feather name="chevron-left" size={28} color={theme.text} />
@@ -187,7 +187,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             height: 32,
             alignItems: "center",
             justifyContent: "center",
-            marginRight: 8,
+            marginRight: 0,
           }}
         >
           <Feather name="more-horizontal" size={24} color={theme.text} />
