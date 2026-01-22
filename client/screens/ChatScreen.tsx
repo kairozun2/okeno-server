@@ -544,7 +544,9 @@ export default function ChatScreen({ route, navigation }: Props) {
                 {userData?.isVerified ? <VerifiedBadge size={14} /> : null}
               </View>
               {isOtherUserTyping ? (
-                <ThemedText type="caption" style={{ color: theme.link }}>{t("typing...", "печатает...")}</ThemedText>
+                <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)}>
+                  <ThemedText type="caption" style={{ color: theme.link, fontSize: 10 }}>{t("typing...", "печатает...")}</ThemedText>
+                </Animated.View>
               ) : null}
             </View>
             <Avatar emoji={displayEmoji} size={32} />

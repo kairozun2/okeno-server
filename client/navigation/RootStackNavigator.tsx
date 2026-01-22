@@ -75,7 +75,7 @@ function CloseButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; username?: string; emoji?: string; onPress: () => void }) {
+function ChatHeaderTitle({ name, username, onPress, emoji, isVerified }: { name?: string; username?: string; emoji?: string; onPress: () => void; isVerified?: boolean }) {
   const { isDark } = useTheme();
   return (
     <Pressable 
@@ -89,9 +89,12 @@ function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; us
       }}
     >
       <View style={{ marginRight: Spacing.sm, alignItems: "flex-end" }}>
-        <ThemedText type="body" style={{ fontWeight: "600", lineHeight: 18 }}>
-          {name || "Пользователь"}
-        </ThemedText>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <ThemedText type="body" style={{ fontWeight: "600", lineHeight: 18 }}>
+            {name || "Пользователь"}
+          </ThemedText>
+          {isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
+        </View>
       </View>
       <View style={{ borderRadius: 20, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.05)" }}>
         <BlurView
