@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
+import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/query-client";
@@ -66,27 +68,13 @@ function MessageBubble({
   );
 }
 
-function EmptyChat() {
-  const { theme } = useTheme();
-
-  return (
-    <View style={styles.emptyContainer}>
-      <Feather name="message-circle" size={40} color={theme.textSecondary} />
-      <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
-        Начните переписку
-      </ThemedText>
-    </View>
-  );
-}
-
 type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
 export default function ChatScreen({ route, navigation }: Props) {
-  const { chatId } = route.params;
+  const { chatId, otherUserName, otherUserUsername, otherUserEmoji, otherUserId } = route.params;
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const flatListRef = useRef<FlatList>(null);
@@ -113,7 +101,6 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const handleSend = () => {
     if (!message.trim()) return;
-    
     sendMutation.mutate(message.trim());
     setMessage("");
   };
@@ -135,44 +122,83 @@ export default function ChatScreen({ route, navigation }: Props) {
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  const EmptyChatState = () => (
-    <View style={styles.emptyContainer}>
-      <Feather name="message-circle" size={40} color={theme.textSecondary} />
-      <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
-        Начните переписку
-      </ThemedText>
-    </View>
-  );
-
   return (
     <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
+      <LinearGradient
+        colors={[
+          isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
+          isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)',
+          isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
+          'transparent'
+        ]}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top + 120,
+          zIndex: 99,
+          pointerEvents: 'none',
+        }}
+      />
+
       <KeyboardAvoidingView
-        style={styles.container}
-        behavior="padding"
-        keyboardVerticalOffset={0}
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
       >
+        <View style={[styles.header, { top: insets.top - 20, paddingTop: 28 }]}>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.headerButton}
+          >
+            {Platform.OS === 'ios' && (
+              <BlurView
+                intensity={30}
+                tint={isDark ? "dark" : "light"}
+                style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
+              />
+            )}
+            <Feather name="x" size={20} color={theme.text} />
+          </Pressable>
+
+          <Pressable
+            onPress={() => otherUserId && navigation.navigate("UserProfile", { userId: otherUserId })}
+            style={styles.userInfo}
+          >
+            {Platform.OS === 'ios' && (
+              <BlurView
+                intensity={30}
+                tint={isDark ? "dark" : "light"}
+                style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
+              />
+            )}
+            <View style={{ marginRight: Spacing.sm }}>
+              <ThemedText type="small" style={{ fontWeight: "600" }}>{otherUserName || "Пользователь"}</ThemedText>
+              {otherUserUsername ? <ThemedText type="caption" style={{ opacity: 0.6 }}>@{otherUserUsername}</ThemedText> : null}
+            </View>
+            <Avatar emoji={otherUserEmoji || "🐸"} size={32} />
+          </Pressable>
+        </View>
+
         <FlatList
           ref={flatListRef}
           data={sortedMessages}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          inverted={messages.length > 0}
+          inverted
+          keyboardDismissMode="interactive"
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: headerHeight + Spacing.md },
-            messages.length === 0 && { flex: 1 },
+            { paddingTop: 8, paddingBottom: insets.top + 100 },
           ]}
-          ListEmptyComponent={EmptyChatState}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={21}
         />
 
-        <View
-          style={{
-            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
-            paddingTop: Spacing.sm,
-            backgroundColor: "transparent",
-          }}
-        >
+        <View style={[styles.inputContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={styles.inputWrapper}>
             <TextInput
               style={[
@@ -181,8 +207,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                   color: theme.text,
                   borderWidth: 1,
                   borderColor: theme.border,
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  borderRadius: 20,
+                  backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
                 },
               ]}
               placeholder="Сообщение..."
@@ -209,6 +234,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               />
             </Pressable>
           </View>
+          <View style={{ height: insets.bottom > 0 ? insets.bottom : Spacing.md }} />
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -216,12 +242,36 @@ export default function ChatScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  header: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    paddingHorizontal: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(128,128,128,0.3)',
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(128,128,128,0.3)',
   },
   messagesList: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.md,
   },
   messageBubble: {
     maxWidth: "80%",
@@ -243,17 +293,13 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     fontSize: 10,
   },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    transform: [{ scaleY: -1 }],
+  inputContainer: {
+    paddingTop: Spacing.sm,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.sm,
     gap: Spacing.sm,
   },
   input: {
@@ -263,6 +309,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     fontSize: 15,
+    borderRadius: 20,
   },
   sendButton: {
     width: 40,

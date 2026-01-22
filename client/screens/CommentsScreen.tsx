@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -83,10 +83,9 @@ type Props = NativeStackScreenProps<RootStackParamList, "Comments">;
 
 export default function CommentsScreen({ route, navigation }: Props) {
   const { postId } = route.params;
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
 
@@ -112,7 +111,6 @@ export default function CommentsScreen({ route, navigation }: Props) {
 
   const handleSubmit = () => {
     if (!comment.trim()) return;
-    
     addCommentMutation.mutate(comment.trim());
     setComment("");
   };
@@ -129,37 +127,42 @@ export default function CommentsScreen({ route, navigation }: Props) {
     [navigation]
   );
 
-  const sortedComments = [...comments].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-
   return (
-    <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior="padding"
-        keyboardVerticalOffset={0}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
+    >
+      <LinearGradient
+        colors={[
+          isDark ? theme.backgroundRoot : theme.backgroundRoot,
+          isDark ? theme.backgroundRoot : theme.backgroundRoot,
+          isDark ? theme.cardBackground : theme.cardBackground,
+        ]}
+        locations={[0, 0.7, 1]}
+        style={{ flex: 1 }}
       >
+        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+          <ThemedText type="h3">Комментарии</ThemedText>
+          <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
+            <Feather name="x" size={24} color={theme.text} />
+          </Pressable>
+        </View>
+
         <FlatList
-          data={sortedComments}
+          data={comments}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          inverted={comments.length > 0}
+          keyboardDismissMode="interactive"
           contentContainerStyle={[
             styles.commentsList,
-            { paddingTop: headerHeight + Spacing.md },
             comments.length === 0 && { flex: 1 },
           ]}
           ListEmptyComponent={<EmptyComments />}
           showsVerticalScrollIndicator={false}
         />
 
-        <View
-          style={{
-            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
-            paddingTop: Spacing.sm,
-          }}
-        >
+        <View style={[styles.inputContainer, { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.lg }]}>
           <View style={styles.inputWrapper}>
             <Avatar emoji={user?.emoji || "🐸"} size={32} />
             <TextInput
@@ -169,8 +172,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
                   color: theme.text,
                   borderWidth: 1,
                   borderColor: theme.border,
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  borderRadius: 20,
+                  backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
                 },
               ]}
               placeholder="Комментарий..."
@@ -196,14 +198,18 @@ export default function CommentsScreen({ route, navigation }: Props) {
             </Pressable>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   commentsList: {
     paddingHorizontal: Spacing.md,
@@ -231,15 +237,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing["3xl"],
-    transform: [{ scaleY: -1 }],
+  },
+  inputContainer: {
+    paddingTop: Spacing.sm,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.sm,
     gap: Spacing.sm,
-    backgroundColor: "transparent",
   },
   input: {
     flex: 1,
@@ -248,5 +254,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     fontSize: 15,
+    borderRadius: 20,
   },
 });
