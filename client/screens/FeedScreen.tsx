@@ -376,20 +376,20 @@ export default function FeedScreen({ navigation }: Props) {
     reportMutation.mutate();
   };
 
-  const queryResult = useInfiniteQuery<PostWithUser[]>({
+  const queryResult = useInfiniteQuery({
     queryKey: ["/api/posts"],
     queryFn: async ({ pageParam }) => {
       const response = await apiRequest("GET", `/api/posts?limit=10&offset=${pageParam}`, null);
       const resData = await response.json();
       return Array.isArray(resData) ? resData : [];
     },
-    getNextPageParam: (lastPage, allPages) => {
+    getNextPageParam: (lastPage: any, allPages: any) => {
       if (!Array.isArray(lastPage) || lastPage.length < 10) return undefined;
       return allPages.length * 10;
     },
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
-  });
+  }) as any;
 
   const {
     data,
@@ -401,7 +401,7 @@ export default function FeedScreen({ navigation }: Props) {
 
   const postsData = useMemo(() => {
     if (!data?.pages) return [];
-    return data.pages.flat().filter(post => post !== null);
+    return data.pages.flat().filter((post: any) => post !== null);
   }, [data]);
 
 
