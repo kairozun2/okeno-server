@@ -161,7 +161,7 @@ function MessageBubble({
               <Feather 
                 name="check" 
                 size={11} 
-                color={message.isRead ? "#fff" : "rgba(255,255,255,0.5)"} 
+                color={message.isRead ? "#fff" : "rgba(255,255,255,0.4)"} 
                 style={{ marginLeft: 2 }}
               />
             )}
@@ -170,7 +170,7 @@ function MessageBubble({
                 name="check" 
                 size={11} 
                 color="#fff" 
-                style={{ marginLeft: -6 }}
+                style={{ marginLeft: -7 }}
               />
             )}
           </View>
@@ -344,6 +344,11 @@ export default function ChatScreen({ route, navigation }: Props) {
         };
       });
 
+      // Play haptic feedback immediately for perceived speed
+      if (hapticsEnabled) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+
       return { previousMessages };
     },
     onError: (err, newMessage, context) => {
@@ -400,13 +405,17 @@ export default function ChatScreen({ route, navigation }: Props) {
     const content = message.trim();
     setMessage("");
     
-    if (editingMessage) {
-      editMutation.mutate({ messageId: editingMessage.id, content });
-      setEditingMessage(null);
-    } else {
-      sendMutation.mutate({ content, replyToId: replyTo?.id });
-      setReplyTo(null);
-    }
+    // Add a tiny delay to allow the state to clear before mutation
+    // This helps with perceived smoothness on some devices
+    requestAnimationFrame(() => {
+      if (editingMessage) {
+        editMutation.mutate({ messageId: editingMessage.id, content });
+        setEditingMessage(null);
+      } else {
+        sendMutation.mutate({ content, replyToId: replyTo?.id });
+        setReplyTo(null);
+      }
+    });
   };
 
   const handleLongPress = (msg: Message) => {
