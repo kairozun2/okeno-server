@@ -52,13 +52,22 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [reportReason, setReportReason] = useState("");
+  const [reportCategory, setReportCategory] = useState<string | null>(null);
+
+  const REPORT_CATEGORIES = [
+    { id: "spam", label: "Спам" },
+    { id: "harassment", label: "Оскорбления" },
+    { id: "sexual", label: "Сексуальный контент" },
+    { id: "violence", label: "Насилие" },
+    { id: "other", label: "Другое" },
+  ];
 
   const reportMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/reports", {
         reporterId: currentUser?.id,
         reportedUserId: userId,
-        reason: reportReason,
+        reason: reportCategory ? `${REPORT_CATEGORIES.find(c => c.id === reportCategory)?.label}: ${reportReason}` : reportReason,
       });
     },
     onSuccess: () => {
@@ -66,6 +75,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       Alert.alert("Жалоба отправлена", "Мы рассмотрим вашу жалобу в течение 24 часов.");
       setShowReportModal(false);
       setReportReason("");
+      setReportCategory(null);
     },
     onError: () => {
       Alert.alert("Ошибка", "Не удалось отправить жалобу");
@@ -86,7 +96,11 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   });
 
   const handleReport = () => {
-    if (!reportReason.trim()) {
+    if (!reportCategory) {
+      Alert.alert("Ошибка", "Выберите категорию жалобы");
+      return;
+    }
+    if (reportCategory === "other" && !reportReason.trim()) {
       Alert.alert("Ошибка", "Укажите причину жалобы");
       return;
     }
@@ -155,7 +169,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             onPress={() => setShowActionSheet(true)} 
             hitSlop={20}
             style={{ 
-              marginRight: -Spacing.xs,
+              marginRight: Spacing.xs,
               padding: 8,
             }}
           >
@@ -421,13 +435,39 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
           <ScrollView contentContainerStyle={styles.modalContent}>
             <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
-              Опишите причину жалобы. Мы рассмотрим её в течение 24 часов.
+              Выберите категорию и опишите причину жалобы. Мы рассмотрим её в течение 24 часов.
             </ThemedText>
+
+            <View style={styles.categoriesGrid}>
+              {REPORT_CATEGORIES.map((cat) => (
+                <Pressable
+                  key={cat.id}
+                  onPress={() => setReportCategory(cat.id)}
+                  style={[
+                    styles.categoryItem,
+                    { 
+                      backgroundColor: reportCategory === cat.id ? theme.accentColor + '20' : theme.backgroundSecondary,
+                      borderColor: reportCategory === cat.id ? theme.accentColor : theme.border,
+                    }
+                  ]}
+                >
+                  <ThemedText 
+                    type="small" 
+                    style={{ 
+                      color: reportCategory === cat.id ? theme.accentColor : theme.text,
+                      fontWeight: reportCategory === cat.id ? "600" : "400",
+                    }}
+                  >
+                    {cat.label}
+                  </ThemedText>
+                </Pressable>
+              ))}
+            </View>
 
             <TextInput
               value={reportReason}
               onChangeText={setReportReason}
-              placeholder="Причина жалобы..."
+              placeholder="Дополнительные детали (необязательно)..."
               placeholderTextColor={theme.textSecondary}
               multiline
               numberOfLines={4}
@@ -528,13 +568,26 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   reportInput: {
-    height: 120,
+    height: 100,
     borderRadius: 12,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
     fontSize: 16,
     borderWidth: 1,
     textAlignVertical: "top",
+    marginTop: Spacing.md,
+  },
+  categoriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  categoryItem: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
   },
   reportButton: {
     height: 50,
