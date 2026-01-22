@@ -62,13 +62,13 @@ function SessionItem({
       </View>
       <View style={styles.sessionInfo}>
         <View style={styles.sessionHeader}>
-          <ThemedText type="body" style={styles.deviceName}>
+          <ThemedText type="body" style={styles.deviceName} numberOfLines={1}>
             {session.deviceInfo || "Unknown Device"}
           </ThemedText>
           {isCurrentSession ? (
             <View style={[styles.currentBadge, { backgroundColor: theme.success }]}>
-              <ThemedText type="caption" style={{ color: "#fff", fontWeight: "600" }}>
-                Current
+              <ThemedText type="caption" style={{ color: "#fff", fontWeight: "600", fontSize: 10 }}>
+                Active
               </ThemedText>
             </View>
           ) : null}
@@ -204,8 +204,9 @@ export default function SessionsScreen({ navigation }: Props) {
             <Button
               onPress={handleTerminateAll}
               style={[styles.terminateAllButton, { backgroundColor: theme.error }]}
+              textStyle={{ fontSize: 14 }}
             >
-              Terminate All Other Sessions
+              Завершить все остальные сеансы
             </Button>
           </>
         ) : null}
@@ -227,14 +228,14 @@ const styles = StyleSheet.create({
   sessionItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
+    padding: Spacing.md,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.sm,
   },
   deviceIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },

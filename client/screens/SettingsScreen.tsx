@@ -123,16 +123,44 @@ export default function SettingsScreen({ navigation }: Props) {
       title: "КОНФИДЕНЦИАЛЬНОСТЬ",
       items: [
         {
+          icon: "lock",
+          title: "Конфиденциальность",
+          subtitle: "Политика и использование данных",
+          onPress: () => {
+            import("expo-web-browser").then(WebBrowser => {
+              WebBrowser.openBrowserAsync("https://skaisay.github.io/App-Privacy/");
+            });
+          },
+        },
+        {
           icon: "shield",
-          title: "Конфиденциальность и безопасность",
-          subtitle: "Разрешения и защита данных",
-          onPress: () => {},
+          title: "Разрешения приложения",
+          subtitle: "Камера, Фото, Геолокация",
+          onPress: () => {
+            Alert.alert(
+              "Разрешения",
+              "Moments запрашивает доступ к:\n\n• Камере: для создания фото\n• Фотографиям: для выбора из галереи\n• Геолокации: для меток на публикациях\n\nДанные используются только внутри приложения."
+            );
+          },
         },
         {
           icon: "smartphone",
           title: "Активные сеансы",
           subtitle: "Управление устройствами",
           onPress: () => navigation.navigate("Sessions"),
+        },
+      ],
+    },
+    {
+      title: "ЯЗЫК / LANGUAGE",
+      items: [
+        {
+          icon: "globe",
+          title: "Язык приложения",
+          subtitle: "Русский (Russian)",
+          onPress: () => {
+            Alert.alert("Язык", "В данный момент поддерживается только Русский. Английский будет добавлен в ближайшем обновлении.");
+          },
         },
       ],
     },
