@@ -110,16 +110,13 @@ export default function MainTabNavigator() {
   const insets = useSafeAreaInsets();
   const [showPlus, setShowPlus] = useState(false);
 
-  const headerBackground = () =>
-    Platform.OS === "ios" ? (
-      <BlurView
-        intensity={80}
-        tint={isDark ? "dark" : "light"}
-        style={StyleSheet.absoluteFill}
-      />
-    ) : (
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot }]} />
-    );
+  const headerBackground = () => (
+    <BlurView
+      intensity={Platform.OS === "ios" ? 80 : 100}
+      tint={isDark ? "dark" : "light"}
+      style={StyleSheet.absoluteFill}
+    />
+  );
 
   return (
     <View style={{ flex: 1 }}>
@@ -166,16 +163,16 @@ export default function MainTabNavigator() {
                 onFadeComplete={() => setShowPlus(true)} 
               />
             ),
-            headerRight: () => (
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
+            headerLeft: () => (
+              <View style={{ marginLeft: Spacing.sm }}>
                 {showPlus ? (
                   <Animated.View entering={FadeIn} exiting={FadeOut}>
                     <CreatePostButton iconOnly />
                   </Animated.View>
                 ) : null}
-                <NotificationsButton />
               </View>
             ),
+            headerRight: () => <NotificationsButton />,
             tabBarIcon: ({ color }) => (
               <Feather name="home" size={22} color={color} />
             ),
@@ -213,7 +210,6 @@ export default function MainTabNavigator() {
 const styles = StyleSheet.create({
   headerButton: {
     padding: Spacing.sm,
-    marginRight: Spacing.xs,
   },
   fabContainer: {
     position: "absolute",

@@ -74,7 +74,7 @@ function ChatItem({
               {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: ru })}
             </ThemedText>
           </View>
-          <div style={styles.chatPreview}>
+          <View style={styles.chatPreview}>
             <ThemedText
               type="small"
               numberOfLines={1}
@@ -89,7 +89,7 @@ function ChatItem({
                 </ThemedText>
               </View>
             ) : null}
-          </div>
+          </View>
         </View>
       </Pressable>
     </Animated.View>
@@ -154,6 +154,7 @@ export default function ChatsListScreen({ navigation }: Props) {
           chat={item}
           onPress={() => navigation.navigate("Chat", { 
             chatId: item.id,
+            otherUserId: item.otherUser?.id,
             otherUserName: item.otherUser?.username,
             otherUserEmoji: item.otherUser?.emoji,
           })}
