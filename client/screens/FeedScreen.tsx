@@ -386,7 +386,8 @@ export default function FeedScreen({ navigation }: Props) {
     queryKey: ["/api/posts"],
     queryFn: async ({ pageParam = 0 }) => {
       const response = await apiRequest("GET", `/api/posts?limit=10&offset=${pageParam}`, null);
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     getNextPageParam: (lastPage, allPages) => {
       if (!Array.isArray(lastPage) || lastPage.length < 10) return undefined;

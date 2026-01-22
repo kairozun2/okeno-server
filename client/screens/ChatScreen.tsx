@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -58,6 +58,56 @@ function MessageBubble({
   const { theme } = useTheme();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
+  const handleUrlPress = useCallback((url: string) => {
+    let supportedUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      supportedUrl = `https://${url}`;
+    }
+    Linking.openURL(supportedUrl).catch(err => console.error("Couldn't load page", err));
+  }, []);
+
+  const renderContent = (content: string, isOwn: boolean) => {
+    const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,})/g;
+    const parts = content.split(urlRegex);
+    const matches = content.match(urlRegex);
+
+    if (!matches) {
+      return (
+        <ThemedText
+          type="body"
+          style={{ color: isOwn ? "#fff" : theme.text }}
+        >
+          {content}
+        </ThemedText>
+      );
+    }
+
+    let matchIndex = 0;
+    return (
+      <ThemedText
+        type="body"
+        style={{ color: isOwn ? "#fff" : theme.text }}
+      >
+        {parts.map((part, i) => {
+          if (part === undefined) return null;
+          if (matches.includes(part)) {
+            return (
+              <ThemedText
+                key={i}
+                type="body"
+                style={{ color: isOwn ? "rgba(255,255,255,0.9)" : theme.link, textDecorationLine: 'underline' }}
+                onPress={() => handleUrlPress(part)}
+              >
+                {part}
+              </ThemedText>
+            );
+          }
+          return part;
+        })}
+      </ThemedText>
+    );
+  };
+
   return (
     <Pressable onLongPress={onLongPress} delayLongPress={300}>
       <View
@@ -79,12 +129,7 @@ function MessageBubble({
             </ThemedText>
           </View>
         ) : null}
-        <ThemedText
-          type="body"
-          style={{ color: isOwn ? "#fff" : theme.text }}
-        >
-          {message.content}
-        </ThemedText>
+        {renderContent(message.content, isOwn)}
         <View style={styles.messageFooter}>
           {message.isEdited ? (
             <ThemedText
