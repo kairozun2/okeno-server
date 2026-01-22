@@ -660,11 +660,25 @@ export default function ChatScreen({ route, navigation }: Props) {
               <Animated.View 
                 entering={FadeIn.duration(400)} 
                 exiting={FadeOut.duration(400)}
-                style={[styles.typingIndicator, { backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 20 }]}
+                style={styles.typingIndicatorWrapper}
               >
-                <ThemedText type="caption" style={{ color: theme.link, fontSize: 13, fontWeight: "700" }}>
-                  {t("typing...", "печатает...")}
-                </ThemedText>
+                {Platform.OS === 'ios' && (
+                  <BlurView
+                    intensity={60} 
+                    tint={isDark ? "dark" : "light"}
+                    style={[StyleSheet.absoluteFill, { borderRadius: 16, overflow: 'hidden' }]}
+                  />
+                )}
+                <View style={[
+                  styles.typingIndicatorInner, 
+                  { 
+                    borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)",
+                  }
+                ]}>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary, fontWeight: "600", fontSize: 12 }}>
+                    {t("typing...", "печатает...")}
+                  </ThemedText>
+                </View>
               </Animated.View>
             ) : null}
           </View>
@@ -925,10 +939,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 50,
   },
-  typingIndicator: {
+  typingIndicatorWrapper: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    minWidth: 100,
+  },
+  typingIndicatorInner: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   userInfo: {
     flexDirection: 'row',
