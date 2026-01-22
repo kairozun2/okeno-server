@@ -77,7 +77,7 @@ function MessageBubble({
   const gesture = Gesture.Pan()
     .activeOffsetX(isOwn ? [-10, 0] : [0, 10]) // Swipe left for own, right for others
     .onUpdate((event) => {
-      const translation = event.translateX;
+      const translation = event.translationX;
       if (isOwn) {
         // Swipe left (negative)
         if (translation < 0) {
@@ -449,25 +449,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       const response = await fetch(url.toString(), { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch messages");
       const msgs = await response.json() as Message[];
-      
-      // Fetch reactions for each message
-      const messagesWithReactions = await Promise.all(
-        msgs.map(async (msg) => {
-          try {
-            const reactionsUrl = new URL(`/api/messages/${msg.id}/reactions`, getApiUrl());
-            const reactionsRes = await fetch(reactionsUrl.toString(), { credentials: "include" });
-            if (reactionsRes.ok) {
-              const reactions = await reactionsRes.json();
-              return { ...msg, reactions };
-            }
-          } catch {
-            // Ignore reaction fetch errors
-          }
-          return { ...msg, reactions: [] };
-        })
-      );
-      
-      return messagesWithReactions;
+      return msgs; // Reactions are now included from server
     },
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length === 0) return undefined;

@@ -371,7 +371,16 @@ export async function registerRoutes(app: express.Express) {
   app.get("/api/chats/:id/messages", async (req, res) => {
     try {
       const messages = await storage.getChatMessages(req.params.id);
-      res.json(messages);
+      
+      // Fetch reactions for all messages in a batch
+      const messagesWithReactions = await Promise.all(
+        messages.map(async (msg) => {
+          const reactions = await storage.getMessageReactions(msg.id);
+          return { ...msg, reactions };
+        })
+      );
+      
+      res.json(messagesWithReactions);
     } catch (error) {
       console.error("Get messages error:", error);
       res.status(500).json({ error: "Failed to get messages" });
@@ -432,6 +441,46 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
+  // In-memory typing status store
+  const typingStatus: Map<string, { userId: string; timestamp: number }> = new Map();
+  
+  // Post typing status
+  app.post("/api/chats/:id/typing", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      const chatId = req.params.id;
+      const key = `${chatId}:${userId}`;
+      typingStatus.set(key, { userId, timestamp: Date.now() });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Set typing status error:", error);
+      res.status(500).json({ error: "Failed to set typing status" });
+    }
+  });
+  
+  // Get typing status for a specific user in a chat
+  app.get("/api/chats/:id/typing/:userId", async (req, res) => {
+    try {
+      const chatId = req.params.id;
+      const targetUserId = req.params.userId;
+      const key = `${chatId}:${targetUserId}`;
+      const status = typingStatus.get(key);
+      
+      // Typing expires after 3 seconds
+      const isTyping = status && (Date.now() - status.timestamp) < 3000;
+      
+      // Clean up expired status
+      if (!isTyping && status) {
+        typingStatus.delete(key);
+      }
+      
+      res.json({ isTyping: !!isTyping });
+    } catch (error) {
+      console.error("Get typing status error:", error);
+      res.status(500).json({ error: "Failed to get typing status" });
+    }
+  });
+  
   app.post("/api/chats/:id/read", async (req, res) => {
     try {
       const { userId } = req.body;
@@ -769,7 +818,6 @@ export async function registerRoutes(app: express.Express) {
         isVerified: u.isVerified,
         isBanned: u.isBanned,
         createdAt: u.createdAt,
-        avatarUrl: u.avatarUrl,
       })));
     } catch (error) {
       console.error("Get all users error:", error);
