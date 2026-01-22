@@ -495,7 +495,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 45 : 0}
     >
         <View style={[styles.header, { top: Spacing.sm }]}>
           <Pressable
