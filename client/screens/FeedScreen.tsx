@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from "react";
-import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform } from "react-native";
+import React, { useState, useCallback, useMemo } from "react";
+import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -118,27 +118,128 @@ function PostCard({
     ? post.location.substring(0, 20) + "..." 
     : post.location;
 
+  const formattedDate = useMemo(() => {
+    const date = new Date(post.createdAt);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+      const diffInMins = Math.floor(diffInHours * 60);
+      return `${diffInMins}м`;
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}ч`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      if (diffInDays < 7) return `${diffInDays}д`;
+      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    }
+  }, [post.createdAt]);
+
+  const [showActions, setShowActions] = useState(false);
+
   return (
     <Animated.View entering={FadeIn.delay(50)} style={styles.postCard}>
-      <Pressable onPress={onUserPress} style={styles.postHeader}>
-        <Avatar emoji={post.user?.emoji || "🐸"} size={32} />
-        <View style={styles.postHeaderInfo}>
-          <ThemedText type="small" style={styles.username} truncate maxLength={12}>
-            {post.user?.username || "..."}
+      <View style={styles.postHeader}>
+        <Pressable onPress={onUserPress} style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+          <Avatar emoji={post.user?.emoji || "🐸"} size={32} />
+          <View style={styles.postHeaderInfo}>
+            <ThemedText type="small" style={styles.username} truncate maxLength={12}>
+              {post.user?.username || "..."}
+            </ThemedText>
+            {post.location ? (
+              <Pressable onPress={onLocationPress} style={styles.locationRow}>
+                <Feather name="map-pin" size={10} color={theme.textSecondary} />
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 2 }}>
+                  {truncatedLocation}
+                </ThemedText>
+              </Pressable>
+            ) : null}
+          </View>
+        </Pressable>
+        
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: Spacing.xs }}>
+            {formattedDate}
           </ThemedText>
-          {post.location ? (
-            <Pressable onPress={onLocationPress} style={styles.locationRow}>
-              <Feather name="map-pin" size={10} color={theme.textSecondary} />
-              <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 2 }}>
-                {truncatedLocation}
+          <Pressable 
+            onPress={() => setShowActions(true)}
+            hitSlop={10}
+            style={{ padding: 4 }}
+          >
+            <Feather name="more-horizontal" size={18} color={theme.textSecondary} />
+          </Pressable>
+        </View>
+      </View>
+
+      <Modal
+        visible={showActions}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowActions(false)}
+      >
+        <Pressable 
+          style={styles.actionSheetOverlay} 
+          onPress={() => setShowActions(false)}
+        >
+          <ThemedView style={styles.actionSheetContainer}>
+            <Pressable 
+              style={styles.actionSheetItem}
+              onPress={() => {
+                setShowActions(false);
+                onLike();
+              }}
+            >
+              <Feather name="heart" size={20} color={post.isLiked ? theme.error : theme.text} />
+              <ThemedText style={{ marginLeft: Spacing.md, color: post.isLiked ? theme.error : theme.text }}>
+                {post.isLiked ? "Убрать лайк" : "Лайк"}
               </ThemedText>
             </Pressable>
-          ) : null}
-        </View>
-        <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ru })}
-        </ThemedText>
-      </Pressable>
+            
+            <Pressable 
+              style={styles.actionSheetItem}
+              onPress={() => {
+                setShowActions(false);
+                handleShare();
+              }}
+            >
+              <Feather name="share" size={20} color={theme.text} />
+              <ThemedText style={{ marginLeft: Spacing.md }}>Поделиться</ThemedText>
+            </Pressable>
+
+            <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
+
+            <Pressable 
+              style={styles.actionSheetItem}
+              onPress={() => {
+                setShowActions(false);
+                navigation.navigate("UserProfile", { userId: post.userId });
+              }}
+            >
+              <Feather name="user" size={20} color={theme.text} />
+              <ThemedText style={{ marginLeft: Spacing.md }}>Профиль автора</ThemedText>
+            </Pressable>
+
+            <Pressable 
+              style={styles.actionSheetItem}
+              onPress={() => {
+                setShowActions(false);
+                // In a real app, this would open the report modal
+                Alert.alert("Жалоба", "Чтобы пожаловаться на этот пост, перейдите в профиль пользователя.");
+              }}
+            >
+              <Feather name="flag" size={20} color={theme.error} />
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Пожаловаться</ThemedText>
+            </Pressable>
+            
+            <Pressable 
+              style={[styles.actionSheetItem, { marginTop: Spacing.xs }]}
+              onPress={() => setShowActions(false)}
+            >
+              <ThemedText style={{ width: "100%", textAlign: "center", color: theme.textSecondary }}>Отмена</ThemedText>
+            </Pressable>
+          </ThemedView>
+        </Pressable>
+      </Modal>
 
       <Image
         source={{ uri: post.imageUrl }}
@@ -392,6 +493,23 @@ const styles = StyleSheet.create({
   actionText: {
     fontWeight: "600",
     fontSize: 13,
+  },
+  actionSheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  actionSheetContainer: {
+    width: "100%",
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.sm,
+    paddingBottom: Platform.OS === 'ios' ? 40 : Spacing.xl,
+  },
+  actionSheetItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
   },
   emptyContainer: {
     flex: 1,

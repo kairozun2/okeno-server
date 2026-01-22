@@ -169,7 +169,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             onPress={() => setShowActionSheet(true)} 
             hitSlop={20}
             style={{ 
-              marginRight: Spacing.md,
+              marginRight: Spacing.xs,
               padding: 8,
             }}
           >

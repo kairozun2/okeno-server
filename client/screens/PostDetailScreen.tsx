@@ -260,6 +260,24 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     }
   };
 
+  const formattedDate = React.useMemo(() => {
+    if (!post) return "";
+    const date = new Date(post.createdAt);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+      const diffInMins = Math.floor(diffInHours * 60);
+      return `${diffInMins}м`;
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}ч`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      if (diffInDays < 7) return `${diffInDays}д`;
+      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    }
+  }, [post?.createdAt]);
+
   if (!post) {
     return (
       <ThemedView style={[styles.container, styles.loadingContainer]}>
@@ -296,7 +314,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                     {postUser?.username || "Пользователь"}
                   </ThemedText>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                    {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ru })}
+                    {formattedDate}
                   </ThemedText>
                 </View>
               </View>
@@ -342,7 +360,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                   {postUser?.username || "Пользователь"}
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ru })}
+                  {formattedDate}
                 </ThemedText>
               </View>
             </Pressable>
