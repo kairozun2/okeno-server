@@ -118,7 +118,6 @@ export default function MainTabNavigator() {
               />
             ) : null,
           headerTransparent: true,
-          headerBlurEffect: isDark ? "systemThinMaterialDark" : "systemThinMaterialLight",
           headerStyle: {
             backgroundColor: "transparent",
           },

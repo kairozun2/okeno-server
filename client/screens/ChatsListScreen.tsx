@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, RefreshControl, Pressable } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { View, StyleSheet, RefreshControl, Pressable, FlatList } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -162,10 +161,9 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <FlashList
+      <FlatList
         data={chats}
         renderItem={renderItem}
-        estimatedItemSize={68}
         contentContainerStyle={{
           paddingTop: headerHeight + Spacing.xs,
           paddingBottom: tabBarHeight + Spacing.lg,

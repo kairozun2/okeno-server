@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, RefreshControl, Pressable, Dimensions } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -155,11 +154,10 @@ export default function ProfileScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <FlashList
+      <FlatList
         data={posts}
         renderItem={renderItem}
         numColumns={NUM_COLUMNS}
-        estimatedItemSize={ITEM_SIZE}
         contentContainerStyle={{
           paddingTop: headerHeight + Spacing.md,
           paddingBottom: tabBarHeight + Spacing.lg,
