@@ -38,30 +38,19 @@ export default function ArchiveScreen({ navigation }: Props) {
     navigation.setOptions({
       headerTitle: t("Archive", "Архив"),
       headerLeft: () => (
-        <View style={{ 
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: "rgba(255, 255, 255, 0.1)",
-          borderWidth: 1,
-          borderColor: "rgba(255, 255, 255, 0.2)",
-          alignItems: "center",
-          justifyContent: "center",
-          marginLeft: 16,
-        }}>
-          <Pressable 
-            onPress={() => navigation.goBack()}
-            hitSlop={20}
-            style={{ 
-              width: "100%",
-              height: "100%",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Feather name="chevron-left" size={24} color={theme.text} />
-          </Pressable>
-        </View>
+        <Pressable 
+          onPress={() => navigation.goBack()}
+          hitSlop={20}
+          style={{ 
+            width: 40,
+            height: 40,
+            alignItems: "center",
+            justifyContent: "center",
+            marginLeft: 8,
+          }}
+        >
+          <Feather name="chevron-left" size={28} color={theme.text} />
+        </Pressable>
       ),
     });
   }, [navigation, theme.text, language]);

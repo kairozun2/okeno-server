@@ -139,116 +139,78 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     navigation.setOptions({
       headerTitle: t("Post", "Пост"),
       headerLeft: () => (
-        <View style={{ 
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: "rgba(255, 255, 255, 0.1)",
-          borderWidth: 1,
-          borderColor: "rgba(255, 255, 255, 0.2)",
-          alignItems: "center",
-          justifyContent: "center",
-          marginLeft: 16,
-        }}>
-          <Pressable 
-            onPress={() => navigation.goBack()}
-            hitSlop={20}
-            style={{ 
-              width: "100%",
-              height: "100%",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Feather name="chevron-left" size={24} color={theme.text} />
-          </Pressable>
-        </View>
+        <Pressable 
+          onPress={() => navigation.goBack()}
+          hitSlop={20}
+          style={{ 
+            width: 40,
+            height: 40,
+            alignItems: "center",
+            justifyContent: "center",
+            marginLeft: 8,
+          }}
+        >
+          <Feather name="chevron-left" size={28} color={theme.text} />
+        </Pressable>
       ),
       headerRight: () => {
         if (!isOwner) return null;
         
         return (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginRight: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingRight: 8 }}>
             {isArchived ? (
-              <View style={{ 
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-                borderWidth: 1,
-                borderColor: "rgba(255, 255, 255, 0.2)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-                <Pressable
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    unarchiveMutation.mutate();
-                  }}
-                  hitSlop={10}
-                  style={{ 
-                    width: "100%",
-                    height: "100%",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Feather name="arrow-up" size={20} color={theme.text} />
-                </Pressable>
-              </View>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  unarchiveMutation.mutate();
+                }}
+                style={({ pressed }) => ({
+                  width: 38,
+                  height: 38,
+                  borderRadius: 19,
+                  backgroundColor: theme.backgroundSecondary,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Feather name="arrow-up" size={20} color={theme.text} />
+              </Pressable>
             ) : null}
-            <View style={{ 
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
-              borderWidth: 1,
-              borderColor: "rgba(255, 255, 255, 0.2)",
-              alignItems: "center",
-              justifyContent: "center",
-            }}>
-              <Pressable
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  navigation.navigate("EditPost", { postId });
-                }}
-                hitSlop={10}
-                style={{ 
-                  width: "100%",
-                  height: "100%",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Feather name="edit-2" size={20} color={theme.text} />
-              </Pressable>
-            </View>
-            <View style={{ 
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
-              borderWidth: 1,
-              borderColor: "rgba(255, 255, 255, 0.2)",
-              alignItems: "center",
-              justifyContent: "center",
-            }}>
-              <Pressable
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  handleDelete();
-                }}
-                hitSlop={10}
-                style={{ 
-                  width: "100%",
-                  height: "100%",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Feather name="trash-2" size={20} color={theme.error} />
-              </Pressable>
-            </View>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate("EditPost", { postId });
+              }}
+              style={({ pressed }) => ({
+                width: 38,
+                height: 38,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 12,
+                backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <Feather name="edit-2" size={20} color={theme.text} />
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                handleDelete();
+              }}
+              style={({ pressed }) => ({
+                width: 38,
+                height: 38,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 12,
+                backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
+                opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <Feather name="trash-2" size={20} color={theme.error} />
+            </Pressable>
           </View>
         );
       },
