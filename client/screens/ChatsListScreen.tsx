@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
+import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";

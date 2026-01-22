@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { View, StyleSheet, Pressable, Dimensions, Modal, Platform } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -135,37 +136,43 @@ function PostCard({
 
       <View style={styles.postActions}>
         <View style={styles.leftActions}>
-          <AnimatedPressable onPress={handleLike} style={[styles.actionButton, likeAnimatedStyle]}>
+          <AnimatedPressable onPress={handleLike} style={[styles.actionButton, likeAnimatedStyle, { backgroundColor: post.isLiked ? theme.error + '15' : theme.backgroundSecondary }]}>
             <Feather
               name="heart"
-              size={20}
+              size={18}
               color={post.isLiked ? theme.error : theme.textSecondary}
             />
+            {post.likesCount > 0 && (
+              <ThemedText type="small" style={[styles.actionText, { color: post.isLiked ? theme.error : theme.textSecondary }]}>
+                {post.likesCount}
+              </ThemedText>
+            )}
           </AnimatedPressable>
 
-          <Pressable onPress={onComment} style={styles.actionButton}>
-            <Feather name="message-circle" size={20} color={theme.textSecondary} />
-          </Pressable>
-
-          <Pressable style={styles.actionButton}>
-            <Feather name="send" size={20} color={theme.textSecondary} />
+          <Pressable onPress={onComment} style={[styles.actionButton, { backgroundColor: theme.backgroundSecondary }]}>
+            <Feather name="message-circle" size={18} color={theme.textSecondary} />
+            {post.commentsCount > 0 && (
+              <ThemedText type="small" style={styles.actionText}>
+                {post.commentsCount}
+              </ThemedText>
+            )}
           </Pressable>
         </View>
 
-        <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle]}>
-          <Feather
-            name="bookmark"
-            size={20}
-            color={post.isSaved ? theme.link : theme.textSecondary}
-          />
-        </AnimatedPressable>
-      </View>
+        <View style={styles.rightActions}>
+          <Pressable style={[styles.actionButton, { backgroundColor: theme.backgroundSecondary }]}>
+            <Feather name="send" size={18} color={theme.textSecondary} />
+          </Pressable>
 
-      {post.likesCount > 0 ? (
-        <ThemedText type="small" style={styles.likesText}>
-          {post.likesCount} {post.likesCount === 1 ? "лайк" : "лайков"}
-        </ThemedText>
-      ) : null}
+          <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle, { backgroundColor: post.isSaved ? theme.link + '15' : theme.backgroundSecondary, marginLeft: Spacing.sm }]}>
+            <Feather
+              name="bookmark"
+              size={18}
+              color={post.isSaved ? theme.link : theme.textSecondary}
+            />
+          </AnimatedPressable>
+        </View>
+      </View>
     </Animated.View>
   );
 }
@@ -351,15 +358,23 @@ const styles = StyleSheet.create({
   },
   leftActions: {
     flexDirection: "row",
-    gap: Spacing.md,
+    gap: Spacing.sm,
+  },
+  rightActions: {
+    flexDirection: "row",
+    gap: Spacing.sm,
   },
   actionButton: {
-    padding: Spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    gap: 6,
   },
-  likesText: {
-    fontWeight: "500",
-    paddingHorizontal: Spacing.xs,
-    marginBottom: Spacing.xs,
+  actionText: {
+    fontWeight: "600",
+    fontSize: 13,
   },
   emptyContainer: {
     flex: 1,
