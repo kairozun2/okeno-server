@@ -575,15 +575,16 @@ export default function ChatScreen({ route, navigation }: Props) {
     const content = message.trim();
     setMessage("");
     
-    requestAnimationFrame(() => {
-      if (editingMessage) {
-        editMutation.mutate({ messageId: editingMessage.id, content });
-        setEditingMessage(null);
-      } else {
-        sendMutation.mutate({ content, replyToId: replyTo?.id });
-        setReplyTo(null);
-      }
-    });
+    // Immediate height reset and clear replyingTo/editingMessage
+    setHeight(40);
+
+    if (editingMessage) {
+      editMutation.mutate({ messageId: editingMessage.id, content });
+      setEditingMessage(null);
+    } else {
+      sendMutation.mutate({ content, replyToId: replyTo?.id });
+      setReplyTo(null);
+    }
   };
 
   const handleCopy = useCallback(async (text: string) => {
@@ -683,7 +684,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                 exiting={FadeOut.duration(400)}
                 style={styles.typingIndicator}
               >
-                <ThemedText type="caption" style={{ color: theme.link, fontSize: 12, fontWeight: "600" }}>
+                <ThemedText type="caption" style={{ color: theme.link, fontSize: 13, fontWeight: "700" }}>
                   {t("typing...", "печатает...")}
                 </ThemedText>
               </Animated.View>
@@ -936,9 +937,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   headerCenter: {
-    flex: 1,
+    position: 'absolute',
+    left: 40,
+    right: 140, // More space for userInfo
+    top: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 50,
   },
   typingIndicator: {
     paddingHorizontal: 12,
