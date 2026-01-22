@@ -264,14 +264,7 @@ function PostCard({
         </View>
 
         <View style={styles.rightActions}>
-          <Pressable 
-            onPress={handleShare}
-            style={[styles.actionButton, { backgroundColor: theme.backgroundSecondary }]}
-          >
-            <Feather name="send" size={18} color={theme.textSecondary} />
-          </Pressable>
-
-          <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle, { backgroundColor: post.isSaved ? theme.link + '15' : theme.backgroundSecondary, marginLeft: Spacing.sm }]}>
+          <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle, { backgroundColor: post.isSaved ? theme.link + '15' : theme.backgroundSecondary }]}>
             <Feather
               name="bookmark"
               size={18}
@@ -389,11 +382,8 @@ export default function FeedScreen({ navigation }: Props) {
 
   const likeMutation = useMutation({
     mutationFn: async ({ postId, isLiked }: { postId: string; isLiked: boolean }) => {
-      if (isLiked) {
-        await apiRequest("DELETE", "/api/likes", { userId: currentUser?.id, postId });
-      } else {
-        await apiRequest("POST", "/api/likes", { userId: currentUser?.id, postId });
-      }
+      // Use the correct endpoint /api/posts/:id/like
+      await apiRequest("POST", `/api/posts/${postId}/like`, { userId: currentUser?.id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });

@@ -212,7 +212,8 @@ export default function ChatsListScreen({ navigation }: Props) {
   const { data: chatsData = [], isLoading } = useQuery<ChatWithDetails[]>({
     queryKey: ["/api/users", user?.id, "chats"],
     enabled: !!user?.id,
-    refetchInterval: 3000,
+    staleTime: 5000,
+    refetchInterval: 10000,
   });
 
   const { data: allChatSettings = [] } = useQuery<ChatSettings[]>({
