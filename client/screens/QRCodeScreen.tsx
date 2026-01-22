@@ -120,7 +120,7 @@ export default function QRCodeScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+      <View style={styles.header}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.closeButton}
@@ -181,7 +181,7 @@ export default function QRCodeScreen({ navigation }: Props) {
         onRequestClose={() => setIsScannerOpen(false)}
       >
         <View style={[styles.scannerContainer, { backgroundColor: "#000" }]}>
-          <View style={[styles.scannerHeader, { paddingTop: insets.top + Spacing.sm }]}>
+          <View style={styles.scannerHeader}>
             <Pressable
               onPress={() => {
                 setIsScannerOpen(false);
@@ -232,6 +232,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
+    paddingTop: Spacing.sm,
   },
   closeButton: {
     width: 36,
@@ -286,6 +287,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
+    paddingTop: Spacing.sm,
     position: "absolute",
     top: 0,
     left: 0,

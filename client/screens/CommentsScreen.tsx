@@ -142,7 +142,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
         locations={[0, 0.7, 1]}
         style={{ flex: 1 }}
       >
-        <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+        <View style={styles.header}>
           <ThemedText type="h3">Комментарии</ThemedText>
           <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
             <Feather name="x" size={24} color={theme.text} />
@@ -210,6 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
+    paddingTop: Spacing.sm,
   },
   commentsList: {
     paddingHorizontal: Spacing.md,

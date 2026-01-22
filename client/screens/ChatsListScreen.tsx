@@ -57,9 +57,11 @@ interface ChatWithDetails extends Chat {
 function ChatItem({
   chat,
   onPress,
+  allChatSettings,
 }: {
   chat: ChatWithDetails;
   onPress: () => void;
+  allChatSettings: ChatSettings[];
 }) {
   const { theme } = useTheme();
 
@@ -82,7 +84,7 @@ function ChatItem({
           <View style={styles.chatHeader}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
               <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
-                {allChatSettings.find(s => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "Пользователь"}
+                {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "Пользователь"}
               </ThemedText>
               <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={15}>
                 @{chat.otherUser?.username || "user"}
@@ -265,6 +267,7 @@ export default function ChatsListScreen({ navigation }: Props) {
       return (
         <ChatItem
           chat={item}
+          allChatSettings={allChatSettings}
           onPress={() => navigation.navigate("Chat", { 
             chatId: item.id,
             otherUserId: item.otherUser?.id,
