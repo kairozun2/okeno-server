@@ -249,16 +249,14 @@ export default function ChatScreen({ route, navigation }: Props) {
     }
   }, [otherUserId]);
 
-  const { data: userData } = useInfiniteQuery({
+  const { data: userData } = useQuery({
     queryKey: ["/api/users", otherUserId],
     queryFn: async () => {
       const response = await apiRequest("GET", `/api/users/${otherUserId}`, null);
       return response.json();
     },
     enabled: !!otherUserId,
-    initialPageParam: 0,
-    getNextPageParam: () => undefined,
-  }) as any;
+  });
 
   const displayName = chatSettings?.nickname || userData?.username || otherUserName || t("User", "Пользователь");
   const displayEmoji = userData?.emoji || otherUserEmoji || "🐸";
