@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useLayoutEffect } from "react";
 import { View, StyleSheet, RefreshControl, Pressable, Dimensions, Alert, FlatList } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeIn, useAnimatedScrollHandler, useSharedValue, useAnimatedStyle, interpolate, Extrapolation } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -22,6 +22,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const GRID_GAP = 2;
 const NUM_COLUMNS = 3;
 const ITEM_SIZE = (SCREEN_WIDTH - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+const HEADER_TRIGGER_HEIGHT = 100;
 
 interface User {
   id: string;
@@ -47,6 +48,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const scrollY = useSharedValue(0);
 
   const { data: profileUser, isLoading: isUserLoading } = useQuery<User>({
     queryKey: ["/api/users", userId],
@@ -54,6 +56,48 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   const { data: posts = [], isLoading: isPostsLoading } = useQuery<Post[]>({
     queryKey: ["/api/users", userId, "posts"],
+  });
+
+  const headerEmojiStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [HEADER_TRIGGER_HEIGHT, HEADER_TRIGGER_HEIGHT + 40],
+      [0, 1],
+      Extrapolation.CLAMP
+    );
+    const scale = interpolate(
+      scrollY.value,
+      [HEADER_TRIGGER_HEIGHT, HEADER_TRIGGER_HEIGHT + 40],
+      [0.5, 1],
+      Extrapolation.CLAMP
+    );
+    const translateY = interpolate(
+      scrollY.value,
+      [HEADER_TRIGGER_HEIGHT, HEADER_TRIGGER_HEIGHT + 40],
+      [10, 0],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      opacity,
+      transform: [{ scale }, { translateY }],
+    };
+  });
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <Animated.View style={[styles.headerTitleContainer, headerEmojiStyle]}>
+          <Avatar emoji={profileUser?.emoji || "🐸"} size={32} />
+        </Animated.View>
+      ),
+    });
+  }, [navigation, profileUser?.emoji, headerEmojiStyle]);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
   });
 
   const startChatMutation = useMutation({
@@ -184,11 +228,13 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <FlatList
+      <Animated.FlatList
         data={posts}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         numColumns={NUM_COLUMNS}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         contentContainerStyle={{
           paddingTop: insets.top + Spacing.xl,
           paddingBottom: insets.bottom + Spacing.xl,
@@ -220,6 +266,10 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerTitleContainer: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   header: {
     alignItems: "center",
