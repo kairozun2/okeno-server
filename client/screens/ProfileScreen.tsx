@@ -206,12 +206,6 @@ export default function ProfileScreen({ navigation }: Props) {
         </ThemedText>
         {user?.isVerified ? <VerifiedBadge size={18} /> : null}
       </View>
-      <Pressable onPress={handleCopyId} style={styles.idButton}>
-        <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-          ID: {user?.id?.slice(0, 8)}...
-        </ThemedText>
-        <Feather name="copy" size={12} color={theme.textSecondary} />
-      </Pressable>
       <View style={styles.stats}>
         <View style={styles.stat}>
           <ThemedText type="h4">{posts.length}</ThemedText>

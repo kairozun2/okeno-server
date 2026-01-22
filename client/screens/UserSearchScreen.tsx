@@ -19,6 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
@@ -30,6 +31,7 @@ interface User {
   id: string;
   username: string;
   emoji: string;
+  isVerified?: boolean;
 }
 
 const SEARCH_HISTORY_KEY = "@search_history";
@@ -65,9 +67,12 @@ function UserItem({
     >
       <Avatar emoji={user.emoji} size={44} />
       <View style={styles.userInfo}>
-        <ThemedText type="body" style={styles.username} truncate maxLength={12}>
-          {user.username}
-        </ThemedText>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+          <ThemedText type="body" style={styles.username} truncate maxLength={12}>
+            {user.username}
+          </ThemedText>
+          {user.isVerified ? <VerifiedBadge size={14} /> : null}
+        </View>
         {isCurrentUser ? (
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
             {t("It's you", "Это вы")}

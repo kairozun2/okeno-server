@@ -12,6 +12,7 @@ import { ru, enUS } from "date-fns/locale";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/query-client";
@@ -32,6 +33,7 @@ interface Notification {
     id: string;
     username: string;
     emoji: string;
+    isVerified?: boolean;
   };
 }
 
@@ -115,12 +117,13 @@ function NotificationItem({
           </View>
         )}
         <View style={styles.notificationContent}>
-          <ThemedText type="body">
+          <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap" }}>
             <ThemedText type="body" style={{ fontWeight: "600" }} truncate maxLength={12}>
               {notification.fromUser?.username || t("Someone", "Кто-то")}
-            </ThemedText>{" "}
-            {getNotificationText()}
-          </ThemedText>
+            </ThemedText>
+            {notification.fromUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4, marginRight: 4 }} /> : null}
+            <ThemedText type="body">{getNotificationText()}</ThemedText>
+          </View>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
             {formatDistanceToNow(new Date(notification.createdAt), { 
               addSuffix: true, 

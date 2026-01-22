@@ -103,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
       const users = await storage.searchUsers(query);
-      res.json(users.map(u => ({ id: u.id, username: u.username, emoji: u.emoji })));
+      res.json(users.map(u => ({ id: u.id, username: u.username, emoji: u.emoji, isVerified: u.isVerified })));
     } catch (error) {
       console.error("Search users error:", error);
       res.status(500).json({ error: "Failed to search users" });
@@ -668,7 +668,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/:id/notifications", async (req, res) => {
     try {
       const notifications = await storage.getUserNotifications(req.params.id);
-      res.json(notifications);
+      const notificationsWithUser = await Promise.all(notifications.map(async (notification) => {
+        if (notification.fromUserId) {
+          const fromUser = await storage.getUser(notification.fromUserId);
+          return {
+            ...notification,
+            fromUser: fromUser ? { id: fromUser.id, username: fromUser.username, emoji: fromUser.emoji, isVerified: fromUser.isVerified } : undefined,
+          };
+        }
+        return notification;
+      }));
+      res.json(notificationsWithUser);
     } catch (error) {
       console.error("Get notifications error:", error);
       res.status(500).json({ error: "Failed to get notifications" });

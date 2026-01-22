@@ -12,6 +12,7 @@ import { ru, enUS } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/query-client";
@@ -32,6 +33,7 @@ interface CommentWithUser extends Comment {
     id: string;
     username: string;
     emoji: string;
+    isVerified?: boolean;
   };
 }
 
@@ -53,11 +55,14 @@ function CommentItem({
       </Pressable>
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
-          <Pressable onPress={onUserPress}>
-            <ThemedText type="small" style={styles.commentUsername} truncate maxLength={12}>
-              {comment.user?.username || (language === "ru" ? "Пользователь" : "User")}
-            </ThemedText>
-          </Pressable>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <Pressable onPress={onUserPress}>
+              <ThemedText type="small" style={styles.commentUsername} truncate maxLength={12}>
+                {comment.user?.username || (language === "ru" ? "Пользователь" : "User")}
+              </ThemedText>
+            </Pressable>
+            {comment.user?.isVerified ? <VerifiedBadge size={12} /> : null}
+          </View>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
             {formatDistanceToNow(new Date(comment.createdAt), { 
               addSuffix: true, 
