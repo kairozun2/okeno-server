@@ -50,6 +50,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const scrollY = useSharedValue(0);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showActionSheet, setShowActionSheet] = useState(false);
   const [reportReason, setReportReason] = useState("");
 
   const reportMutation = useMutation({
@@ -151,9 +152,12 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       headerRight: () => (
         currentUser?.id !== userId ? (
           <Pressable 
-            onPress={() => setShowReportModal(true)} 
-            hitSlop={8}
-            style={{ marginRight: Spacing.md }}
+            onPress={() => setShowActionSheet(true)} 
+            hitSlop={15}
+            style={{ 
+              marginRight: Spacing.sm,
+              padding: 4,
+            }}
           >
             <Feather name="more-horizontal" size={24} color={theme.text} />
           </Pressable>
@@ -353,6 +357,60 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       />
 
       <Modal
+        visible={showActionSheet}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowActionSheet(false)}
+      >
+        <Pressable 
+          style={styles.actionSheetOverlay} 
+          onPress={() => setShowActionSheet(false)}
+        >
+          <Animated.View 
+            entering={FadeIn}
+            style={[styles.actionSheetContainer, { backgroundColor: theme.backgroundRoot }]}
+          >
+            <Pressable
+              onPress={() => {
+                setShowActionSheet(false);
+                handleShareProfile();
+              }}
+              style={styles.actionSheetItem}
+            >
+              <Feather name="send" size={20} color={theme.text} />
+              <ThemedText style={styles.actionSheetText}>Поделиться профилем</ThemedText>
+            </Pressable>
+            
+            <View style={[styles.actionSheetDivider, { backgroundColor: theme.border }]} />
+            
+            <Pressable
+              onPress={() => {
+                setShowActionSheet(false);
+                setShowReportModal(true);
+              }}
+              style={styles.actionSheetItem}
+            >
+              <Feather name="flag" size={20} color={theme.error} />
+              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>Пожаловаться</ThemedText>
+            </Pressable>
+            
+            <View style={[styles.actionSheetDivider, { backgroundColor: theme.border }]} />
+            
+            <Pressable
+              onPress={() => {
+                setShowActionSheet(false);
+                handleBlock();
+              }}
+              style={styles.actionSheetItem}
+            >
+              <Feather name="slash" size={20} color={theme.error} />
+              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>Заблокировать</ThemedText>
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </Modal>
+
+      <Modal
         visible={showReportModal}
         animationType="slide"
         presentationStyle="pageSheet"
@@ -508,5 +566,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: Spacing.md,
     borderWidth: 1,
+  },
+  actionSheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.xl,
+  },
+  actionSheetContainer: {
+    width: "100%",
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.sm,
+    overflow: "hidden",
+  },
+  actionSheetItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+  },
+  actionSheetText: {
+    marginLeft: Spacing.md,
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  actionSheetDivider: {
+    height: 1,
+    marginHorizontal: Spacing.md,
   },
 });
