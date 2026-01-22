@@ -153,12 +153,12 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [isGlobal, setIsGlobal] = useState(false);
 
   const presetBackgrounds = [
-    "https://www.imgbly.com/7LrPlX4Iji8B7My",
-    "https://www.imgbly.com/dXlgA0NxiQ0OQrf",
-    "https://www.imgbly.com/LfiUT8bTrfnCxxi",
-    "https://www.imgbly.com/Oe0Zr0pZL1AaiYc",
-    "https://www.imgbly.com/DtLmUPp1J7D93Y6",
-    "https://www.imgbly.com/sXwxiUNCKhTknmC"
+    "https://www.imgbly.com/7LrPlX4Iji8B7My.png",
+    "https://www.imgbly.com/dXlgA0NxiQ0OQrf.png",
+    "https://www.imgbly.com/LfiUT8bTrfnCxxi.png",
+    "https://www.imgbly.com/Oe0Zr0pZL1AaiYc.png",
+    "https://www.imgbly.com/DtLmUPp1J7D93Y6.png",
+    "https://www.imgbly.com/sXwxiUNCKhTknmC.png"
   ];
 
   useLayoutEffect(() => {
@@ -424,13 +424,21 @@ export default function ChatsListScreen({ navigation }: Props) {
                   {presetBackgrounds.map((url, index) => (
                     <Pressable
                       key={index}
-                      onPress={() => setBackgroundImage(url)}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setBackgroundImage(url);
+                      }}
                       style={[
                         styles.presetItem,
                         backgroundImage === url && { borderColor: theme.link, borderWidth: 2 }
                       ]}
                     >
-                      <Image source={{ uri: url }} style={styles.presetImage} contentFit="cover" />
+                      <Image 
+                        source={{ uri: url }} 
+                        style={styles.presetImage} 
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                      />
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -449,6 +457,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                       source={{ uri: backgroundImage }}
                       style={styles.backgroundImage}
                       contentFit="cover"
+                      cachePolicy="memory-disk"
                     />
                   ) : (
                     <View style={[styles.backgroundPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
