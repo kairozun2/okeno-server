@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { 
   View, 
   StyleSheet, 
@@ -11,9 +11,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -31,28 +32,30 @@ interface User {
   emoji: string;
 }
 
+const SEARCH_HISTORY_KEY = "@search_history";
+
 type Props = NativeStackScreenProps<RootStackParamList, "UserSearch">;
 
 function UserItem({ 
   user, 
   onPress,
   isCurrentUser,
+  showChatIcon = true,
 }: { 
   user: User; 
   onPress: () => void;
   isCurrentUser: boolean;
+  showChatIcon?: boolean;
 }) {
   const { theme } = useTheme();
 
   return (
     <Pressable 
       onPress={onPress} 
-      disabled={isCurrentUser}
       style={[
         styles.userItem, 
         { 
           backgroundColor: theme.backgroundDefault,
-          opacity: isCurrentUser ? 0.5 : 1,
         }
       ]}
     >
@@ -67,15 +70,44 @@ function UserItem({
           </ThemedText>
         ) : null}
       </View>
-      {!isCurrentUser ? (
-        <Feather name="message-circle" size={20} color={theme.link} />
+      {showChatIcon && !isCurrentUser ? (
+        <Feather name="chevron-right" size={20} color={theme.textSecondary} />
       ) : null}
     </Pressable>
   );
 }
 
-function EmptyResults({ query }: { query: string }) {
+function EmptyResults({ query, history, onClearHistory, onSelectHistory }: { 
+  query: string; 
+  history: User[];
+  onClearHistory: () => void;
+  onSelectHistory: (user: User) => void;
+}) {
   const { theme } = useTheme();
+
+  if (query.length === 0 && history.length > 0) {
+    return (
+      <View style={styles.historyContainer}>
+        <View style={styles.historyHeader}>
+          <ThemedText type="small" style={{ color: theme.textSecondary, fontWeight: "600" }}>
+            НЕДАВНИЕ
+          </ThemedText>
+          <Pressable onPress={onClearHistory} style={styles.clearButton}>
+            <ThemedText type="caption" style={{ color: theme.link }}>Очистить</ThemedText>
+          </Pressable>
+        </View>
+        {history.map((user) => (
+          <UserItem 
+            key={user.id} 
+            user={user} 
+            onPress={() => onSelectHistory(user)} 
+            isCurrentUser={false}
+            showChatIcon={false}
+          />
+        ))}
+      </View>
+    );
+  }
 
   return (
     <View style={styles.emptyContainer}>
@@ -94,8 +126,43 @@ export default function UserSearchScreen({ navigation }: Props) {
   const { theme, isDark } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
-  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
+  const [history, setHistory] = useState<User[]>([]);
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const loadHistory = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(SEARCH_HISTORY_KEY);
+      if (stored) {
+        setHistory(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error("Failed to load search history", e);
+    }
+  };
+
+  const saveToHistory = async (user: User) => {
+    try {
+      const newHistory = [user, ...history.filter(u => u.id !== user.id)].slice(0, 10);
+      setHistory(newHistory);
+      await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newHistory));
+    } catch (e) {
+      console.error("Failed to save search history", e);
+    }
+  };
+
+  const clearHistory = async () => {
+    try {
+      setHistory([]);
+      await AsyncStorage.removeItem(SEARCH_HISTORY_KEY);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (e) {
+      console.error("Failed to clear search history", e);
+    }
+  };
 
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users/search", searchQuery],
@@ -108,32 +175,16 @@ export default function UserSearchScreen({ navigation }: Props) {
     },
   });
 
-  const createChatMutation = useMutation({
-    mutationFn: async (otherUserId: string) => {
-      const response = await apiRequest("POST", "/api/chats", {
-        participant1Id: currentUser?.id,
-        participant2Id: otherUserId,
-      });
-      return response.json();
-    },
-    onSuccess: (data, otherUserId) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      const otherUser = users.find(u => u.id === otherUserId);
-      navigation.replace("Chat", { 
-        chatId: data.id,
-        otherUserId,
-        otherUserName: otherUser?.username,
-        otherUserEmoji: otherUser?.emoji,
-      });
-    },
-  });
-
   const handleUserPress = useCallback((user: User) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Keyboard.dismiss();
-    createChatMutation.mutate(user.id);
-  }, [createChatMutation]);
+    saveToHistory(user);
+    if (user.id === currentUser?.id) {
+      navigation.replace("MainTabs", { screen: "Profile" });
+    } else {
+      navigation.push("UserProfile", { userId: user.id });
+    }
+  }, [currentUser?.id, history]);
 
   const renderItem = useCallback(({ item }: { item: User }) => (
     <Animated.View entering={FadeIn}>
@@ -185,7 +236,7 @@ export default function UserSearchScreen({ navigation }: Props) {
       </View>
 
       <FlatList
-        data={users}
+        data={searchQuery.length > 0 ? users : []}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
@@ -193,7 +244,14 @@ export default function UserSearchScreen({ navigation }: Props) {
           { paddingBottom: insets.bottom + Spacing.lg },
         ]}
         ListEmptyComponent={
-          !isLoading ? <EmptyResults query={searchQuery} /> : null
+          !isLoading ? (
+            <EmptyResults 
+              query={searchQuery} 
+              history={history}
+              onClearHistory={clearHistory}
+              onSelectHistory={handleUserPress}
+            />
+          ) : null
         }
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -201,6 +259,78 @@ export default function UserSearchScreen({ navigation }: Props) {
     </ThemedView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: Spacing.xs,
+  },
+  listContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+  },
+  userItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+  },
+  userInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  username: {
+    fontWeight: "600",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing["3xl"],
+  },
+  historyContainer: {
+    marginTop: Spacing.sm,
+  },
+  historyHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+  },
+  clearButton: {
+    padding: Spacing.xs,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
