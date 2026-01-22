@@ -340,9 +340,14 @@ const styles = StyleSheet.create({
   },
   headerEmojiContainer: {
     position: "absolute",
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerEmojiText: {
     fontSize: 24,
+    lineHeight: 32,
+    includeFontPadding: false,
   },
   headerIconButton: {
     padding: Spacing.sm,
