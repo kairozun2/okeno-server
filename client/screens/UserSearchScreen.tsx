@@ -180,7 +180,7 @@ export default function UserSearchScreen({ navigation }: Props) {
     Keyboard.dismiss();
     saveToHistory(user);
     if (user.id === currentUser?.id) {
-      navigation.replace("MainTabs", { screen: "Profile" });
+      navigation.replace("Main", { screen: "Profile" });
     } else {
       navigation.push("UserProfile", { userId: user.id });
     }
@@ -329,64 +329,5 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     padding: Spacing.xs,
-  },
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    paddingVertical: Spacing.xs,
-  },
-  listContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-  },
-  userItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
-  },
-  userInfo: {
-    flex: 1,
-    marginLeft: Spacing.md,
-  },
-  username: {
-    fontWeight: "600",
-  },
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing["3xl"],
   },
 });
