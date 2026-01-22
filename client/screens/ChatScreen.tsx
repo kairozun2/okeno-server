@@ -54,12 +54,12 @@ function MessageBubble({
 }: {
   message: Message;
   isOwn: boolean;
-  onLongPress: () => void;
+  onLongPress: (msg: Message) => void;
   replyMessage?: Message | null;
   language: string;
   isSelected: boolean;
 }) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const handleUrlPress = useCallback(async (url: string) => {
@@ -119,71 +119,80 @@ function MessageBubble({
     );
   };
 
-  return (
-    <Pressable onLongPress={onLongPress} delayLongPress={300}>
-      <View
-        style={[
-          styles.messageBubble,
-          isOwn ? styles.ownMessage : styles.otherMessage,
-          {
-            backgroundColor: isOwn ? theme.link : theme.cardBackground,
-            zIndex: isSelected ? 1001 : 1,
-            transform: [{ scale: isSelected ? 1.05 : 1 }],
-          },
-        ]}
-      >
-        {replyMessage ? (
-          <View style={[styles.replyContainer, { borderLeftColor: isOwn ? "rgba(255,255,255,0.5)" : theme.link }]}>
-            <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontWeight: "600" }}>
-              {t("Reply", "Ответ")}
-            </ThemedText>
-            <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
-              {typeof replyMessage.content === 'string' ? replyMessage.content : ""}
-            </ThemedText>
-          </View>
-        ) : null}
-        {renderContent(typeof message.content === 'string' ? message.content : "", isOwn)}
-        <View style={styles.messageFooter}>
-          {message.isEdited ? (
-            <ThemedText
-              type="caption"
-              style={[styles.editedLabel, { color: isOwn ? "rgba(255,255,255,0.5)" : theme.textSecondary }]}
-            >
-              {t("edited", "изм.")}
-            </ThemedText>
+    return (
+      <View style={{ zIndex: isSelected ? 1001 : 1 }}>
+        <Pressable 
+          onLongPress={() => onLongPress(message)}
+          delayLongPress={300}
+          style={({ pressed }) => [
+            styles.messageBubble,
+            isOwn ? styles.ownMessage : styles.otherMessage,
+            { 
+              backgroundColor: isOwn 
+                ? (isSelected ? (isDark ? "#4a9eff" : "#2a89ff") : theme.link) 
+                : (isSelected ? (isDark ? "#323235" : "#f0f0f2") : theme.cardBackground),
+              opacity: pressed ? 0.9 : 1,
+              transform: [{ scale: isSelected ? 1.05 : 1 }],
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isSelected ? 0.3 : 0,
+              shadowRadius: 8,
+              elevation: isSelected ? 10 : 0,
+            },
+          ]}
+        >
+          {replyMessage ? (
+            <View style={[styles.replyContainer, { borderLeftColor: isOwn ? "rgba(255,255,255,0.5)" : theme.link }]}>
+              <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontWeight: "600" }}>
+                {t("Reply", "Ответ")}
+              </ThemedText>
+              <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
+                {typeof replyMessage.content === 'string' ? replyMessage.content : ""}
+              </ThemedText>
+            </View>
           ) : null}
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <ThemedText
-              type="caption"
-              style={[
-                styles.messageTime,
-                { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, marginRight: 2 },
-              ]}
-            >
-              {formatMessageTime(new Date(message.createdAt))}
-            </ThemedText>
-            {isOwn && (
-              <Feather 
-                name="check" 
-                size={11} 
-                color={message.isRead ? "#fff" : "rgba(255,255,255,0.4)"} 
-                style={{ marginLeft: 2 }}
-              />
-            )}
-            {isOwn && message.isRead && (
-              <Feather 
-                name="check" 
-                size={11} 
-                color="#fff" 
-                style={{ marginLeft: -7 }}
-              />
-            )}
+          {renderContent(typeof message.content === 'string' ? message.content : "", isOwn)}
+          <View style={styles.messageFooter}>
+            {message.isEdited ? (
+              <ThemedText
+                type="caption"
+                style={[styles.editedLabel, { color: isOwn ? "rgba(255,255,255,0.5)" : theme.textSecondary }]}
+              >
+                {t("edited", "изм.")}
+              </ThemedText>
+            ) : null}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <ThemedText
+                type="caption"
+                style={[
+                  styles.messageTime,
+                  { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, marginRight: 2 },
+                ]}
+              >
+                {formatMessageTime(new Date(message.createdAt))}
+              </ThemedText>
+              {isOwn && (
+                <Feather 
+                  name="check" 
+                  size={11} 
+                  color={message.isRead ? "#fff" : "rgba(255,255,255,0.4)"} 
+                  style={{ marginLeft: 2 }}
+                />
+              )}
+              {isOwn && message.isRead && (
+                <Feather 
+                  name="check" 
+                  size={11} 
+                  color="#fff" 
+                  style={{ marginLeft: -7 }}
+                />
+              )}
+            </View>
           </View>
-        </View>
+        </Pressable>
       </View>
-    </Pressable>
-  );
-}
+    );
+  }
 
 type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
@@ -438,34 +447,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   const handleLongPress = (msg: Message) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedMessage(msg);
-    
-    if (Platform.OS === "ios") {
-      const isOwn = msg.senderId === user?.id;
-      const options = isOwn 
-        ? [t("Reply", "Ответить"), t("Edit", "Редактировать"), t("Delete", "Удалить"), t("Cancel", "Отмена")]
-        : [t("Reply", "Ответить"), t("Cancel", "Отмена")];
-      const destructiveButtonIndex = isOwn ? 2 : undefined;
-      const cancelButtonIndex = isOwn ? 3 : 1;
-
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options,
-          destructiveButtonIndex,
-          cancelButtonIndex,
-        },
-        (buttonIndex) => {
-          if (isOwn) {
-            if (buttonIndex === 0) handleReply(msg);
-            else if (buttonIndex === 1) handleEdit(msg);
-            else if (buttonIndex === 2) handleDelete(msg);
-          } else {
-            if (buttonIndex === 0) handleReply(msg);
-          }
-        }
-      );
-    } else {
-      setShowActionModal(true);
-    }
+    setShowActionModal(true);
   };
 
   const handleReply = (msg: Message) => {
@@ -849,9 +831,9 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   actionSheet: {
-    borderRadius: 24,
+    borderRadius: 14,
     paddingVertical: Spacing.xs,
-    width: '80%',
+    width: 250,
     alignSelf: 'center',
   },
   actionItem: {
