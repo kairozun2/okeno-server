@@ -210,15 +210,13 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   const likeMutation = useMutation({
     mutationFn: async () => {
-      if (likedData?.liked) {
-        await apiRequest("DELETE", "/api/likes", { userId: currentUser?.id, postId });
-      } else {
-        await apiRequest("POST", "/api/likes", { userId: currentUser?.id, postId });
-      }
+      // Use the correct endpoint /api/posts/:id/like
+      await apiRequest("POST", `/api/posts/${postId}/like`, { userId: currentUser?.id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "likes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "likes", currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Also invalidate main feed
     },
   });
 
@@ -411,10 +409,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 ) : null}
               </Pressable>
             )}
-
-            <Pressable onPress={handleShare} style={styles.actionButton}>
-              <Feather name="share" size={24} color={theme.textSecondary} />
-            </Pressable>
 
             <View style={{ flex: 1 }} />
 
