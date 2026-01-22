@@ -22,6 +22,7 @@ import CacheSettingsScreen from "@/screens/CacheSettingsScreen";
 import EditPostScreen from "@/screens/EditPostScreen";
 import ArchiveScreen from "@/screens/ArchiveScreen";
 import AdminPanelScreen from "@/screens/AdminPanelScreen";
+import BlockedUsersScreen from "@/screens/BlockedUsersScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
@@ -47,6 +48,7 @@ export type RootStackParamList = {
   EditPost: { postId: string };
   Archive: undefined;
   AdminPanel: undefined;
+  BlockedUsers: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -267,6 +269,16 @@ export default function RootStackNavigator() {
               presentation: "modal",
               animation: "slide_from_bottom",
             }}
+          />
+          <Stack.Screen
+            name="BlockedUsers"
+            component={BlockedUsersScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: "Blocked Users",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
           />
         </>
       ) : (

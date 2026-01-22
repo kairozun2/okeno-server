@@ -230,9 +230,7 @@ export default function SettingsScreen({ navigation }: Props) {
           icon: "eye-off",
           title: t("Hidden Users", "Скрытые пользователи"),
           subtitle: t("Manage blocked users", "Управление заблокированными пользователями"),
-          onPress: () => {
-            Alert.alert(t("Information", "Информация"), t("The blocked users list is empty.", "Список заблокированных пользователей пуст."));
-          },
+          onPress: () => navigation.navigate("BlockedUsers"),
         },
       ],
     },
