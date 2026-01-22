@@ -1,15 +1,14 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn, FadeOut } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { ru, enUS } from "date-fns/locale";
+import { format } from "date-fns";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
@@ -25,6 +24,8 @@ interface Message {
   chatId: string;
   senderId: string;
   content: string;
+  replyToId?: string | null;
+  isEdited?: boolean;
   createdAt: string;
   isRead: boolean;
 }
@@ -37,53 +38,75 @@ interface ChatSettings {
   backgroundImage: string | null;
 }
 
+function formatMessageTime(date: Date): string {
+  return format(date, "HH:mm");
+}
+
 function MessageBubble({
   message,
   isOwn,
+  onLongPress,
+  replyMessage,
   language,
 }: {
   message: Message;
   isOwn: boolean;
+  onLongPress: () => void;
+  replyMessage?: Message | null;
   language: string;
 }) {
   const { theme } = useTheme();
-
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  };
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   return (
-    <Animated.View
-      entering={FadeInDown.springify()}
-      style={[
-        styles.messageBubble,
-        isOwn ? styles.ownMessage : styles.otherMessage,
-        {
-          backgroundColor: isOwn ? theme.link : theme.cardBackground,
-        },
-      ]}
-    >
-      <View style={styles.messageContentContainer}>
+    <Pressable onLongPress={onLongPress} delayLongPress={300}>
+      <Animated.View
+        entering={FadeInDown.springify().damping(18).stiffness(150)}
+        style={[
+          styles.messageBubble,
+          isOwn ? styles.ownMessage : styles.otherMessage,
+          {
+            backgroundColor: isOwn ? theme.link : theme.cardBackground,
+          },
+        ]}
+      >
+        {replyMessage ? (
+          <View style={[styles.replyContainer, { borderLeftColor: isOwn ? "rgba(255,255,255,0.5)" : theme.link }]}>
+            <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontWeight: "600" }}>
+              {t("Reply", "Ответ")}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
+              {replyMessage.content}
+            </ThemedText>
+          </View>
+        ) : null}
         <ThemedText
           type="body"
-          style={{ color: isOwn ? "#fff" : theme.text, marginRight: 45 }}
+          style={{ color: isOwn ? "#fff" : theme.text }}
         >
           {message.content}
         </ThemedText>
-        <ThemedText
-          type="caption"
-          style={[
-            styles.messageTime,
-            { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary },
-          ]}
-        >
-          {formatTime(message.createdAt)}
-        </ThemedText>
-      </View>
-    </Animated.View>
+        <View style={styles.messageFooter}>
+          {message.isEdited ? (
+            <ThemedText
+              type="caption"
+              style={[styles.editedLabel, { color: isOwn ? "rgba(255,255,255,0.5)" : theme.textSecondary }]}
+            >
+              {t("edited", "изм.")}
+            </ThemedText>
+          ) : null}
+          <ThemedText
+            type="caption"
+            style={[
+              styles.messageTime,
+              { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary },
+            ]}
+          >
+            {formatMessageTime(new Date(message.createdAt))}
+          </ThemedText>
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -96,6 +119,10 @@ export default function ChatScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
@@ -139,11 +166,12 @@ export default function ChatScreen({ route, navigation }: Props) {
   const messages = data?.pages.flat() || [];
 
   const sendMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, replyToId }: { content: string; replyToId?: string | null }) => {
       const response = await apiRequest("POST", "/api/messages", {
         chatId,
         senderId: user?.id,
         content,
+        replyToId,
       });
       return response.json();
     },
@@ -159,11 +187,118 @@ export default function ChatScreen({ route, navigation }: Props) {
     },
   });
 
+  const editMutation = useMutation({
+    mutationFn: async ({ messageId, content }: { messageId: string; content: string }) => {
+      const response = await apiRequest("PATCH", `/api/messages/${messageId}`, {
+        content,
+        senderId: user?.id,
+      });
+      return response.json();
+    },
+    onSuccess: (updatedMessage) => {
+      queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: Message[]) =>
+            page.map((msg: Message) => (msg.id === updatedMessage.id ? updatedMessage : msg))
+          ),
+        };
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (messageId: string) => {
+      await apiRequest("DELETE", `/api/messages/${messageId}`, {
+        senderId: user?.id,
+      });
+      return messageId;
+    },
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: Message[]) =>
+            page.filter((msg: Message) => msg.id !== deletedId)
+          ),
+        };
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+  });
+
   const handleSend = () => {
     if (!message.trim()) return;
     const content = message.trim();
     setMessage("");
-    sendMutation.mutate(content);
+    
+    if (editingMessage) {
+      editMutation.mutate({ messageId: editingMessage.id, content });
+      setEditingMessage(null);
+    } else {
+      sendMutation.mutate({ content, replyToId: replyTo?.id });
+      setReplyTo(null);
+    }
+  };
+
+  const handleLongPress = (msg: Message) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectedMessage(msg);
+    
+    if (Platform.OS === "ios") {
+      const isOwn = msg.senderId === user?.id;
+      const options = isOwn 
+        ? [t("Reply", "Ответить"), t("Edit", "Редактировать"), t("Delete", "Удалить"), t("Cancel", "Отмена")]
+        : [t("Reply", "Ответить"), t("Cancel", "Отмена")];
+      const destructiveButtonIndex = isOwn ? 2 : undefined;
+      const cancelButtonIndex = isOwn ? 3 : 1;
+
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          destructiveButtonIndex,
+          cancelButtonIndex,
+        },
+        (buttonIndex) => {
+          if (isOwn) {
+            if (buttonIndex === 0) handleReply(msg);
+            else if (buttonIndex === 1) handleEdit(msg);
+            else if (buttonIndex === 2) handleDelete(msg);
+          } else {
+            if (buttonIndex === 0) handleReply(msg);
+          }
+        }
+      );
+    } else {
+      setShowActionModal(true);
+    }
+  };
+
+  const handleReply = (msg: Message) => {
+    setReplyTo(msg);
+    setEditingMessage(null);
+    setShowActionModal(false);
+  };
+
+  const handleEdit = (msg: Message) => {
+    setEditingMessage(msg);
+    setMessage(msg.content);
+    setReplyTo(null);
+    setShowActionModal(false);
+  };
+
+  const handleDelete = (msg: Message) => {
+    deleteMutation.mutate(msg.id);
+    setShowActionModal(false);
+  };
+
+  const cancelReplyOrEdit = () => {
+    setReplyTo(null);
+    setEditingMessage(null);
+    setMessage("");
   };
 
   useEffect(() => {
@@ -172,15 +307,22 @@ export default function ChatScreen({ route, navigation }: Props) {
     }
   }, [chatId, user?.id]);
 
+  const getReplyMessage = useCallback((replyToId: string | null | undefined) => {
+    if (!replyToId) return null;
+    return messages.find(m => m.id === replyToId) || null;
+  }, [messages]);
+
   const renderItem = useCallback(
     ({ item }: { item: Message }) => (
-      <MessageBubble message={item} isOwn={item.senderId === user?.id} language={language} />
+      <MessageBubble
+        message={item}
+        isOwn={item.senderId === user?.id}
+        onLongPress={() => handleLongPress(item)}
+        replyMessage={getReplyMessage(item.replyToId)}
+        language={language}
+      />
     ),
-    [user?.id, language]
-  );
-
-  const sortedMessages = [...messages].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    [user?.id, language, messages]
   );
 
   const chatContent = (
@@ -261,6 +403,25 @@ export default function ChatScreen({ route, navigation }: Props) {
         />
 
         <View style={[styles.inputContainer, { backgroundColor: theme.backgroundRoot }]}>
+          {(replyTo || editingMessage) ? (
+            <Animated.View 
+              entering={FadeIn.duration(150)} 
+              exiting={FadeOut.duration(100)}
+              style={[styles.replyBar, { backgroundColor: theme.backgroundSecondary, borderLeftColor: theme.link }]}
+            >
+              <View style={{ flex: 1 }}>
+                <ThemedText type="caption" style={{ color: theme.link, fontWeight: "600" }}>
+                  {editingMessage ? t("Editing", "Редактирование") : t("Reply to", "Ответ на")}
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }} numberOfLines={1}>
+                  {editingMessage?.content || replyTo?.content}
+                </ThemedText>
+              </View>
+              <Pressable onPress={cancelReplyOrEdit} style={styles.cancelReplyButton}>
+                <Feather name="x" size={18} color={theme.textSecondary} />
+              </Pressable>
+            </Animated.View>
+          ) : null}
           <View style={styles.inputWrapper}>
             <TextInput
               style={[
@@ -281,7 +442,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             />
             <Pressable
               onPress={handleSend}
-              disabled={!message.trim() || sendMutation.isPending}
+              disabled={!message.trim() || sendMutation.isPending || editMutation.isPending}
               style={[
                 styles.sendButton,
                 {
@@ -290,7 +451,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               ]}
             >
               <Feather
-                name="send"
+                name={editingMessage ? "check" : "send"}
                 size={18}
                 color={message.trim() ? "#fff" : theme.textSecondary}
               />
@@ -298,6 +459,53 @@ export default function ChatScreen({ route, navigation }: Props) {
           </View>
           <View style={{ height: insets.bottom > 0 ? insets.bottom : Spacing.md }} />
         </View>
+
+        <Modal
+          visible={showActionModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowActionModal(false)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setShowActionModal(false)}>
+            <View style={[styles.actionSheet, { backgroundColor: theme.backgroundRoot }]}>
+              <Pressable
+                style={[styles.actionItem, { borderBottomColor: theme.border }]}
+                onPress={() => selectedMessage && handleReply(selectedMessage)}
+              >
+                <Feather name="corner-up-left" size={20} color={theme.text} />
+                <ThemedText type="body" style={{ marginLeft: Spacing.md }}>{t("Reply", "Ответить")}</ThemedText>
+              </Pressable>
+              
+              {selectedMessage?.senderId === user?.id ? (
+                <>
+                  <Pressable
+                    style={[styles.actionItem, { borderBottomColor: theme.border }]}
+                    onPress={() => selectedMessage && handleEdit(selectedMessage)}
+                  >
+                    <Feather name="edit-2" size={20} color={theme.text} />
+                    <ThemedText type="body" style={{ marginLeft: Spacing.md }}>{t("Edit", "Редактировать")}</ThemedText>
+                  </Pressable>
+                  
+                  <Pressable
+                    style={[styles.actionItem, { borderBottomColor: theme.border }]}
+                    onPress={() => selectedMessage && handleDelete(selectedMessage)}
+                  >
+                    <Feather name="trash-2" size={20} color={theme.error} />
+                    <ThemedText type="body" style={{ marginLeft: Spacing.md, color: theme.error }}>{t("Delete", "Удалить")}</ThemedText>
+                  </Pressable>
+                </>
+              ) : null}
+              
+              <Pressable
+                style={styles.actionItem}
+                onPress={() => setShowActionModal(false)}
+              >
+                <Feather name="x" size={20} color={theme.textSecondary} />
+                <ThemedText type="body" style={{ marginLeft: Spacing.md, color: theme.textSecondary }}>{t("Cancel", "Отмена")}</ThemedText>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
       </KeyboardAvoidingView>
   );
 
@@ -353,15 +561,9 @@ const styles = StyleSheet.create({
   messageBubble: {
     maxWidth: "80%",
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.xs,
-  },
-  messageContentContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
+    marginBottom: Spacing.sm,
   },
   ownMessage: {
     alignSelf: "flex-end",
@@ -371,14 +573,39 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     borderBottomLeftRadius: Spacing.xs,
   },
+  replyContainer: {
+    borderLeftWidth: 2,
+    paddingLeft: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  messageFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    marginTop: 2,
+    gap: 4,
+  },
+  editedLabel: {
+    fontSize: 9,
+  },
   messageTime: {
-    position: 'absolute',
-    right: 0,
-    bottom: -2,
     fontSize: 10,
   },
   inputContainer: {
     paddingTop: Spacing.sm,
+  },
+  replyBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    borderLeftWidth: 3,
+  },
+  cancelReplyButton: {
+    padding: Spacing.xs,
   },
   inputWrapper: {
     flexDirection: "row",
@@ -401,5 +628,23 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  actionSheet: {
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xl,
+  },
+  actionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
 });

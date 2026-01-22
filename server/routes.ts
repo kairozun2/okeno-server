@@ -521,13 +521,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/messages", async (req, res) => {
     try {
-      const { chatId, senderId, content } = req.body;
+      const { chatId, senderId, content, replyToId } = req.body;
       
       if (!chatId || !senderId || !content) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const message = await storage.createMessage({ chatId, senderId, content });
+      const message = await storage.createMessage({ chatId, senderId, content, replyToId: replyToId || null });
       
       // Create notification for recipient
       const chat = await storage.getChat(chatId);
@@ -545,6 +545,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Send message error:", error);
       res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  app.patch("/api/messages/:id", async (req, res) => {
+    try {
+      const { content, senderId } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: "Content is required" });
+      }
+
+      const existingMessage = await storage.getMessage(req.params.id);
+      if (!existingMessage) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+
+      if (existingMessage.senderId !== senderId) {
+        return res.status(403).json({ error: "Can only edit your own messages" });
+      }
+
+      const message = await storage.updateMessage(req.params.id, content);
+      res.json(message);
+    } catch (error) {
+      console.error("Edit message error:", error);
+      res.status(500).json({ error: "Failed to edit message" });
+    }
+  });
+
+  app.delete("/api/messages/:id", async (req, res) => {
+    try {
+      const { senderId } = req.body;
+      
+      const existingMessage = await storage.getMessage(req.params.id);
+      if (!existingMessage) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+
+      if (existingMessage.senderId !== senderId) {
+        return res.status(403).json({ error: "Can only delete your own messages" });
+      }
+
+      await storage.deleteMessage(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete message error:", error);
+      res.status(500).json({ error: "Failed to delete message" });
     }
   });
 

@@ -85,7 +85,10 @@ export interface IStorage {
   
   // Messages
   getChatMessages(chatId: string, limit?: number, offset?: number): Promise<Message[]>;
+  getMessage(id: string): Promise<Message | undefined>;
   createMessage(message: InsertMessage): Promise<Message>;
+  updateMessage(id: string, content: string): Promise<Message | undefined>;
+  deleteMessage(id: string): Promise<void>;
   markMessagesAsRead(chatId: string, userId: string): Promise<void>;
   getUnreadMessagesCount(chatId: string, userId: string): Promise<number>;
   
@@ -286,10 +289,24 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(messages).where(eq(messages.chatId, chatId)).orderBy(desc(messages.createdAt)).limit(limit).offset(offset);
   }
 
+  async getMessage(id: string): Promise<Message | undefined> {
+    const [message] = await db.select().from(messages).where(eq(messages.id, id));
+    return message;
+  }
+
   async createMessage(message: InsertMessage): Promise<Message> {
     const [newMessage] = await db.insert(messages).values(message).returning();
     await db.update(chats).set({ updatedAt: new Date() }).where(eq(chats.id, message.chatId));
     return newMessage;
+  }
+
+  async updateMessage(id: string, content: string): Promise<Message | undefined> {
+    const [updated] = await db.update(messages).set({ content, isEdited: true }).where(eq(messages.id, id)).returning();
+    return updated;
+  }
+
+  async deleteMessage(id: string): Promise<void> {
+    await db.delete(messages).where(eq(messages.id, id));
   }
 
   async markMessagesAsRead(chatId: string, userId: string): Promise<void> {
