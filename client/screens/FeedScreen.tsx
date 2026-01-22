@@ -384,7 +384,7 @@ export default function FeedScreen({ navigation }: Props) {
     isLoading,
   } = useInfiniteQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
-    queryFn: async ({ pageParam = 0 }) => {
+    queryFn: async ({ pageParam }) => {
       const response = await apiRequest("GET", `/api/posts?limit=10&offset=${pageParam}`, null);
       const resData = await response.json();
       return Array.isArray(resData) ? resData : [];
