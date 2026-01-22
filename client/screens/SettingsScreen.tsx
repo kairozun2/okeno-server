@@ -1,9 +1,9 @@
-import React from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
+import React, { useState } from "react";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TouchableWithoutFeedback } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 
@@ -15,6 +15,18 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 import { useQueryClient } from "@tanstack/react-query";
+
+const ACCENT_COLORS = [
+  { name: "Royal Blue", color: "#162660" },
+  { name: "Powder Blue", color: "#D0E6FD" },
+  { name: "Warm Beige", color: "#F1E4D1" },
+  { name: "Buttermilk", color: "#FFF1B5" },
+  { name: "Pastel Blue", color: "#C1DBE8" },
+  { name: "Old Burgundy", color: "#43302E" },
+  { name: "Dark Moss", color: "#525333" },
+  { name: "Persian Orange", color: "#CF8852" },
+  { name: "Sage Green", color: "#5C7A5C" }, // Default
+];
 
 interface SettingItem {
   icon: keyof typeof Feather.glyphMap;
@@ -78,11 +90,12 @@ function SettingRow({ item, isLast }: { item: SettingItem; isLast: boolean }) {
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 
 export default function SettingsScreen({ navigation }: Props) {
-  const { theme } = useTheme();
+  const { theme, accentColor, setAccentColor } = useTheme();
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   const handleCopyId = async () => {
     if (user?.id) {
@@ -195,10 +208,10 @@ export default function SettingsScreen({ navigation }: Props) {
       title: "ВНЕШНИЙ ВИД",
       items: [
         {
-          icon: "moon",
-          title: "Затемнить фон",
-          subtitle: "Выключено",
-          onPress: () => {},
+          icon: "aperture",
+          title: "Цвет приложения",
+          subtitle: ACCENT_COLORS.find(c => c.color === (accentColor || "#5C7A5C"))?.name || "По умолчанию",
+          onPress: () => setShowColorPicker(true),
         },
       ],
     },
@@ -216,45 +229,92 @@ export default function SettingsScreen({ navigation }: Props) {
   ];
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      contentContainerStyle={{
-        paddingTop: Spacing.lg,
-        paddingBottom: insets.bottom + Spacing.xl,
-      }}
-      showsVerticalScrollIndicator={false}
-    >
-      {sections.map((section, sectionIndex) => (
-        <Animated.View
-          key={sectionIndex}
-          entering={FadeIn.delay(sectionIndex * 30)}
-          style={styles.section}
-        >
-          {section.title ? (
-            <ThemedText
-              type="caption"
-              style={[styles.sectionTitle, { color: theme.textSecondary }]}
-            >
-              {section.title}
-            </ThemedText>
-          ) : null}
-          <View
-            style={[
-              styles.sectionContent,
-              { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg },
-            ]}
+    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingTop: Spacing.lg,
+          paddingBottom: insets.bottom + Spacing.xl,
+        }}
+      >
+        {sections.map((section, sectionIndex) => (
+          <Animated.View
+            key={sectionIndex}
+            entering={FadeIn.delay(sectionIndex * 30)}
+            style={styles.section}
           >
-            {section.items.map((item, itemIndex) => (
-              <SettingRow
-                key={itemIndex}
-                item={item}
-                isLast={itemIndex === section.items.length - 1}
-              />
-            ))}
+            {section.title ? (
+              <ThemedText
+                type="caption"
+                style={[styles.sectionTitle, { color: theme.textSecondary }]}
+              >
+                {section.title}
+              </ThemedText>
+            ) : null}
+            <View
+              style={[
+                styles.sectionContent,
+                { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg },
+              ]}
+            >
+              {section.items.map((item, itemIndex) => (
+                <SettingRow
+                  key={itemIndex}
+                  item={item}
+                  isLast={itemIndex === section.items.length - 1}
+                />
+              ))}
+            </View>
+          </Animated.View>
+        ))}
+      </ScrollView>
+
+      <Modal
+        visible={showColorPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowColorPicker(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowColorPicker(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <Animated.View
+                entering={FadeInDown}
+                style={[styles.modalContent, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}
+              >
+                <ThemedText type="h4" style={styles.modalTitle}>Выберите цвет</ThemedText>
+                <View style={styles.colorGrid}>
+                  {ACCENT_COLORS.map((item) => (
+                    <Pressable
+                      key={item.color}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        setAccentColor(item.color === "#5C7A5C" ? null : item.color);
+                        setShowColorPicker(false);
+                      }}
+                      style={[
+                        styles.colorOption,
+                        { backgroundColor: item.color },
+                        (accentColor || "#5C7A5C") === item.color && {
+                          borderWidth: 3,
+                          borderColor: theme.text,
+                        }
+                      ]}
+                    />
+                  ))}
+                </View>
+                <Pressable
+                  onPress={() => setShowColorPicker(false)}
+                  style={[styles.closeButton, { backgroundColor: theme.backgroundSecondary }]}
+                >
+                  <ThemedText type="body">Закрыть</ThemedText>
+                </Pressable>
+              </Animated.View>
+            </TouchableWithoutFeedback>
           </View>
-        </Animated.View>
-      ))}
-    </ScrollView>
+        </TouchableWithoutFeedback>
+      </Modal>
+    </View>
   );
 }
 
@@ -292,4 +352,40 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     fontSize: 15,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.xl,
+  },
+  modalContent: {
+    width: "100%",
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    borderWidth: 1,
+  },
+  modalTitle: {
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+  },
+  colorGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: Spacing.md,
+  },
+  colorOption: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginBottom: Spacing.md,
+  },
+  closeButton: {
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+  },
 });
+
