@@ -543,10 +543,10 @@ export default function ChatScreen({ route, navigation }: Props) {
                 <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
                 {userData?.isVerified ? <VerifiedBadge size={14} /> : null}
               </View>
-              <View style={{ height: 12, marginTop: -2 }}>
+              <View style={{ height: 12 }}>
                 {isOtherUserTyping ? (
-                  <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
-                    <ThemedText type="caption" style={{ color: theme.link, fontSize: 9, lineHeight: 12 }}>{t("typing...", "печатает...")}</ThemedText>
+                  <Animated.View entering={FadeIn.duration(400)} exiting={FadeOut.duration(400)}>
+                    <ThemedText type="caption" style={{ color: theme.link, fontSize: 10, lineHeight: 12 }}>{t("typing...", "печатает...")}</ThemedText>
                   </Animated.View>
                 ) : null}
               </View>
