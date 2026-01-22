@@ -117,7 +117,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     if (isOwner) {
       navigation.setOptions({
         headerRight: () => (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", paddingRight: 8 }}>
             <Pressable
               onPress={() => navigation.navigate("EditPost", { postId })}
               style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
@@ -201,7 +201,23 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     }
   };
 
-  if (!post) {
+  const { data: archivedData } = useQuery<string[]>({
+    queryKey: ["/api/users", currentUser?.id, "archived"],
+    enabled: !!currentUser?.id,
+  });
+
+  const isArchived = archivedData?.includes(postId);
+
+  if (!post || isArchived) {
+    if (isArchived) {
+      return (
+        <ThemedView style={[styles.container, styles.loadingContainer]}>
+          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+            Публикация в архиве
+          </ThemedText>
+        </ThemedView>
+      );
+    }
     return (
       <ThemedView style={[styles.container, styles.loadingContainer]}>
         <ThemedText type="body" style={{ color: theme.textSecondary }}>

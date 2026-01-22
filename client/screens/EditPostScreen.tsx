@@ -22,7 +22,7 @@ export default function EditPostScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
-  const { data: post } = useQuery({
+  const { data: post } = useQuery<{ id: string; userId: string; location: string | null }>({
     queryKey: ["/api/posts", postId],
   });
 
@@ -42,13 +42,18 @@ export default function EditPostScreen({ route, navigation }: Props) {
 
   const archiveMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", `/api/posts/${postId}/archive`);
+      await apiRequest("POST", `/api/users/${post?.userId}/archived`, { postId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", post?.userId, "archived"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.goBack();
     },
+    onError: (error) => {
+      console.error("Archive error:", error);
+      Alert.alert("Ошибка", "Не удалось архивировать публикацию");
+    }
   });
 
   const handleSave = () => {
