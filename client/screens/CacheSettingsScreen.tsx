@@ -59,7 +59,7 @@ export default function CacheSettingsScreen() {
 
         <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
           <ThemedText type="caption" style={styles.sectionTitle}>ДАННЫЕ ПРИЛОЖЕНИЯ</ThemedText>
-          <GlassView tintColor={theme.cardBackground} glassEffectStyle={isDark ? "dark" : "light"} style={styles.glassCard}>
+          <GlassView tintColor={theme.cardBackground} glassEffectStyle={isDark ? "dark" : "light" as any} style={styles.glassCard}>
             <View style={styles.row}>
               <ThemedText type="body">Сообщения</ThemedText>
               <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.messages}</ThemedText>
@@ -68,7 +68,7 @@ export default function CacheSettingsScreen() {
             <View style={styles.row}>
               <ThemedText type="body">Изображения</ThemedText>
               <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.images}</ThemedText>
-            </ThemedText>
+            </View>
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <View style={styles.row}>
               <ThemedText type="body">Кэш запросов</ThemedText>
@@ -79,7 +79,7 @@ export default function CacheSettingsScreen() {
 
         <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>
           <Pressable onPress={handleClearCache}>
-            <GlassView tintColor={theme.cardBackground} glassEffectStyle={isDark ? "dark" : "light"} style={styles.glassCard}>
+            <GlassView tintColor={theme.cardBackground} glassEffectStyle={isDark ? "dark" : "light" as any} style={styles.glassCard}>
               <View style={[styles.row, { justifyContent: 'center' }]}>
                 <ThemedText type="body" style={{ color: theme.error, fontWeight: "600" }}>Очистить весь кэш</ThemedText>
               </View>
