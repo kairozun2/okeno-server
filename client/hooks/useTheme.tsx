@@ -55,9 +55,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     link: accentColor,
     accent: accentColor,
     success: accentColor,
-    backgroundRoot: isDark ? baseTheme.backgroundRoot : accentColor, 
-    backgroundDefault: isDark ? baseTheme.backgroundDefault : accentColor + "DD",
-    cardBackground: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.9)",
+    backgroundRoot: isDark ? baseTheme.backgroundRoot : accentColor,
+    backgroundDefault: isDark ? baseTheme.backgroundDefault : accentColor,
+    cardBackground: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.95)",
   } : baseTheme;
 
   if (isLoading) return null;

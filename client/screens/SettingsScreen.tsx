@@ -18,12 +18,12 @@ import { useQueryClient } from "@tanstack/react-query";
 
 const ACCENT_COLORS = [
   { name: "Royal Blue", color: "#162660" },
-  { name: "Powder Blue", color: "#D0E6FD" },
+  { name: "Powder Blue", color: "#6EB0F5" }, // Brighter for background
   { name: "Warm Beige", color: "#F1E4D1" },
   { name: "Buttermilk", color: "#FFF1B5" },
   { name: "Pastel Blue", color: "#C1DBE8" },
-  { name: "Old Burgundy", color: "#43302E" },
-  { name: "Dark Moss", color: "#525333" },
+  { name: "Old Burgundy", color: "#8E443D" }, // Brighter for background
+  { name: "Dark Moss", color: "#7A7B4D" }, // Brighter for background
   { name: "Persian Orange", color: "#CF8852" },
   { name: "Sage Green", color: "#5C7A5C" }, // Default
 ];
@@ -276,54 +276,49 @@ export default function SettingsScreen({ navigation }: Props) {
 
       <Modal
         visible={showColorPicker}
-        transparent={false}
-        animationType="slide"
+        transparent
+        animationType="fade"
         onRequestClose={() => setShowColorPicker(false)}
       >
-        <View style={[styles.fullScreenModal, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.md }]}>
-            <Pressable 
-              onPress={() => setShowColorPicker(false)}
-              style={styles.backButton}
-            >
-              <Feather name="chevron-left" size={28} color={theme.text} />
-            </Pressable>
-            <ThemedText type="h3">Цвет приложения</ThemedText>
-            <View style={{ width: 28 }} />
-          </View>
+        <TouchableWithoutFeedback onPress={() => setShowColorPicker(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <Animated.View
+                entering={FadeInDown}
+                style={[styles.modalContent, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}
+              >
+                <ThemedText type="h4" style={styles.modalTitle}>Цвет приложения</ThemedText>
+                
+                <View style={styles.colorGridOverlay}>
+                  {ACCENT_COLORS.map((item) => (
+                    <Pressable
+                      key={item.color}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        setAccentColor(item.color === "#5C7A5C" ? null : item.color);
+                      }}
+                      style={[
+                        styles.colorCircleLarge,
+                        { backgroundColor: item.color },
+                        (accentColor || "#5C7A5C") === item.color && {
+                          borderWidth: 3,
+                          borderColor: theme.text,
+                        }
+                      ]}
+                    />
+                  ))}
+                </View>
 
-          <ScrollView 
-            contentContainerStyle={styles.modalScroll}
-            showsVerticalScrollIndicator={false}
-          >
-            <ThemedText type="body" style={styles.modalSubtitle}>
-              Выберите основной цвет для элементов интерфейса и фона
-            </ThemedText>
-
-            <View style={styles.colorGrid}>
-              {ACCENT_COLORS.map((item) => (
                 <Pressable
-                  key={item.color}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    setAccentColor(item.color === "#5C7A5C" ? null : item.color);
-                  }}
-                  style={[
-                    styles.colorCard,
-                    { backgroundColor: theme.cardBackground }
-                  ]}
+                  onPress={() => setShowColorPicker(false)}
+                  style={[styles.closeButtonOverlay, { backgroundColor: theme.backgroundSecondary }]}
                 >
-                  <View style={[styles.colorCircle, { backgroundColor: item.color }]}>
-                    {(accentColor || "#5C7A5C") === item.color && (
-                      <Feather name="check" size={20} color="#FFF" />
-                    )}
-                  </View>
-                  <ThemedText type="small" style={styles.colorName}>{item.name}</ThemedText>
+                  <ThemedText type="body">Готово</ThemedText>
                 </Pressable>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   );
@@ -363,55 +358,40 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     fontSize: 15,
   },
-  fullScreenModal: {
+  modalOverlay: {
     flex: 1,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-  },
-  backButton: {
-    padding: Spacing.xs,
-  },
-  modalScroll: {
-    padding: Spacing.lg,
-  },
-  modalSubtitle: {
-    textAlign: "center",
-    marginBottom: Spacing.xl,
-    opacity: 0.7,
-  },
-  colorGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: Spacing.md,
-  },
-  colorCard: {
-    width: "47%",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-  },
-  colorCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginBottom: Spacing.sm,
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: Spacing.xl,
   },
-  colorName: {
-    fontWeight: "500",
+  modalContent: {
+    width: "100%",
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    borderWidth: 1,
+  },
+  modalTitle: {
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+  },
+  colorGridOverlay: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: Spacing.md,
+  },
+  colorCircleLarge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginBottom: Spacing.sm,
+  },
+  closeButtonOverlay: {
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
   },
 });
 

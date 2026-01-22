@@ -69,12 +69,6 @@ export default function ArchiveScreen({ navigation }: Props) {
       style={styles.item}
     >
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      <Pressable
-        onPress={() => unarchiveMutation.mutate(item.id)}
-        style={[styles.unarchiveBadge, { backgroundColor: theme.accent }]}
-      >
-        <Feather name="arrow-up" size={14} color="#FFF" />
-      </Pressable>
     </Pressable>
   );
 
@@ -125,17 +119,6 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
-  },
-  unarchiveBadge: {
-    position: 'absolute',
-    bottom: Spacing.xs,
-    right: Spacing.xs,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    opacity: 0.9,
   },
   empty: {
     flex: 1,

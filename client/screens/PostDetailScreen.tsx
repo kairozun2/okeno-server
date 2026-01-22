@@ -118,6 +118,26 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       navigation.setOptions({
         headerRight: () => (
           <View style={{ flexDirection: "row", alignItems: "center", paddingRight: -8 }}>
+            {isArchived && (
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  unarchiveMutation.mutate();
+                }}
+                style={({ pressed }) => ({
+                  width: 38,
+                  height: 38,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 19,
+                  marginRight: 8,
+                  backgroundColor: theme.accent,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Feather name="arrow-up" size={18} color="#FFF" />
+              </Pressable>
+            )}
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -159,7 +179,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         headerRight: undefined
       });
     }
-  }, [isOwner, navigation, theme.error, theme.text, handleDelete, postId]);
+  }, [isOwner, isArchived, navigation, theme.error, theme.text, theme.accent, handleDelete, postId, unarchiveMutation]);
 
   const likeMutation = useMutation({
     mutationFn: async () => {
@@ -253,28 +273,44 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   if (isArchived) {
     return (
-      <ThemedView style={[styles.container, styles.loadingContainer]}>
-        <Feather name="archive" size={48} color={theme.textSecondary} style={{ marginBottom: Spacing.md }} />
-        <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
-          Публикация в архиве
-        </ThemedText>
-        <Pressable
-          onPress={() => unarchiveMutation.mutate()}
-          style={({ pressed }) => ({
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            backgroundColor: theme.cardBackground,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: 1,
-            borderColor: theme.border,
-            opacity: pressed ? 0.7 : 1,
-            transform: [{ scale: pressed ? 0.95 : 1 }]
-          })}
+      <ThemedView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={{
+            paddingTop: Spacing.lg,
+            paddingBottom: insets.bottom + Spacing.xl,
+          }}
+          showsVerticalScrollIndicator={false}
         >
-          <Feather name="rotate-ccw" size={24} color={theme.link} />
-        </Pressable>
+          <Image
+            source={{ uri: post.imageUrl }}
+            style={styles.image}
+            contentFit="cover"
+            transition={200}
+          />
+
+          <Animated.View entering={FadeIn} style={styles.content}>
+            <View style={styles.userRow}>
+              <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
+                <View style={styles.userInfo}>
+                  <ThemedText type="body" style={styles.username} truncate maxLength={15}>
+                    {postUser?.username || "Пользователь"}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ru })}
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.archiveNotice}>
+              <Feather name="archive" size={20} color={theme.textSecondary} />
+              <ThemedText type="body" style={{ marginLeft: Spacing.sm, color: theme.textSecondary }}>
+                Публикация находится в архиве
+              </ThemedText>
+            </View>
+          </Animated.View>
+        </ScrollView>
       </ThemedView>
     );
   }
@@ -439,5 +475,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
+  },
+  archiveNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.lg,
+    backgroundColor: "rgba(0,0,0,0.03)",
+    borderRadius: BorderRadius.lg,
+    marginTop: Spacing.md,
   },
 });
