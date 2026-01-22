@@ -717,13 +717,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users/:id/chat-settings", async (req, res) => {
     try {
-      const { otherUserId, nickname, backgroundImage } = req.body;
+      const { otherUserId, nickname, backgroundImage, isGlobal } = req.body;
       const settings = await storage.upsertChatSettings({
         userId: req.params.id,
         otherUserId,
         nickname,
         backgroundImage,
+        isGlobal: !!isGlobal,
       });
+
+      // If global is enabled, also update for the other user
+      if (isGlobal) {
+        await storage.upsertChatSettings({
+          userId: otherUserId,
+          otherUserId: req.params.id,
+          nickname: null, // Don't overwrite their nickname for us
+          backgroundImage,
+          isGlobal: true,
+        });
+      }
+
       res.json(settings);
     } catch (error) {
       console.error("Update chat settings error:", error);

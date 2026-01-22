@@ -374,7 +374,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(chatSettings).where(eq(chatSettings.userId, userId));
   }
 
-  async upsertChatSettings(settings: InsertChatSettings): Promise<ChatSettings> {
+  async upsertChatSettings(settings: InsertChatSettings & { isGlobal?: boolean }): Promise<ChatSettings> {
     const existing = await this.getChatSettings(settings.userId, settings.otherUserId);
     
     if (existing) {
@@ -382,6 +382,7 @@ export class DatabaseStorage implements IStorage {
         .set({ 
           nickname: settings.nickname,
           backgroundImage: settings.backgroundImage,
+          isGlobal: settings.isGlobal ?? existing.isGlobal,
           updatedAt: new Date()
         })
         .where(eq(chatSettings.id, existing.id))
@@ -389,8 +390,24 @@ export class DatabaseStorage implements IStorage {
       return updated;
     }
     
+    const [created] = await db.insert(chatSettings).values({
+      userId: settings.userId,
+      otherUserId: settings.otherUserId,
+      nickname: settings.nickname,
+      backgroundImage: settings.backgroundImage,
+      isGlobal: settings.isGlobal ?? false,
+    }).returning();
+    return created;
+  }
+  
+  async createChatSettings(settings: any): Promise<ChatSettings> {
     const [created] = await db.insert(chatSettings).values(settings).returning();
     return created;
+  }
+
+  async updateChatSettings(id: string, data: any): Promise<ChatSettings> {
+    const [updated] = await db.update(chatSettings).set({ ...data, updatedAt: new Date() }).where(eq(chatSettings.id, id)).returning();
+    return updated;
   }
 }
 

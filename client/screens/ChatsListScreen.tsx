@@ -150,6 +150,16 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [selectedChat, setSelectedChat] = useState<ChatWithDetails | null>(null);
   const [nickname, setNickname] = useState("");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [isGlobal, setIsGlobal] = useState(false);
+
+  const presetBackgrounds = [
+    "https://www.imgbly.com/7LrPlX4Iji8B7My",
+    "https://www.imgbly.com/dXlgA0NxiQ0OQrf",
+    "https://www.imgbly.com/LfiUT8bTrfnCxxi",
+    "https://www.imgbly.com/Oe0Zr0pZL1AaiYc",
+    "https://www.imgbly.com/DtLmUPp1J7D93Y6",
+    "https://www.imgbly.com/sXwxiUNCKhTknmC"
+  ];
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -179,7 +189,7 @@ export default function ChatsListScreen({ navigation }: Props) {
   });
 
   const saveChatSettingsMutation = useMutation({
-    mutationFn: async (data: { otherUserId: string; nickname?: string | null; backgroundImage?: string | null }) => {
+    mutationFn: async (data: { otherUserId: string; nickname?: string | null; backgroundImage?: string | null; isGlobal?: boolean }) => {
       await apiRequest("POST", `/api/users/${user?.id}/chat-settings`, data);
     },
     onSuccess: () => {
@@ -218,6 +228,7 @@ export default function ChatsListScreen({ navigation }: Props) {
       otherUserId: selectedChat.otherUser.id,
       nickname: nickname || null,
       backgroundImage,
+      isGlobal,
     });
   };
 
@@ -226,6 +237,7 @@ export default function ChatsListScreen({ navigation }: Props) {
     setSelectedChat(null);
     setNickname("");
     setBackgroundImage(null);
+    setIsGlobal(false);
   };
 
   const onRefresh = useCallback(async () => {
@@ -382,6 +394,46 @@ export default function ChatsListScreen({ navigation }: Props) {
                 <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
                   Этот никнейм виден только вам
                 </ThemedText>
+              </View>
+
+              <View style={styles.settingSection}>
+                <View style={styles.toggleRow}>
+                  <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary, marginBottom: 0 }]}>
+                    Видно обоим пользователям
+                  </ThemedText>
+                  <Pressable
+                    onPress={() => setIsGlobal(!isGlobal)}
+                    style={[
+                      styles.toggle,
+                      { backgroundColor: isGlobal ? theme.link : theme.backgroundSecondary }
+                    ]}
+                  >
+                    <View style={[styles.toggleThumb, isGlobal && { transform: [{ translateX: 14 }] }]} />
+                  </Pressable>
+                </View>
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
+                  Если включено, другой пользователь тоже увидит этот фон и ваш никнейм для него
+                </ThemedText>
+              </View>
+
+              <View style={styles.settingSection}>
+                <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
+                  Готовые фоны
+                </ThemedText>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.presetsContainer}>
+                  {presetBackgrounds.map((url, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => setBackgroundImage(url)}
+                      style={[
+                        styles.presetItem,
+                        backgroundImage === url && { borderColor: theme.link, borderWidth: 2 }
+                      ]}
+                    >
+                      <Image source={{ uri: url }} style={styles.presetImage} contentFit="cover" />
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
 
               <View style={styles.settingSection}>
@@ -576,5 +628,39 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: Spacing.md,
     alignSelf: "center",
+  },
+  presetsContainer: {
+    flexDirection: "row",
+    marginBottom: Spacing.md,
+  },
+  presetItem: {
+    width: 60,
+    height: 100,
+    borderRadius: 8,
+    marginRight: Spacing.sm,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  presetImage: {
+    width: "100%",
+    height: "100%",
+  },
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  toggle: {
+    width: 34,
+    height: 20,
+    borderRadius: 10,
+    padding: 2,
+  },
+  toggleThumb: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#fff",
   },
 });

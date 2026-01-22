@@ -136,6 +136,7 @@ export const chatSettings = pgTable("chat_settings", {
   otherUserId: varchar("other_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   nickname: text("nickname"),
   backgroundImage: text("background_image"),
+  isGlobal: boolean("is_global").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
