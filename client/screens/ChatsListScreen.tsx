@@ -86,13 +86,13 @@ function ChatItem({
         <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
         <View style={styles.chatInfo}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1 }}>
-              <ThemedText type="body" style={[styles.chatName, { flex: 0 }]} truncate maxLength={12}>
+            <View style={{ flexDirection: "row", alignItems: "center", flex: 1, marginRight: Spacing.sm }}>
+              <ThemedText type="body" style={[styles.chatName, { flexShrink: 1 }]} truncate maxLength={12}>
                 {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
               </ThemedText>
               {chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
             </View>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, flexShrink: 0 }}>
               {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: enUS })}
             </ThemedText>
           </View>
