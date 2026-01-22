@@ -71,9 +71,9 @@ export default function ArchiveScreen({ navigation }: Props) {
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
       <Pressable
         onPress={() => unarchiveMutation.mutate(item.id)}
-        style={[styles.unarchiveBadge, { backgroundColor: theme.cardBackground }]}
+        style={[styles.unarchiveBadge, { backgroundColor: theme.accent }]}
       >
-        <Feather name="rotate-ccw" size={12} color={theme.text} />
+        <Feather name="arrow-up" size={14} color="#FFF" />
       </Pressable>
     </Pressable>
   );
