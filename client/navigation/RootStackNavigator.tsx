@@ -52,21 +52,18 @@ function CloseButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-function ChatHeaderTitle({ name, emoji }: { name?: string; emoji?: string }) {
+function ChatHeaderTitle({ name }: { name?: string }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm }}>
-      <Avatar emoji={emoji || "🐸"} size={28} />
-      <ThemedText type="body" style={{ fontWeight: "600" }}>
-        {name || "Чат"}
-      </ThemedText>
-    </View>
+    <ThemedText type="body" style={{ fontWeight: "600" }}>
+      {name || "Чат"}
+    </ThemedText>
   );
 }
 
 function ChatHeaderRight({ emoji }: { emoji?: string }) {
   return (
-    <View style={{ marginRight: Spacing.sm }}>
-      <Avatar emoji={emoji || "🐸"} size={28} />
+    <View style={{ marginRight: Spacing.md }}>
+      <Avatar emoji={emoji || "🐸"} size={32} />
     </View>
   );
 }
@@ -98,14 +95,13 @@ export default function RootStackNavigator() {
               headerTitle: () => (
                 <ChatHeaderTitle 
                   name={route.params?.otherUserName} 
-                  emoji={route.params?.otherUserEmoji} 
                 />
               ),
               headerRight: () => (
                 <ChatHeaderRight emoji={route.params?.otherUserEmoji} />
               ),
-              gestureEnabled: false,
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              gestureEnabled: true,
             })}
           />
           <Stack.Screen

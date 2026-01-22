@@ -82,8 +82,8 @@ function EmptyChat() {
 
 type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
-export default function ChatScreen({ route }: Props) {
-  const { chatId } = route.params;
+export default function ChatScreen({ route, navigation }: Props) {
+  const { chatId, otherUserName, otherUserEmoji } = route.params;
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -141,7 +141,7 @@ export default function ChatScreen({ route }: Props) {
       <KeyboardAvoidingView
         style={styles.container}
         behavior="padding"
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={headerHeight}
       >
         <FlatList
           ref={flatListRef}
@@ -151,7 +151,7 @@ export default function ChatScreen({ route }: Props) {
           inverted={messages.length > 0}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: headerHeight + Spacing.md },
+            { paddingTop: Spacing.md },
             messages.length === 0 && { flex: 1 },
           ]}
           ListEmptyComponent={<EmptyChat />}
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     minHeight: 40,
-    maxHeight: 100,
+    maxHeight: 150,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,

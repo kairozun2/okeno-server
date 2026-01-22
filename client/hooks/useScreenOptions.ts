@@ -1,6 +1,7 @@
-import { Platform, View } from "react-native";
+import { Platform, View, StyleSheet } from "react-native";
 import { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
+import { BlurView } from "expo-blur";
 import React from "react";
 
 import { useTheme } from "@/hooks/useTheme";
@@ -67,17 +68,15 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
       ? (isDark ? "systemThinMaterialDark" : "systemThinMaterialLight")
       : undefined,
     headerStyle: {
-      backgroundColor: Platform.OS === "ios" ? "transparent" : "rgba(255, 255, 255, 0.1)",
+      backgroundColor: "transparent",
     },
-    headerBackground: () => {
-      if (Platform.OS === "ios") return null;
-      return React.createElement(View, {
-        style: {
-          flex: 1,
-          backgroundColor: isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)"
-        }
-      });
-    },
+    headerBackground: () => (
+      <BlurView
+        intensity={80}
+        tint={isDark ? "dark" : "light"}
+        style={StyleSheet.absoluteFill}
+      />
+    ),
     contentStyle: {
       backgroundColor: theme.backgroundRoot,
     },
