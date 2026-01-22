@@ -519,6 +519,28 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(userId: string): Promise<void> {
     await db.delete(users).where(eq(users.id, userId));
   }
+  
+  // Admin functions
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+  
+  async setUserAdmin(userId: string, isAdmin: boolean): Promise<void> {
+    await db.update(users).set({ isAdmin }).where(eq(users.id, userId));
+  }
+  
+  async setUserVerified(userId: string, isVerified: boolean): Promise<void> {
+    await db.update(users).set({ isVerified }).where(eq(users.id, userId));
+  }
+  
+  async setUserBanned(userId: string, isBanned: boolean): Promise<void> {
+    await db.update(users).set({ isBanned }).where(eq(users.id, userId));
+  }
+  
+  async isUserAdmin(userId: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    return user?.isAdmin ?? false;
+  }
 }
 
 export const storage = new DatabaseStorage();

@@ -225,7 +225,16 @@ export default function ProfileScreen({ navigation }: Props) {
         <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
         <View style={[styles.headerContent, { paddingTop: insets.top }]}>
           <View style={styles.headerLeft}>
-            <View style={{ width: 40 }} />
+            {user?.isAdmin ? (
+              <Pressable
+                onPress={() => navigation.navigate("AdminPanel")}
+                style={styles.headerIconButton}
+              >
+                <Feather name="shield" size={20} color={theme.text} />
+              </Pressable>
+            ) : (
+              <View style={{ width: 40 }} />
+            )}
           </View>
           <View style={styles.headerCenter}>
             <Animated.View style={[styles.headerTitleContainer, headerTitleStyle]}>

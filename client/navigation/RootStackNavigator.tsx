@@ -21,6 +21,7 @@ import PrivacyPolicyScreen from "@/screens/PrivacyPolicyScreen";
 import CacheSettingsScreen from "@/screens/CacheSettingsScreen";
 import EditPostScreen from "@/screens/EditPostScreen";
 import ArchiveScreen from "@/screens/ArchiveScreen";
+import AdminPanelScreen from "@/screens/AdminPanelScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
@@ -45,6 +46,7 @@ export type RootStackParamList = {
   CacheSettings: undefined;
   EditPost: { postId: string };
   Archive: undefined;
+  AdminPanel: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -256,6 +258,15 @@ export default function RootStackNavigator() {
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               headerShadowVisible: false,
             })}
+          />
+          <Stack.Screen
+            name="AdminPanel"
+            component={AdminPanelScreen}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
           />
         </>
       ) : (

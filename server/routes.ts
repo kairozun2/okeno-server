@@ -923,6 +923,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  app.get("/api/admin/users", async (req, res) => {
+    try {
+      const adminId = req.headers["x-user-id"] as string;
+      if (!adminId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const isAdmin = await storage.isUserAdmin(adminId);
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers.map(u => ({
+        id: u.id,
+        username: u.username,
+        emoji: u.emoji,
+        isAdmin: u.isAdmin,
+        isVerified: u.isVerified,
+        isBanned: u.isBanned,
+        createdAt: u.createdAt,
+      })));
+    } catch (error) {
+      console.error("Get all users error:", error);
+      res.status(500).json({ error: "Failed to get users" });
+    }
+  });
+  
+  app.post("/api/admin/users/:id/admin", async (req, res) => {
+    try {
+      const adminId = req.headers["x-user-id"] as string;
+      if (!adminId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const isAdmin = await storage.isUserAdmin(adminId);
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      
+      const { value } = req.body;
+      await storage.setUserAdmin(req.params.id, value);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Set admin error:", error);
+      res.status(500).json({ error: "Failed to update admin status" });
+    }
+  });
+  
+  app.post("/api/admin/users/:id/verify", async (req, res) => {
+    try {
+      const adminId = req.headers["x-user-id"] as string;
+      if (!adminId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const isAdmin = await storage.isUserAdmin(adminId);
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      
+      const { value } = req.body;
+      await storage.setUserVerified(req.params.id, value);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Set verified error:", error);
+      res.status(500).json({ error: "Failed to update verified status" });
+    }
+  });
+  
+  app.post("/api/admin/users/:id/ban", async (req, res) => {
+    try {
+      const adminId = req.headers["x-user-id"] as string;
+      if (!adminId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const isAdmin = await storage.isUserAdmin(adminId);
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      
+      const { value } = req.body;
+      await storage.setUserBanned(req.params.id, value);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Set banned error:", error);
+      res.status(500).json({ error: "Failed to update banned status" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
