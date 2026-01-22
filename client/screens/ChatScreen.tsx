@@ -132,7 +132,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   );
 
   const sortedMessages = [...messages].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   const EmptyChatState = () => (
@@ -156,16 +156,14 @@ export default function ChatScreen({ route, navigation }: Props) {
           data={sortedMessages}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
+          inverted={messages.length > 0}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: headerHeight + Spacing.md, paddingBottom: Spacing.xl },
+            { paddingTop: headerHeight + Spacing.md },
             messages.length === 0 && { flex: 1 },
           ]}
           ListEmptyComponent={EmptyChatState}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => {
-            flatListRef.current?.scrollToEnd({ animated: true });
-          }}
         />
 
         <View
@@ -250,6 +248,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    transform: [{ scaleY: -1 }],
   },
   inputContainer: {
     paddingTop: Spacing.sm,
