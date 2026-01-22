@@ -164,31 +164,36 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         </Animated.View>
       ),
       headerLeft: () => (
-        <Pressable 
-          onPress={() => navigation.goBack()}
-          hitSlop={20}
-          style={{ 
-            width: 40,
-            height: 40,
-            alignItems: "center",
-            justifyContent: "center",
-            marginLeft: 8,
-          }}
-        >
-          <Feather name="chevron-left" size={28} color={theme.text} />
-        </Pressable>
+        <View style={{ marginLeft: 8 }}>
+          <Pressable 
+            onPress={() => navigation.goBack()}
+            hitSlop={20}
+            style={({ pressed }) => ({ 
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : "transparent",
+              alignItems: "center",
+              justifyContent: "center",
+            })}
+          >
+            <Feather name="chevron-left" size={28} color={theme.text} />
+          </Pressable>
+        </View>
       ),
       headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center", paddingRight: 8 }}>
           <Pressable 
             onPress={() => setShowActionSheet(true)} 
             hitSlop={20}
-            style={{ 
-              width: 40,
-              height: 40,
+            style={({ pressed }) => ({ 
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : "transparent",
               alignItems: "center",
               justifyContent: "center",
-            }}
+            })}
           >
             <Feather name="more-horizontal" size={24} color={theme.text} />
           </Pressable>

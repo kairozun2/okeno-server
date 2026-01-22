@@ -139,19 +139,22 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     navigation.setOptions({
       headerTitle: t("Post", "Пост"),
       headerLeft: () => (
-        <Pressable 
-          onPress={() => navigation.goBack()}
-          hitSlop={20}
-          style={{ 
-            width: 40,
-            height: 40,
-            alignItems: "center",
-            justifyContent: "center",
-            marginLeft: 8,
-          }}
-        >
-          <Feather name="chevron-left" size={28} color={theme.text} />
-        </Pressable>
+        <View style={{ marginLeft: 8 }}>
+          <Pressable 
+            onPress={() => navigation.goBack()}
+            hitSlop={20}
+            style={({ pressed }) => ({ 
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : "transparent",
+              alignItems: "center",
+              justifyContent: "center",
+            })}
+          >
+            <Feather name="chevron-left" size={28} color={theme.text} />
+          </Pressable>
+        </View>
       ),
       headerRight: () => {
         if (!isOwner) return null;
@@ -165,13 +168,12 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                   unarchiveMutation.mutate();
                 }}
                 style={({ pressed }) => ({
-                  width: 38,
-                  height: 38,
-                  borderRadius: 19,
-                  backgroundColor: theme.backgroundSecondary,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : theme.backgroundSecondary,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  opacity: pressed ? 0.7 : 1,
                 })}
               >
                 <Feather name="arrow-up" size={20} color={theme.text} />
@@ -183,13 +185,12 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 navigation.navigate("EditPost", { postId });
               }}
               style={({ pressed }) => ({
-                width: 38,
-                height: 38,
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : "transparent",
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: 12,
-                backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
-                opacity: pressed ? 0.7 : 1,
               })}
             >
               <Feather name="edit-2" size={20} color={theme.text} />
@@ -200,13 +201,12 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 handleDelete();
               }}
               style={({ pressed }) => ({
-                width: 38,
-                height: 38,
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: pressed ? "rgba(255, 255, 255, 0.1)" : "transparent",
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: 12,
-                backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
-                opacity: pressed ? 0.7 : 1,
               })}
             >
               <Feather name="trash-2" size={20} color={theme.error} />

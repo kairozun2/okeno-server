@@ -149,8 +149,11 @@ export default function MainTabNavigator() {
             backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundRoot,
             borderTopWidth: 0,
             elevation: 0,
-            height: 60 + insets.bottom,
-            paddingBottom: insets.bottom + 8,
+            height: 50 + insets.bottom,
+            paddingBottom: 0,
+          },
+          tabBarItemStyle: {
+            paddingTop: 12,
           },
           tabBarBackground: () =>
             Platform.OS === "ios" ? (
