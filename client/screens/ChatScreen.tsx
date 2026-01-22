@@ -654,31 +654,46 @@ export default function ChatScreen({ route, navigation }: Props) {
           onRequestClose={() => setShowActionModal(false)}
         >
           <Pressable style={styles.modalOverlay} onPress={() => setShowActionModal(false)}>
-            <View style={[styles.actionSheet, { backgroundColor: theme.backgroundRoot }]}>
+            <BlurView intensity={20} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+            <Animated.View 
+              entering={FadeIn.duration(200)}
+              style={[
+                styles.actionSheet, 
+                { 
+                  backgroundColor: isDark ? "rgba(30,30,30,0.9)" : "rgba(255,255,255,0.9)",
+                  marginHorizontal: Spacing.xl,
+                  marginBottom: insets.bottom + Spacing.xl,
+                  borderRadius: 24,
+                  overflow: 'hidden',
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                }
+              ]}
+            >
               <Pressable
-                style={[styles.actionItem, { borderBottomColor: theme.border }]}
+                style={[styles.actionItem, { borderBottomColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }]}
                 onPress={() => selectedMessage && handleReply(selectedMessage)}
               >
+                <ThemedText type="body" style={{ flex: 1, fontWeight: '500' }}>{t("Reply", "Ответить")}</ThemedText>
                 <Feather name="corner-up-left" size={20} color={theme.text} />
-                <ThemedText type="body" style={{ marginLeft: Spacing.md }}>{t("Reply", "Ответить")}</ThemedText>
               </Pressable>
               
               {selectedMessage?.senderId === user?.id ? (
                 <>
                   <Pressable
-                    style={[styles.actionItem, { borderBottomColor: theme.border }]}
+                    style={[styles.actionItem, { borderBottomColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }]}
                     onPress={() => selectedMessage && handleEdit(selectedMessage)}
                   >
+                    <ThemedText type="body" style={{ flex: 1, fontWeight: '500' }}>{t("Edit", "Редактировать")}</ThemedText>
                     <Feather name="edit-2" size={20} color={theme.text} />
-                    <ThemedText type="body" style={{ marginLeft: Spacing.md }}>{t("Edit", "Редактировать")}</ThemedText>
                   </Pressable>
                   
                   <Pressable
-                    style={[styles.actionItem, { borderBottomColor: theme.border }]}
+                    style={[styles.actionItem, { borderBottomColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }]}
                     onPress={() => selectedMessage && handleDelete(selectedMessage)}
                   >
+                    <ThemedText type="body" style={{ flex: 1, color: theme.error, fontWeight: '600' }}>{t("Delete", "Удалить")}</ThemedText>
                     <Feather name="trash-2" size={20} color={theme.error} />
-                    <ThemedText type="body" style={{ marginLeft: Spacing.md, color: theme.error }}>{t("Delete", "Удалить")}</ThemedText>
                   </Pressable>
                 </>
               ) : null}
@@ -687,10 +702,10 @@ export default function ChatScreen({ route, navigation }: Props) {
                 style={styles.actionItem}
                 onPress={() => setShowActionModal(false)}
               >
+                <ThemedText type="body" style={{ flex: 1, color: theme.textSecondary }}>{t("Cancel", "Отмена")}</ThemedText>
                 <Feather name="x" size={20} color={theme.textSecondary} />
-                <ThemedText type="body" style={{ marginLeft: Spacing.md, color: theme.textSecondary }}>{t("Cancel", "Отмена")}</ThemedText>
               </Pressable>
-            </View>
+            </Animated.View>
           </Pressable>
         </Modal>
       </KeyboardAvoidingView>
@@ -822,10 +837,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   actionSheet: {
-    borderTopLeftRadius: BorderRadius.lg,
-    borderTopRightRadius: BorderRadius.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
+    borderRadius: 24,
+    paddingVertical: Spacing.xs,
+    width: '80%',
+    alignSelf: 'center',
   },
   actionItem: {
     flexDirection: "row",
