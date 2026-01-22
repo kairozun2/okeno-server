@@ -38,6 +38,7 @@ interface Post {
   id: string;
   userId: string;
   imageUrl: string;
+  caption: string | null;
   location: string | null;
   latitude: string | null;
   longitude: string | null;
@@ -57,6 +58,7 @@ interface PostWithUser extends Post {
   commentsCount: number;
   isLiked: boolean;
   isSaved: boolean;
+  caption: string | null;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -85,6 +87,7 @@ function PostCard({
   t: (en: string, ru: string) => string;
 }) {
   const { theme, language } = useTheme();
+  const [showCaptionModal, setShowCaptionModal] = useState(false);
   const likeScale = useSharedValue(1);
   const saveScale = useSharedValue(1);
 
@@ -273,6 +276,50 @@ function PostCard({
           </AnimatedPressable>
         </View>
       </View>
+
+      {post.caption ? (
+        <Pressable 
+          onPress={() => setShowCaptionModal(true)}
+          style={styles.captionContainer}
+        >
+          <ThemedText 
+            type="small" 
+            style={{ color: theme.text }}
+            numberOfLines={1}
+          >
+            {post.caption.length > 50 ? post.caption.substring(0, 50) + "..." : post.caption}
+          </ThemedText>
+          {post.caption.length > 50 ? (
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
+              {t("more", "ещё")}
+            </ThemedText>
+          ) : null}
+        </Pressable>
+      ) : null}
+
+      <Modal
+        visible={showCaptionModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCaptionModal(false)}
+      >
+        <Pressable 
+          style={styles.captionModalOverlay} 
+          onPress={() => setShowCaptionModal(false)}
+        >
+          <View style={[styles.captionModalContent, { backgroundColor: theme.cardBackground }]}>
+            <View style={styles.captionModalHeader}>
+              <ThemedText type="body" style={{ fontWeight: "600" }}>{t("Caption", "Описание")}</ThemedText>
+              <Pressable onPress={() => setShowCaptionModal(false)}>
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
+            </View>
+            <ThemedText type="body" style={{ color: theme.text, lineHeight: 22 }}>
+              {post.caption}
+            </ThemedText>
+          </View>
+        </Pressable>
+      </Modal>
     </Animated.View>
   );
 }
@@ -700,5 +747,30 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+  },
+  captionContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.xs,
+    paddingBottom: Spacing.xs,
+  },
+  captionModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.xl,
+  },
+  captionModalContent: {
+    width: "100%",
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    maxHeight: "60%",
+  },
+  captionModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
   },
 });

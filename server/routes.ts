@@ -370,7 +370,10 @@ export async function registerRoutes(app: express.Express) {
 
   app.get("/api/chats/:id/messages", async (req, res) => {
     try {
-      const messages = await storage.getChatMessages(req.params.id);
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const messages = await storage.getChatMessages(req.params.id, limit, offset);
       
       // Fetch reactions for all messages in a batch
       const messagesWithReactions = await Promise.all(

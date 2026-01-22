@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
-import { View, StyleSheet, Pressable, Alert, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Alert, Platform, TextInput, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Image } from "expo-image";
@@ -32,6 +32,7 @@ export default function CreatePostScreen({ navigation }: Props) {
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const [image, setImage] = useState<string | null>(null);
+  const [caption, setCaption] = useState("");
   const [location, setLocation] = useState<{
     name: string | null;
     latitude: number | null;
@@ -50,6 +51,7 @@ export default function CreatePostScreen({ navigation }: Props) {
       const response = await apiRequest("POST", "/api/posts", {
         userId: user?.id,
         imageUrl: image,
+        caption: caption.trim() || null,
         location: location.name,
         latitude: location.latitude?.toString(),
         longitude: location.longitude?.toString(),
@@ -202,6 +204,19 @@ export default function CreatePostScreen({ navigation }: Props) {
           </View>
         )}
 
+        <View style={[styles.captionContainer, { backgroundColor: theme.backgroundSecondary }]}>
+          <Feather name="edit-3" size={20} color={caption ? theme.link : theme.textSecondary} style={{ marginRight: Spacing.sm }} />
+          <TextInput
+            value={caption}
+            onChangeText={setCaption}
+            placeholder={t("Add a caption...", "Добавить описание...")}
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.captionInput, { color: theme.text }]}
+            multiline
+            maxLength={500}
+          />
+        </View>
+
         <Pressable
           onPress={getLocation}
           disabled={isLoadingLocation}
@@ -285,6 +300,21 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
+  },
+  captionContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.md,
+  },
+  captionInput: {
+    flex: 1,
+    fontSize: 16,
+    minHeight: 40,
+    maxHeight: 100,
+    paddingTop: 0,
   },
   locationButton: {
     flexDirection: "row",

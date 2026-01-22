@@ -25,6 +25,7 @@ export const posts = pgTable("posts", {
     .default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   imageUrl: text("image_url").notNull(),
+  caption: text("caption"),
   location: text("location"),
   latitude: text("latitude"),
   longitude: text("longitude"),
@@ -312,6 +313,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertPostSchema = createInsertSchema(posts).pick({
   userId: true,
   imageUrl: true,
+  caption: true,
   location: true,
   latitude: true,
   longitude: true,
