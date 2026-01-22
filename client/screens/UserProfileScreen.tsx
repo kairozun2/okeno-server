@@ -165,21 +165,6 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       ),
       headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {currentUser?.id !== userId && (
-            <Pressable 
-              onPress={() => {
-                if (profileUser) {
-                  startChatMutation.mutate();
-                }
-              }} 
-              hitSlop={20}
-              style={{ 
-                padding: 8,
-              }}
-            >
-              <Feather name="zap" size={24} color={theme.text} />
-            </Pressable>
-          )}
           <Pressable 
             onPress={() => setShowActionSheet(true)} 
             hitSlop={20}
