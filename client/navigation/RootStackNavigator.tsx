@@ -145,7 +145,7 @@ export default function RootStackNavigator() {
               presentation: chatFullscreen ? "card" : "modal",
               animation: chatFullscreen ? "slide_from_right" : "slide_from_bottom",
               gestureEnabled: true,
-              contentStyle: { backgroundColor: theme.backgroundRoot },
+              contentStyle: { backgroundColor: '#000' },
             })}
           />
           <Stack.Screen

@@ -701,11 +701,11 @@ export default function ChatScreen({ route, navigation }: Props) {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.backgroundRoot, overflow: 'hidden' }}>
+    <View style={{ flex: 1, backgroundColor: '#000', overflow: 'hidden' }}>
       {backgroundImage ? (
         <ImageBackground
           source={{ uri: getDirectLink(backgroundImage) }}
-          style={{ flex: 1, backgroundColor: theme.backgroundRoot }}
+          style={{ flex: 1, backgroundColor: '#000' }}
           resizeMode="cover"
         >
           {chatContent}
