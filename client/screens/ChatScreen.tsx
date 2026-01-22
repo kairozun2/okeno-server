@@ -314,28 +314,6 @@ export default function ChatScreen({ route, navigation }: Props) {
       };
     });
 
-    // Schedule removal after 5 seconds
-    setTimeout(() => {
-      queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
-        if (!oldData) return oldData;
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page: Message[]) =>
-            page.map((msg: Message) => {
-              if (msg.id === selectedMessage.id) {
-                const currentReactions = (msg as any).reactions || [];
-                return {
-                  ...msg,
-                  reactions: currentReactions.filter((r: any) => !(r.emoji === emoji && r.userId === user?.id))
-                };
-              }
-              return msg;
-            })
-          ),
-        };
-      });
-    }, 5000);
-
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     closeEmojiPicker();
     setShowActionModal(false);
@@ -1016,11 +994,11 @@ const styles = StyleSheet.create({
   emojiPickerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.sm,
     borderRadius: 20,
     marginBottom: Spacing.sm,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   actionSheetContent: {
     borderRadius: 14,
