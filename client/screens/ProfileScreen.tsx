@@ -222,10 +222,10 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
           <View style={styles.headerRight}>
             <Pressable
-              onPress={() => navigation.navigate("Archive")}
+              onPress={() => navigation.navigate("QRCode")}
               style={styles.headerIconButton}
             >
-              <Feather name="layers" size={20} color={theme.text} />
+              <Feather name="maximize" size={20} color={theme.text} />
             </Pressable>
             <Pressable
               onPress={() => navigation.navigate("Settings")}
