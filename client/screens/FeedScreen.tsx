@@ -389,7 +389,8 @@ export default function FeedScreen({ navigation }: Props) {
       return response.json();
     },
     getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length === 10 ? allPages.length * 10 : undefined;
+      if (!Array.isArray(lastPage) || lastPage.length < 10) return undefined;
+      return allPages.length * 10;
     },
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,

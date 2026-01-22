@@ -207,10 +207,10 @@ export default function ChatScreen({ route, navigation }: Props) {
     getNextPageParam: () => undefined,
   }) as any;
 
-  const backgroundImage = chatSettings?.backgroundImage;
   const displayName = chatSettings?.nickname || userData?.username || otherUserName || t("User", "Пользователь");
   const displayEmoji = userData?.emoji || otherUserEmoji || "🐸";
   const displayUsername = userData?.username || otherUserUsername;
+  const backgroundImage = chatSettings?.backgroundImage;
 
   const {
     data,
