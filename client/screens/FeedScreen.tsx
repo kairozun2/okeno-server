@@ -543,6 +543,7 @@ export default function FeedScreen({ navigation }: Props) {
         }}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        progressViewOffset={headerHeight}
         ListEmptyComponent={!isLoading ? <EmptyFeed t={t} /> : null}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
       />
