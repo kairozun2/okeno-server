@@ -510,7 +510,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 45 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? 0 : 45) : 0}
     >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
@@ -555,9 +555,9 @@ export default function ChatScreen({ route, navigation }: Props) {
 
         <LinearGradient
           colors={[
-            isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
-            isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)',
-            isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
+            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.6)') : (chatFullscreen ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)'),
+            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)') : (chatFullscreen ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.4)'),
+            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)') : (chatFullscreen ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)'),
             'transparent'
           ]}
           style={{
@@ -565,7 +565,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             top: 0,
             left: 0,
             right: 0,
-            height: insets.top + 120,
+            height: insets.top + (chatFullscreen ? 160 : 120),
             zIndex: 90, 
             pointerEvents: 'none',
           }}
