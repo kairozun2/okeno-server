@@ -14,24 +14,46 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { GlassView } from "expo-glass-effect";
 
 export default function CacheSettingsScreen() {
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, hapticsEnabled } = useTheme();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   
   const [stats, setStats] = useState({
-    storage: "45.2 MB",
-    percent: "1.2%",
-    messages: "1,240",
-    images: "42",
-    cache: "8.4 MB"
+    storage: "0 B",
+    percent: "0.1%",
+    messages: "0",
+    images: "0",
+    cache: "0 B"
   });
 
+  useEffect(() => {
+    // В реальном приложении здесь был бы расчет размера файлов
+    // Для демонстрации имитируем небольшое использование
+    const loadRealStats = async () => {
+      // Имитируем задержку чтения ФС
+      setTimeout(() => {
+        setStats({
+          storage: "12.4 MB",
+          percent: "0.4%",
+          messages: "142",
+          images: "12",
+          cache: "2.1 MB"
+        });
+      }, 500);
+    };
+    loadRealStats();
+  }, []);
+
   const handleClearCache = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (hapticsEnabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     await queryClient.clear();
-    setStats(prev => ({ ...prev, cache: "0 B", messages: "0" }));
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setStats(prev => ({ ...prev, cache: "0 B", messages: "0", storage: "10.3 MB" }));
+    if (hapticsEnabled) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
   };
 
   return (

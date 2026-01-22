@@ -36,7 +36,7 @@ export function Button({
   textStyle,
   disabled = false,
 }: ButtonProps) {
-  const { theme } = useTheme();
+  const { theme, hapticsEnabled } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -46,6 +46,9 @@ export function Button({
   const handlePressIn = () => {
     if (!disabled) {
       scale.value = withSpring(0.98, springConfig);
+      if (hapticsEnabled) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     }
   };
 

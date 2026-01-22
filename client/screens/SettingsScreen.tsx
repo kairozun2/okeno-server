@@ -54,7 +54,9 @@ function SettingRow({ item, isLast }: SettingRowProps) {
   return (
     <Pressable
       onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (hapticsEnabled) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
         item.onPress();
       }}
       style={({ pressed }) => [
