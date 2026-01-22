@@ -555,8 +555,8 @@ export default function ChatScreen({ route, navigation }: Props) {
 
         <LinearGradient
           colors={[
-            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.6)') : (chatFullscreen ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.6)'),
-            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)') : (chatFullscreen ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.4)'),
+            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.95)' : 'rgba(0,0,0,0.8)') : (chatFullscreen ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.8)'),
+            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)') : (chatFullscreen ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)'),
             isDark ? (chatFullscreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)') : (chatFullscreen ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)'),
             'transparent'
           ]}
@@ -565,7 +565,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             top: 0,
             left: 0,
             right: 0,
-            height: insets.top + (chatFullscreen ? 160 : 120),
+            height: insets.top + (chatFullscreen ? 180 : 140),
             zIndex: 90, 
             pointerEvents: 'none',
           }}
