@@ -11,6 +11,7 @@ import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 
 import { ThemedText } from "@/components/ThemedText";
+import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -103,6 +104,8 @@ export default function SettingsScreen({ navigation }: Props) {
   const queryClient = useQueryClient();
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [isIdVisible, setIsIdVisible] = useState(false);
   const [deletePin, setDeletePin] = useState("");
 
   const deleteAccountMutation = useMutation({
@@ -169,9 +172,9 @@ export default function SettingsScreen({ navigation }: Props) {
       items: [
         {
           icon: "user",
-          title: "Аккаунт",
-          subtitle: "ID восстановления и настройки аккаунта",
-          onPress: handleCopyId,
+          title: "Управление аккаунтом",
+          subtitle: "ID восстановления и безопасность",
+          onPress: () => setShowAccountModal(true),
         },
         {
           icon: "smartphone",
@@ -296,21 +299,7 @@ export default function SettingsScreen({ navigation }: Props) {
     },
     {
       title: "",
-      items: [
-        {
-          icon: "log-out",
-          title: "Выйти из аккаунта",
-          onPress: handleLogout,
-          danger: true,
-        },
-        {
-          icon: "trash-2",
-          title: "Удалить аккаунт",
-          subtitle: "Безвозвратное удаление",
-          onPress: () => setShowDeleteModal(true),
-          danger: true,
-        },
-      ],
+      items: [],
     },
   ];
 
@@ -354,6 +343,85 @@ export default function SettingsScreen({ navigation }: Props) {
           </Animated.View>
         ))}
       </ScrollView>
+
+      <Modal
+        visible={showAccountModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowAccountModal(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <ThemedText type="h3">Аккаунт</ThemedText>
+            <Pressable onPress={() => setShowAccountModal(false)} hitSlop={8}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.colorPickerContent}>
+            <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, padding: Spacing.lg }]}>
+              <ThemedText type="h4" style={{ marginBottom: Spacing.sm }}>ID восстановления</ThemedText>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.md }}>
+                Этот идентификатор необходим для восстановления доступа к вашему аккаунту. Никогда не передавайте его посторонним.
+              </ThemedText>
+              
+              <View style={[styles.idContainer, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
+                <ThemedText style={[styles.idText, !isIdVisible && { opacity: 0.3 }]}>
+                  {isIdVisible ? (user?.id ?? "") : "••••••••-••••-••••-••••-••••••••••••"}
+                </ThemedText>
+                <Pressable 
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setIsIdVisible(!isIdVisible);
+                  }}
+                  style={styles.idActionButton}
+                >
+                  <Feather name={isIdVisible ? "eye-off" : "eye"} size={20} color={theme.textSecondary} />
+                </Pressable>
+              </View>
+
+              <Button 
+                onPress={handleCopyId}
+                variant="secondary"
+                style={{ marginTop: Spacing.md }}
+                text="Скопировать ID"
+              />
+            </View>
+
+            <View style={{ height: Spacing.xl }} />
+
+            <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, overflow: "hidden" }]}>
+              <SettingRow 
+                item={{
+                  icon: "log-out",
+                  title: "Выйти из аккаунта",
+                  onPress: () => {
+                    setShowAccountModal(false);
+                    handleLogout();
+                  }
+                }}
+                isLast={false}
+              />
+              <SettingRow 
+                item={{
+                  icon: "trash-2",
+                  title: "Удалить аккаунт",
+                  onPress: () => {
+                    setShowAccountModal(false);
+                    setShowDeleteModal(true);
+                  },
+                  danger: true
+                }}
+                isLast={true}
+              />
+            </View>
+
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xl, textAlign: "center" }}>
+              Moments использует анонимную систему аккаунтов.{"\n"}Ваш PIN-код и ID — единственные способы доступа.
+            </ThemedText>
+          </ScrollView>
+        </View>
+      </Modal>
 
       <Modal
         visible={showDeleteModal}
@@ -559,6 +627,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: Spacing.xl,
+  },
+  idContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  idText: {
+    flex: 1,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 12,
+  },
+  idActionButton: {
+    padding: Spacing.xs,
   },
 });
 
