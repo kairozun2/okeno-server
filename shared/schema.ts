@@ -127,6 +127,19 @@ export const archivedPosts = pgTable("archived_posts", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Chat settings table - per-user customizations for each chat
+export const chatSettings = pgTable("chat_settings", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  otherUserId: varchar("other_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  nickname: text("nickname"),
+  backgroundImage: text("background_image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   posts: many(posts),
@@ -226,6 +239,17 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   }),
 }));
 
+export const chatSettingsRelations = relations(chatSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [chatSettings.userId],
+    references: [users.id],
+  }),
+  otherUser: one(users, {
+    fields: [chatSettings.otherUserId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -281,6 +305,13 @@ export const insertSessionSchema = createInsertSchema(sessions).pick({
   deviceInfo: true,
 });
 
+export const insertChatSettingsSchema = createInsertSchema(chatSettings).pick({
+  userId: true,
+  otherUserId: true,
+  nickname: true,
+  backgroundImage: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -300,3 +331,5 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type Session = typeof sessions.$inferSelect;
+export type InsertChatSettings = z.infer<typeof insertChatSettingsSchema>;
+export type ChatSettings = typeof chatSettings.$inferSelect;
