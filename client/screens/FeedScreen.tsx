@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert } from "react-native";
+import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert, TextInput } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -65,6 +65,9 @@ function PostCard({
   onComment,
   onUserPress,
   onLocationPress,
+  navigation,
+  onBlock,
+  onReport,
 }: {
   post: PostWithUser;
   onLike: () => void;
@@ -72,6 +75,9 @@ function PostCard({
   onComment: () => void;
   onUserPress: () => void;
   onLocationPress: () => void;
+  navigation: any;
+  onBlock: () => void;
+  onReport: () => void;
 }) {
   const { theme } = useTheme();
   const likeScale = useSharedValue(1);
@@ -186,24 +192,22 @@ function PostCard({
               style={styles.actionSheetItem}
               onPress={() => {
                 setShowActions(false);
-                onLike();
+                onReport();
               }}
             >
-              <Feather name="heart" size={20} color={post.isLiked ? theme.error : theme.text} />
-              <ThemedText style={{ marginLeft: Spacing.md, color: post.isLiked ? theme.error : theme.text }}>
-                {post.isLiked ? "Убрать лайк" : "Лайк"}
-              </ThemedText>
+              <Feather name="flag" size={20} color={theme.error} />
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Пожаловаться</ThemedText>
             </Pressable>
-            
+
             <Pressable 
               style={styles.actionSheetItem}
               onPress={() => {
                 setShowActions(false);
-                handleShare();
+                onBlock();
               }}
             >
-              <Feather name="share" size={20} color={theme.text} />
-              <ThemedText style={{ marginLeft: Spacing.md }}>Поделиться</ThemedText>
+              <Feather name="slash" size={20} color={theme.error} />
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Заблокировать</ThemedText>
             </Pressable>
 
             <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
@@ -217,18 +221,6 @@ function PostCard({
             >
               <Feather name="user" size={20} color={theme.text} />
               <ThemedText style={{ marginLeft: Spacing.md }}>Профиль автора</ThemedText>
-            </Pressable>
-
-            <Pressable 
-              style={styles.actionSheetItem}
-              onPress={() => {
-                setShowActions(false);
-                // In a real app, this would open the report modal
-                Alert.alert("Жалоба", "Чтобы пожаловаться на этот пост, перейдите в профиль пользователя.");
-              }}
-            >
-              <Feather name="flag" size={20} color={theme.error} />
-              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>Пожаловаться</ThemedText>
             </Pressable>
             
             <Pressable 
@@ -329,6 +321,60 @@ export default function FeedScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [mapModalVisible, setMapModalVisible] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number, lng: number, name: string } | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportCategory, setReportCategory] = useState<string | null>(null);
+  const [reportedPostId, setReportedPostId] = useState<string | null>(null);
+  const [reportedUserId, setReportedUserId] = useState<string | null>(null);
+
+  const REPORT_CATEGORIES = [
+    { id: "spam", label: "Спам" },
+    { id: "harassment", label: "Оскорбления" },
+    { id: "sexual", label: "Сексуальный контент" },
+    { id: "violence", label: "Насилие" },
+    { id: "other", label: "Другое" },
+  ];
+
+  const reportMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/reports", {
+        reporterId: currentUser?.id,
+        reportedUserId: reportedUserId,
+        reportedPostId: reportedPostId,
+        reason: reportCategory ? `${REPORT_CATEGORIES.find(c => c.id === reportCategory)?.label}: ${reportReason}` : reportReason,
+      });
+    },
+    onSuccess: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Жалоба отправлена", "Мы рассмотрим вашу жалобу в течение 24 часов.");
+      setShowReportModal(false);
+      setReportReason("");
+      setReportCategory(null);
+      setReportedPostId(null);
+      setReportedUserId(null);
+    },
+  });
+
+  const blockMutation = useMutation({
+    mutationFn: async (userIdToBlock: string) => {
+      await apiRequest("POST", `/api/users/${currentUser?.id}/blocked`, {
+        blockedUserId: userIdToBlock,
+      });
+    },
+    onSuccess: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Пользователь заблокирован", "Вы больше не увидите контент этого пользователя.");
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    },
+  });
+
+  const handleReport = () => {
+    if (!reportCategory) {
+      Alert.alert("Ошибка", "Выберите категорию жалобы");
+      return;
+    }
+    reportMutation.mutate();
+  };
 
   const { data: posts = [], isLoading } = useQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
@@ -371,10 +417,26 @@ export default function FeedScreen({ navigation }: Props) {
     ({ item }: { item: PostWithUser }) => (
       <PostCard
         post={item}
+        navigation={navigation}
         onLike={() => likeMutation.mutate({ postId: item.id, isLiked: item.isLiked })}
         onSave={() => saveMutation.mutate({ postId: item.id, isSaved: item.isSaved })}
         onComment={() => navigation.navigate("Comments", { postId: item.id })}
         onUserPress={() => navigation.navigate("UserProfile", { userId: item.userId })}
+        onBlock={() => {
+          Alert.alert(
+            "Заблокировать?",
+            "Вы больше не увидите контент этого пользователя.",
+            [
+              { text: "Отмена", style: "cancel" },
+              { text: "Блокировать", style: "destructive", onPress: () => blockMutation.mutate(item.userId) }
+            ]
+          );
+        }}
+        onReport={() => {
+          setReportedPostId(item.id);
+          setReportedUserId(item.userId);
+          setShowReportModal(true);
+        }}
         onLocationPress={() => {
           if (item.latitude && item.longitude) {
             setSelectedLocation({
@@ -392,6 +454,86 @@ export default function FeedScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
+      <Modal
+        visible={showReportModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <Pressable 
+          style={[styles.actionSheetOverlay, { justifyContent: 'center', padding: Spacing.xl }]} 
+          onPress={() => setShowReportModal(false)}
+        >
+          <ThemedView style={[styles.actionSheetContainer, { borderRadius: BorderRadius.xl, paddingBottom: Spacing.xl }]}>
+            <View style={[styles.modalHeader, { paddingTop: Spacing.sm }]}>
+              <ThemedText type="h4">Пожаловаться</ThemedText>
+              <Pressable onPress={() => setShowReportModal(false)} style={styles.closeButton}>
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
+            </View>
+
+            <View style={{ padding: Spacing.md }}>
+              <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.md }}>
+                Выберите категорию жалобы:
+              </ThemedText>
+
+              <View style={styles.categoriesGrid}>
+                {REPORT_CATEGORIES.map((cat) => (
+                  <Pressable
+                    key={cat.id}
+                    onPress={() => setReportCategory(cat.id)}
+                    style={[
+                      styles.categoryItem,
+                      { 
+                        backgroundColor: reportCategory === cat.id ? theme.accent + '20' : theme.backgroundSecondary,
+                        borderColor: reportCategory === cat.id ? theme.accent : theme.border,
+                      }
+                    ]}
+                  >
+                    <ThemedText 
+                      type="small" 
+                      style={{ 
+                        color: reportCategory === cat.id ? theme.accent : theme.text,
+                        fontWeight: reportCategory === cat.id ? "600" : "400",
+                      }}
+                    >
+                      {cat.label}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+
+              <TextInput
+                value={reportReason}
+                onChangeText={setReportReason}
+                placeholder="Дополнительно (необязательно)..."
+                placeholderTextColor={theme.textSecondary}
+                style={[
+                  styles.reportInput,
+                  {
+                    backgroundColor: theme.backgroundSecondary,
+                    color: theme.text,
+                    borderColor: theme.border,
+                    height: 80,
+                  },
+                ]}
+                multiline
+              />
+
+              <Pressable
+                onPress={handleReport}
+                style={[styles.reportSubmitButton, { backgroundColor: theme.error }]}
+                disabled={reportMutation.isPending}
+              >
+                <ThemedText style={{ color: "white", fontWeight: "600" }}>
+                  {reportMutation.isPending ? "Отправка..." : "Отправить"}
+                </ThemedText>
+              </Pressable>
+            </View>
+          </ThemedView>
+        </Pressable>
+      </Modal>
+
       <FlashList
         data={posts}
         renderItem={renderItem}
@@ -400,7 +542,6 @@ export default function FeedScreen({ navigation }: Props) {
           paddingTop: headerHeight + Spacing.xs,
           paddingBottom: tabBarHeight + Spacing.lg,
         }}
-        estimatedItemSize={450}
         onRefresh={onRefresh}
         refreshing={refreshing}
         ListEmptyComponent={!isLoading ? <EmptyFeed /> : null}
@@ -533,5 +674,32 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: Spacing.sm,
+  },
+  categoryItem: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  categoriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  reportInput: {
+    borderRadius: 12,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    fontSize: 14,
+    borderWidth: 1,
+    textAlignVertical: "top",
+    marginBottom: Spacing.md,
+  },
+  reportSubmitButton: {
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
