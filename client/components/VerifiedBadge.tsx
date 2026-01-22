@@ -20,7 +20,7 @@ export function VerifiedBadge({ size = 16, style }: VerifiedBadgeProps) {
         style={[StyleSheet.absoluteFill, { borderRadius: size / 2, opacity: 0.9 }]}
       />
       <View style={[StyleSheet.absoluteFill, { borderRadius: size / 2, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" }]} />
-      <Feather name="check" size={iconSize} color="#FFFFFF" />
+      <Feather name="check" size={iconSize} color="#FFFFFF" style={{ marginBottom: 0.5 }} />
     </View>
   );
 }

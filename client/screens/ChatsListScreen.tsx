@@ -86,28 +86,26 @@ function ChatItem({
         <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
-            <View style={{ flex: 1, marginRight: Spacing.sm }}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <ThemedText type="body" style={[styles.chatName, { marginRight: 4 }]} truncate maxLength={12}>
-                  {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
-                </ThemedText>
-                {chat.otherUser?.isVerified ? <VerifiedBadge size={14} /> : null}
-              </View>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={15}>
-                @{chat.otherUser?.username || "user"}
+            <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
+              <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
+                {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
               </ThemedText>
+              {chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
             </View>
-            <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}>
               {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: enUS })}
             </ThemedText>
           </View>
           <View style={styles.chatPreview}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: 4 }} truncate maxLength={15}>
+              @{chat.otherUser?.username || "user"}
+            </ThemedText>
             <ThemedText
               type="small"
               numberOfLines={1}
               style={{ color: theme.textSecondary, flex: 1 }}
             >
-              {chat.lastMessage || "Start a conversation"}
+              • {chat.lastMessage || "Start a conversation"}
             </ThemedText>
             {chat.unreadCount && chat.unreadCount > 0 ? (
               <View style={[styles.unreadBadge, { backgroundColor: theme.link }]}>

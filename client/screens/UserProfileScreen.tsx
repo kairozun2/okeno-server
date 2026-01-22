@@ -289,11 +289,11 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     return (
       <Animated.View entering={FadeIn} style={styles.header}>
         <Avatar emoji={profileUser?.emoji || "🐸"} size={72} />
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <ThemedText type="h3" style={styles.username} truncate maxLength={15}>
+        <View style={{ flexDirection: "row", alignItems: "center", marginTop: Spacing.sm }}>
+          <ThemedText type="h3" style={[styles.username, { marginTop: 0 }]} truncate maxLength={15}>
             {profileUser?.username}
           </ThemedText>
-          {profileUser?.isVerified ? <VerifiedBadge size={18} /> : null}
+          {profileUser?.isVerified ? <VerifiedBadge size={18} style={{ marginLeft: 6 }} /> : null}
         </View>
 
         <View style={styles.stats}>
