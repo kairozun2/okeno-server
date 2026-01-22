@@ -13,7 +13,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 
@@ -376,33 +376,10 @@ export default function FeedScreen({ navigation }: Props) {
     reportMutation.mutate();
   };
 
-  const queryResult = useInfiniteQuery({
+  const { data: postsData = [], isLoading } = useQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
-    queryFn: async ({ pageParam }) => {
-      const response = await apiRequest("GET", `/api/posts?limit=10&offset=${pageParam}`, null);
-      const resData = await response.json();
-      return Array.isArray(resData) ? resData : [];
-    },
-    getNextPageParam: (lastPage: any, allPages: any) => {
-      if (!Array.isArray(lastPage) || lastPage.length < 10) return undefined;
-      return allPages.length * 10;
-    },
-    initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
-  }) as any;
-
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = queryResult;
-
-  const postsData = useMemo(() => {
-    if (!data?.pages) return [];
-    return data.pages.flat().filter((post: any) => post !== null);
-  }, [data]);
+  });
 
 
   const likeMutation = useMutation({
@@ -571,9 +548,6 @@ export default function FeedScreen({ navigation }: Props) {
         }}
         onRefresh={onRefresh}
         refreshing={refreshing}
-        onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={isFetchingNextPage ? <View style={{ padding: Spacing.md }}><ThemedText type="caption" style={{ textAlign: 'center' }}>{t("Loading...", "Загрузка...")}</ThemedText></View> : null}
         ListEmptyComponent={!isLoading ? <EmptyFeed t={t} /> : null}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
       />
