@@ -197,7 +197,7 @@ function MessageBubble({
           
           {(message as any).reactions && (message as any).reactions.length > 0 && (
             <View 
-              pointerEvents="box-none"
+              pointerEvents="none"
               style={[
                 styles.reactionsBadge,
                 { 
@@ -676,7 +676,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             <Feather name={chatFullscreen ? "arrow-left" : "x"} size={20} color={theme.text} />
           </Pressable>
 
-          <View style={styles.headerCenter}>
+          <View style={styles.headerCenter} pointerEvents="none">
             {isOtherUserTyping ? (
               <Animated.View 
                 entering={FadeIn.duration(400)} 
