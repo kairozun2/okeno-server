@@ -620,9 +620,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/chats/:id/typing", async (req, res) => {
     try {
-      const { oderId } = req.body;
+      const { userId } = req.body;
       const chatId = req.params.id;
-      const key = `${chatId}:${oderId}`;
+      const key = `${chatId}:${userId}`;
       typingStatus.set(key, Date.now());
       res.json({ success: true });
     } catch (error) {

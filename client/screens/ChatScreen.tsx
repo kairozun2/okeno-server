@@ -151,7 +151,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       clearTimeout(typingTimeoutRef.current);
     }
     
-    apiRequest("POST", `/api/chats/${chatId}/typing`, { oderId: user.id }).catch(() => {});
+    apiRequest("POST", `/api/chats/${chatId}/typing`, { userId: user.id }).catch(() => {});
     
     typingTimeoutRef.current = setTimeout(() => {
       typingTimeoutRef.current = null;
