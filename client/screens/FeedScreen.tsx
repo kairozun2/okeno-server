@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList, Modal } from "react-native";
+import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList, Modal, Platform } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,7 +15,6 @@ import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import MapView, { Marker } from "react-native-maps";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -29,6 +28,15 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { CompositeScreenProps } from "@react-navigation/native";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { MainTabParamList } from "@/navigation/MainTabNavigator";
+
+// Conditionally import MapView to avoid web bundling issues
+let MapView: any;
+let Marker: any;
+if (Platform.OS !== 'web') {
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Marker = Maps.Marker;
+}
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -299,7 +307,7 @@ export default function FeedScreen({ navigation }: Props) {
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
           </View>
-          {selectedLocation && (
+          {selectedLocation && Platform.OS !== 'web' ? (
             <MapView
               style={{ flex: 1 }}
               initialRegion={{
@@ -317,6 +325,13 @@ export default function FeedScreen({ navigation }: Props) {
                 title={selectedLocation.name}
               />
             </MapView>
+          ) : (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl }}>
+               <Feather name="map" size={48} color={theme.textSecondary} />
+               <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: 'center' }}>
+                 Карты доступны только на мобильных устройствах. Откройте приложение в Expo Go.
+               </ThemedText>
+            </View>
           )}
         </ThemedView>
       </Modal>
