@@ -15,6 +15,7 @@ interface ButtonProps {
   onPress?: () => void;
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<any>;
   disabled?: boolean;
 }
 
@@ -32,6 +33,7 @@ export function Button({
   onPress,
   children,
   style,
+  textStyle,
   disabled = false,
 }: ButtonProps) {
   const { theme } = useTheme();
@@ -71,7 +73,7 @@ export function Button({
     >
       <ThemedText
         type="body"
-        style={[styles.buttonText, { color: "#fff" }]}
+        style={[styles.buttonText, { color: "#fff" }, textStyle]}
       >
         {children}
       </ThemedText>
