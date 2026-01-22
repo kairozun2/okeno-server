@@ -50,8 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(storedUser);
         setSessionId(storedSessionId);
       }
-    } catch (error) {
-      console.error("Failed to load auth:", error);
+    } catch {
+      // Silent fail - stay logged out
     } finally {
       setIsLoading(false);
     }

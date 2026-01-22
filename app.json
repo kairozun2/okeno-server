@@ -11,11 +11,40 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.moments.app",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyCollectedDataTypes": [
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhotosorVideos",
+            "NSPrivacyCollectedDataTypeLinked": false,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePreciseLocation",
+            "NSPrivacyCollectedDataTypeLinked": false,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
+          }
+        ],
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1"]
+          }
+        ]
+      },
       "infoPlist": {
-        "NSCameraUsageDescription": "This app uses the camera to take photos and video for your moments.",
-        "NSPhotoLibraryUsageDescription": "This app accesses your photos to let you share moments from your library.",
-        "NSLocationWhenInUseUsageDescription": "This app uses your location to add beautiful place tags to your moments.",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone for videos."
+        "NSCameraUsageDescription": "Moments uses your camera to capture photos and videos that you can share with friends.",
+        "NSPhotoLibraryUsageDescription": "Moments accesses your photo library so you can select and share existing photos and videos.",
+        "NSPhotoLibraryAddUsageDescription": "Moments saves photos and videos you create to your photo library.",
+        "NSLocationWhenInUseUsageDescription": "Moments uses your location to tag your posts with beautiful place names. Location is optional and never shared without your permission.",
+        "NSMicrophoneUsageDescription": "Moments uses the microphone to record audio when you capture videos.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

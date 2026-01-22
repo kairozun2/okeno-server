@@ -33,8 +33,7 @@ export async function getStoredAuth(): Promise<{ user: User | null; sessionId: s
       user: userJson ? JSON.parse(userJson) : null,
       sessionId,
     };
-  } catch (error) {
-    console.error("Failed to get stored auth:", error);
+  } catch {
     return { user: null, sessionId: null };
   }
 }
@@ -45,8 +44,8 @@ export async function storeAuth(user: User, sessionId: string): Promise<void> {
       AsyncStorage.setItem(USER_KEY, JSON.stringify(user)),
       AsyncStorage.setItem(SESSION_KEY, sessionId),
     ]);
-  } catch (error) {
-    console.error("Failed to store auth:", error);
+  } catch {
+    // Silent fail
   }
 }
 
@@ -56,8 +55,8 @@ export async function clearAuth(): Promise<void> {
       AsyncStorage.removeItem(USER_KEY),
       AsyncStorage.removeItem(SESSION_KEY),
     ]);
-  } catch (error) {
-    console.error("Failed to clear auth:", error);
+  } catch {
+    // Silent fail
   }
 }
 
@@ -80,8 +79,8 @@ export async function logout(sessionId: string | null): Promise<void> {
     if (sessionId) {
       await apiRequest("POST", "/api/auth/logout", { sessionId });
     }
-  } catch (error) {
-    console.error("Logout API error:", error);
+  } catch {
+    // Silent fail - continue with local logout
   }
   await clearAuth();
 }

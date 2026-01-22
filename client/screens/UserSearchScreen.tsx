@@ -154,8 +154,8 @@ export default function UserSearchScreen({ navigation }: Props) {
       if (stored) {
         setHistory(JSON.parse(stored));
       }
-    } catch (e) {
-      console.error("Failed to load search history", e);
+    } catch {
+      // Silent fail
     }
   };
 
@@ -164,8 +164,8 @@ export default function UserSearchScreen({ navigation }: Props) {
       const newHistory = [user, ...history.filter(u => u.id !== user.id)].slice(0, 10);
       setHistory(newHistory);
       await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newHistory));
-    } catch (e) {
-      console.error("Failed to save search history", e);
+    } catch {
+      // Silent fail
     }
   };
 
@@ -174,8 +174,8 @@ export default function UserSearchScreen({ navigation }: Props) {
       setHistory([]);
       await AsyncStorage.removeItem(SEARCH_HISTORY_KEY);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (e) {
-      console.error("Failed to clear search history", e);
+    } catch {
+      // Silent fail
     }
   };
 

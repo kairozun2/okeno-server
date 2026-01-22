@@ -264,8 +264,8 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       await Share.share({
         message: t("Check out this post!", "Посмотрите этот пост!"),
       });
-    } catch (error) {
-      console.error("Share error:", error);
+    } catch {
+      // Silent fail
     }
   };
 

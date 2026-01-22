@@ -51,8 +51,7 @@ export default function EditPostScreen({ route, navigation }: Props) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.goBack();
     },
-    onError: (error) => {
-      console.error("Archive error:", error);
+    onError: () => {
       Alert.alert("Error", "Failed to archive post");
     }
   });

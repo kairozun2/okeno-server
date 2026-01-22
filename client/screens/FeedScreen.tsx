@@ -120,8 +120,8 @@ function PostCard({
         message: `Check out this moment on Moments: ${shareUrl}`,
         url: shareUrl,
       });
-    } catch (error) {
-      console.error("Error sharing:", error);
+    } catch {
+      // Silent fail
     }
   };
 

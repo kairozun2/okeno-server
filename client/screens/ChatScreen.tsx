@@ -69,8 +69,8 @@ function MessageBubble({
       if (supported) {
         await Linking.openURL(supportedUrl);
       }
-    } catch (err) {
-      console.error("Couldn't load page", err);
+    } catch {
+      // Silent fail
     }
   }, []);
 

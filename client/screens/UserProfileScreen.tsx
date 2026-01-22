@@ -279,8 +279,8 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         message: `Check out ${profileUser?.username}'s profile on Moments: ${shareUrl}`,
         url: shareUrl,
       });
-    } catch (error) {
-      console.error("Error sharing profile:", error);
+    } catch {
+      // Silent fail
     }
   };
 

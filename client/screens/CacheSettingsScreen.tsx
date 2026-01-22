@@ -42,8 +42,8 @@ export default function CacheSettingsScreen() {
             cache: "3.4 MB"
           });
         }, 300);
-      } catch (e) {
-        console.error(e);
+      } catch {
+        // Silent fail
       }
     };
     loadRealStats();

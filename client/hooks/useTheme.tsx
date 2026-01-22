@@ -38,8 +38,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (savedAccent) setAccentState(savedAccent);
         if (savedLang) setLanguageState(savedLang as "en" | "ru");
         if (savedHaptics !== null) setHapticsEnabled(savedHaptics === "true");
-      } catch (e) {
-        console.error("Load theme settings error:", e);
+      } catch {
+        // Silent fail - use defaults
       } finally {
         setIsLoading(false);
       }
@@ -55,8 +55,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         await AsyncStorage.removeItem(THEME_ACCENT_KEY);
       }
       setAccentState(color);
-    } catch (e) {
-      console.error("Save accent color error:", e);
+    } catch {
+      // Silent fail
     }
   };
 
@@ -64,8 +64,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     try {
       await AsyncStorage.setItem(THEME_LANGUAGE_KEY, lang);
       setLanguageState(lang);
-    } catch (e) {
-      console.error("Save language error:", e);
+    } catch {
+      // Silent fail
     }
   };
 
@@ -74,8 +74,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const newState = !hapticsEnabled;
       await AsyncStorage.setItem(THEME_HAPTICS_KEY, newState.toString());
       setHapticsEnabled(newState);
-    } catch (e) {
-      console.error("Save haptics error:", e);
+    } catch {
+      // Silent fail
     }
   };
 
