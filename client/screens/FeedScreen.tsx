@@ -213,17 +213,6 @@ function PostCard({
             <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
 
             <Pressable 
-              style={styles.actionSheetItem}
-              onPress={() => {
-                setShowActions(false);
-                navigation.navigate("UserProfile", { userId: post.userId });
-              }}
-            >
-              <Feather name="user" size={20} color={theme.text} />
-              <ThemedText style={{ marginLeft: Spacing.md }}>Профиль автора</ThemedText>
-            </Pressable>
-            
-            <Pressable 
               style={[styles.actionSheetItem, { marginTop: Spacing.xs }]}
               onPress={() => setShowActions(false)}
             >
