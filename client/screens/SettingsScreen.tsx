@@ -218,7 +218,9 @@ export default function SettingsScreen({ navigation }: Props) {
           icon: "eye-off",
           title: "Скрытые пользователи",
           subtitle: "Управление скрытыми пользователями",
-          onPress: () => {},
+          onPress: () => {
+            Alert.alert("Информация", "Список заблокированных пользователей пуст.");
+          },
         },
       ],
     },
@@ -241,6 +243,27 @@ export default function SettingsScreen({ navigation }: Props) {
           title: "Цвет приложения",
           subtitle: ACCENT_COLORS.find(c => c.color === (accentColor || "#5C7A5C"))?.name || "По умолчанию",
           onPress: () => setShowColorPicker(true),
+        },
+      ],
+    },
+    {
+      title: "ПОМОЩЬ И ОБРАТНАЯ СВЯЗЬ",
+      items: [
+        {
+          icon: "help-circle",
+          title: "Центр помощи",
+          subtitle: "Частые вопросы и инструкции",
+          onPress: () => {
+            Linking.openURL("https://skaisay.github.io/App-Privacy/");
+          },
+        },
+        {
+          icon: "alert-octagon",
+          title: "Сообщить об ошибке",
+          subtitle: "Помогите нам стать лучше",
+          onPress: () => {
+            Linking.openURL("mailto:messaconfirmation@gmail.com?subject=Bug Report - Moments");
+          },
         },
       ],
     },
