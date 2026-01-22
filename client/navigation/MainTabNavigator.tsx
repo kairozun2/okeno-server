@@ -6,6 +6,7 @@ import { Platform, StyleSheet, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { useQuery } from "@tanstack/react-query";
 
 import FeedScreen from "@/screens/FeedScreen";
 import ChatsListScreen from "@/screens/ChatsListScreen";
@@ -16,6 +17,8 @@ import { Spacing } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./RootStackNavigator";
 import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "@/contexts/AuthContext";
+import { getApiUrl } from "@/lib/query-client";
 
 export type MainTabParamList = {
   FeedTab: undefined;
@@ -126,7 +129,23 @@ function EditChatButton({ onPress }: { onPress: () => void }) {
 export default function MainTabNavigator() {
   const { theme, isDark, language } = useTheme();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [showPlus, setShowPlus] = useState(false);
+
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/users", user?.id, "unread-messages"],
+    queryFn: async () => {
+      if (!user?.id) return { count: 0 };
+      const url = new URL(`/api/users/${user.id}/unread-messages`, getApiUrl());
+      const response = await fetch(url.toString(), { credentials: "include" });
+      if (!response.ok) return { count: 0 };
+      return response.json();
+    },
+    enabled: !!user?.id,
+    refetchInterval: 5000, // Poll every 5 seconds for stability and free tier
+  });
+
+  const unreadCount = unreadData?.count || 0;
 
   const headerBackground = () => (
     <BlurView
@@ -209,6 +228,13 @@ export default function MainTabNavigator() {
           component={ChatsListScreen}
           options={{
             headerTitle: language === "ru" ? "Чаты" : "Chats",
+            tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+            tabBarBadgeStyle: {
+              backgroundColor: theme.error,
+              fontSize: 10,
+              lineHeight: 14,
+              marginTop: Platform.OS === 'ios' ? -2 : 0,
+            },
             tabBarIcon: ({ color }) => (
               <Feather name="message-circle" size={22} color={color} />
             ),

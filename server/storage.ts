@@ -322,6 +322,26 @@ export class DatabaseStorage implements IStorage {
     return Number(result[0]?.count || 0);
   }
 
+  async getTotalUnreadMessagesCount(userId: string): Promise<number> {
+    // Get all chats the user is part of
+    const userChats = await db.select().from(chats).where(
+      or(eq(chats.user1Id, userId), eq(chats.user2Id, userId))
+    );
+    
+    if (userChats.length === 0) return 0;
+    
+    const chatIds = userChats.map(c => c.id);
+    
+    const result = await db.select({ count: sql<number>`count(*)` }).from(messages).where(
+      and(
+        sql`${messages.chatId} IN ${chatIds}`,
+        sql`${messages.senderId} != ${userId}`,
+        eq(messages.isRead, false)
+      )
+    );
+    return Number(result[0]?.count || 0);
+  }
+
   // Notifications
   async getUserNotifications(userId: string): Promise<Notification[]> {
     return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));

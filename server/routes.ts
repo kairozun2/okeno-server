@@ -652,6 +652,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/users/:id/unread-messages", async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const count = await storage.getTotalUnreadMessagesCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Get total unread count error:", error);
+      res.status(500).json({ error: "Failed to get total unread count" });
+    }
+  });
+
   // Notifications routes
   app.get("/api/users/:id/notifications", async (req, res) => {
     try {
