@@ -83,6 +83,26 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   const isOwner = currentUser?.id === post?.userId;
 
+  const { data: archivedData } = useQuery<string[]>({
+    queryKey: ["/api/users", currentUser?.id, "archived"],
+    enabled: !!currentUser?.id,
+  });
+
+  const isArchived = archivedData?.includes(postId);
+
+  const unarchiveMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/users/${currentUser?.id}/archived/${postId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "archived"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigation.goBack();
+    },
+  });
+
   const deletePostMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("DELETE", `/api/posts/${postId}`);
@@ -241,25 +261,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       console.error("Share error:", error);
     }
   };
-
-  const { data: archivedData } = useQuery<string[]>({
-    queryKey: ["/api/users", currentUser?.id, "archived"],
-    enabled: !!currentUser?.id,
-  });
-
-  const isArchived = archivedData?.includes(postId);
-
-  const unarchiveMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("DELETE", `/api/users/${currentUser?.id}/archived/${postId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "archived"] });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    },
-  });
 
   if (!post) {
     return (

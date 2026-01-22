@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TouchableWithoutFeedback } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn, FadeInDown, FadeOut } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
@@ -276,49 +277,54 @@ export default function SettingsScreen({ navigation }: Props) {
 
       <Modal
         visible={showColorPicker}
-        transparent
-        animationType="fade"
+        animationType="slide"
+        presentationStyle="pageSheet"
         onRequestClose={() => setShowColorPicker(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setShowColorPicker(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <Animated.View
-                entering={FadeInDown}
-                style={[styles.modalContent, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}
-              >
-                <ThemedText type="h4" style={styles.modalTitle}>Цвет приложения</ThemedText>
-                
-                <View style={styles.colorGridOverlay}>
-                  {ACCENT_COLORS.map((item) => (
-                    <Pressable
-                      key={item.color}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        setAccentColor(item.color === "#5C7A5C" ? null : item.color);
-                      }}
-                      style={[
-                        styles.colorCircleLarge,
-                        { backgroundColor: item.color },
-                        (accentColor || "#5C7A5C") === item.color && {
-                          borderWidth: 3,
-                          borderColor: theme.text,
-                        }
-                      ]}
-                    />
-                  ))}
-                </View>
-
-                <Pressable
-                  onPress={() => setShowColorPicker(false)}
-                  style={[styles.closeButtonOverlay, { backgroundColor: theme.backgroundSecondary }]}
-                >
-                  <ThemedText type="body">Готово</ThemedText>
-                </Pressable>
-              </Animated.View>
-            </TouchableWithoutFeedback>
+        <LinearGradient
+          colors={[theme.backgroundRoot, theme.backgroundRoot, theme.cardBackground]}
+          locations={[0, 0.7, 1]}
+          style={styles.modalContainer}
+        >
+          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm }]}>
+            <ThemedText type="h3">Цвет приложения</ThemedText>
+            <Pressable onPress={() => setShowColorPicker(false)} hitSlop={8}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
           </View>
-        </TouchableWithoutFeedback>
+
+          <ScrollView 
+            contentContainerStyle={styles.colorPickerContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <ThemedText type="body" style={[styles.colorPickerSubtitle, { color: theme.textSecondary }]}>
+              Выберите основной цвет для всего интерфейса
+            </ThemedText>
+
+            <View style={styles.colorGrid}>
+              {ACCENT_COLORS.map((item) => (
+                <Pressable
+                  key={item.color}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setAccentColor(item.color === "#5C7A5C" ? null : item.color);
+                  }}
+                  style={[
+                    styles.colorCard,
+                    { backgroundColor: theme.cardBackground }
+                  ]}
+                >
+                  <View style={[styles.colorCircle, { backgroundColor: item.color }]}>
+                    {(accentColor || "#5C7A5C") === item.color ? (
+                      <Feather name="check" size={20} color="#FFF" />
+                    ) : null}
+                  </View>
+                  <ThemedText type="small" style={styles.colorName}>{item.name}</ThemedText>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </LinearGradient>
       </Modal>
     </View>
   );
@@ -358,40 +364,46 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     fontSize: 15,
   },
-  modalOverlay: {
+  modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
+  },
+  modalHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.xl,
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
-  modalContent: {
-    width: "100%",
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-    borderWidth: 1,
+  colorPickerContent: {
+    padding: Spacing.lg,
   },
-  modalTitle: {
+  colorPickerSubtitle: {
     textAlign: "center",
     marginBottom: Spacing.xl,
   },
-  colorGridOverlay: {
+  colorGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "center",
+    justifyContent: "space-between",
     gap: Spacing.md,
   },
-  colorCircleLarge: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  colorCard: {
+    width: "47%",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    alignItems: "center",
     marginBottom: Spacing.sm,
   },
-  closeButtonOverlay: {
-    marginTop: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+  colorCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginBottom: Spacing.sm,
+    justifyContent: "center",
     alignItems: "center",
+  },
+  colorName: {
+    fontWeight: "500",
   },
 });
 
