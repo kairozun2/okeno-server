@@ -1,6 +1,7 @@
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 import { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
+import React from "react";
 
 import { useTheme } from "@/hooks/useTheme";
 
@@ -66,12 +67,15 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
       ? (isDark ? "systemThinMaterialDark" : "systemThinMaterialLight")
       : undefined,
     headerStyle: {
-      backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundRoot,
+      backgroundColor: Platform.OS === "ios" ? "transparent" : "rgba(255, 255, 255, 0.1)",
     },
+    headerBackground: () => 
+      Platform.OS === "ios" ? null : (
+        <View style={{ flex: 1, backgroundColor: isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }} />
+      ),
     contentStyle: {
       backgroundColor: theme.backgroundRoot,
     },
     gestureEnabled: true,
-    headerLeft: () => null, // Placeholder to be overridden in navigator
   };
 }

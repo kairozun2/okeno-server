@@ -141,7 +141,7 @@ export default function ChatScreen({ route }: Props) {
       <KeyboardAvoidingView
         style={styles.container}
         behavior="padding"
-        keyboardVerticalOffset={headerHeight}
+        keyboardVerticalOffset={0}
       >
         <FlatList
           ref={flatListRef}
@@ -162,46 +162,51 @@ export default function ChatScreen({ route }: Props) {
           style={[
             styles.inputContainer,
             {
-              backgroundColor: theme.backgroundRoot,
+              backgroundColor: "transparent",
               paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md,
-              borderTopWidth: 1,
-              borderTopColor: theme.border,
             },
           ]}
         >
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.inputBackground,
-                color: theme.text,
-                borderWidth: 1,
-                borderColor: theme.border,
-              },
-            ]}
-            placeholder="Сообщение..."
-            placeholderTextColor={theme.textSecondary}
-            value={message}
-            onChangeText={setMessage}
-            multiline
-            maxLength={1000}
+          <BlurView
+            intensity={80}
+            tint={isDark ? "dark" : "light"}
+            style={StyleSheet.absoluteFill}
           />
-          <Pressable
-            onPress={handleSend}
-            disabled={!message.trim() || sendMutation.isPending}
-            style={[
-              styles.sendButton,
-              {
-                backgroundColor: message.trim() ? theme.link : theme.backgroundSecondary,
-              },
-            ]}
-          >
-            <Feather
-              name="send"
-              size={18}
-              color={message.trim() ? "#fff" : theme.textSecondary}
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.inputBackground,
+                  color: theme.text,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                },
+              ]}
+              placeholder="Сообщение..."
+              placeholderTextColor={theme.textSecondary}
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              maxLength={1000}
             />
-          </Pressable>
+            <Pressable
+              onPress={handleSend}
+              disabled={!message.trim() || sendMutation.isPending}
+              style={[
+                styles.sendButton,
+                {
+                  backgroundColor: message.trim() ? theme.link : theme.backgroundSecondary,
+                },
+              ]}
+            >
+              <Feather
+                name="send"
+                size={18}
+                color={message.trim() ? "#fff" : theme.textSecondary}
+              />
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -243,10 +248,13 @@ const styles = StyleSheet.create({
     transform: [{ scaleY: -1 }],
   },
   inputContainer: {
+    paddingTop: Spacing.sm,
+  },
+  inputWrapper: {
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.sm,
     gap: Spacing.sm,
   },
   input: {
