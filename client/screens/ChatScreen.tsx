@@ -274,15 +274,14 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const openEmojiPicker = useCallback(() => {
     setShowEmojiPicker(true);
-    emojiPickerTranslateY.value = withSpring(0, { damping: 15 });
-    emojiPickerOpacity.value = withSpring(1);
+    emojiPickerTranslateY.value = 0; // No animation, set directly
+    emojiPickerOpacity.value = 1; // No animation, set directly
   }, []);
 
   const closeEmojiPicker = useCallback(() => {
-    emojiPickerTranslateY.value = withSpring(20);
-    emojiPickerOpacity.value = withSpring(0, {}, () => {
-      runOnJS(setShowEmojiPicker)(false);
-    });
+    emojiPickerTranslateY.value = 0;
+    emojiPickerOpacity.value = 0;
+    runOnJS(setShowEmojiPicker)(false);
     // Ensure scrolling isn't blocked by resetting selection state
     setSelectedMessage(null);
   }, []);
@@ -290,7 +289,10 @@ export default function ChatScreen({ route, navigation }: Props) {
   const handleReaction = useCallback((emoji: string) => {
     if (!selectedMessage) return;
     
-    // Add reaction optimistically
+    // Send to server (placeholder for real API call to persist)
+    // apiRequest("POST", `/api/messages/${selectedMessage.id}/reactions`, { emoji });
+
+    // Add reaction optimistically and persist in local query cache
     queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
       if (!oldData) return oldData;
       return {
@@ -299,7 +301,6 @@ export default function ChatScreen({ route, navigation }: Props) {
           page.map((msg: Message) => {
             if (msg.id === selectedMessage.id) {
               const currentReactions = (msg as any).reactions || [];
-              // Prevent duplicate same-emoji reaction from same user
               const alreadyReacted = currentReactions.some((r: any) => r.emoji === emoji && r.userId === user?.id);
               if (alreadyReacted) return msg;
 
@@ -994,7 +995,7 @@ const styles = StyleSheet.create({
   emojiPickerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing.xl * 1.5,
     paddingHorizontal: Spacing.sm,
     borderRadius: 20,
     marginBottom: Spacing.sm,
