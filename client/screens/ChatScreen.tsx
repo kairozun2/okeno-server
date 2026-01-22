@@ -196,14 +196,17 @@ function MessageBubble({
           {renderContent(typeof message.content === 'string' ? message.content : "", isOwn)}
           
           {(message as any).reactions && (message as any).reactions.length > 0 && (
-            <View style={[
-              styles.reactionsBadge,
-              { 
-                backgroundColor: 'transparent',
-                left: isOwn ? -25 : undefined, // Moved further left for own messages (was right: -25)
-                right: !isOwn ? -25 : undefined, // Moved further right for other user messages
-              }
-            ]}>
+            <View 
+              pointerEvents="none"
+              style={[
+                styles.reactionsBadge,
+                { 
+                  backgroundColor: 'transparent',
+                  right: isOwn ? -10 : undefined, // Moved right for own messages
+                  left: !isOwn ? -10 : undefined, // Moved left for other user messages
+                }
+              ]}
+            >
               {(message as any).reactions.map((r: any, idx: number) => (
                 <ThemedText key={idx} style={{ fontSize: 13, lineHeight: 18 }}>{r.emoji}</ThemedText>
               ))}
@@ -284,6 +287,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     runOnJS(setShowEmojiPicker)(false);
     // Ensure scrolling isn't blocked by resetting selection state
     setSelectedMessage(null);
+    setShowActionModal(false); // Explicitly ensure modal is closed
   }, []);
 
   const handleReaction = useCallback(async (emoji: string) => {
