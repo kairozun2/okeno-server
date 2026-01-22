@@ -87,6 +87,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const { data: posts = [] } = useQuery<Post[]>({
     queryKey: ["/api/users", user?.id, "posts"],
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 
   const onRefresh = useCallback(async () => {

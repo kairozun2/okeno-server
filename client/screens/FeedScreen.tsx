@@ -207,6 +207,7 @@ export default function FeedScreen({ navigation }: Props) {
 
   const { data: posts = [], isLoading } = useQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const likeMutation = useMutation({

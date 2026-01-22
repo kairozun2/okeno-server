@@ -7,7 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -15,7 +15,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getApiUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -79,10 +79,28 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [message, setMessage] = useState("");
   const flatListRef = useRef<FlatList>(null);
 
-  const { data: messages = [] } = useQuery<Message[]>({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
     queryKey: ["/api/chats", chatId, "messages"],
-    refetchInterval: 2000,
+    queryFn: async ({ pageParam = 0 }) => {
+      const url = new URL(`/api/chats/${chatId}/messages?limit=20&offset=${pageParam}`, getApiUrl());
+      const response = await fetch(url.toString(), { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch messages");
+      return response.json() as Promise<Message[]>;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === 20 ? allPages.length * 20 : undefined;
+    },
+    initialPageParam: 0,
+    refetchInterval: 3000,
   });
+
+  const messages = data?.pages.flat() || [];
 
   const sendMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -93,16 +111,23 @@ export default function ChatScreen({ route, navigation }: Props) {
       });
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chats", chatId, "messages"] });
+    onSuccess: (newMessage) => {
+      queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
+        if (!oldData) return { pages: [[newMessage]], pageParams: [0] };
+        return {
+          ...oldData,
+          pages: [[newMessage, ...oldData.pages[0]], ...oldData.pages.slice(1)],
+        };
+      });
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     },
   });
 
   const handleSend = () => {
     if (!message.trim()) return;
-    sendMutation.mutate(message.trim());
+    const content = message.trim();
     setMessage("");
+    sendMutation.mutate(content);
   };
 
   useEffect(() => {
@@ -183,11 +208,13 @@ export default function ChatScreen({ route, navigation }: Props) {
 
         <FlatList
           ref={flatListRef}
-          data={sortedMessages}
+          data={messages}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           inverted
           keyboardDismissMode="interactive"
+          onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
+          onEndReachedThreshold={0.5}
           contentContainerStyle={[
             styles.messagesList,
             { paddingTop: 8, paddingBottom: insets.top + 100 },

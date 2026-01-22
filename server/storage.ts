@@ -74,7 +74,7 @@ export interface IStorage {
   createChat(chat: InsertChat): Promise<Chat>;
   
   // Messages
-  getChatMessages(chatId: string, limit?: number): Promise<Message[]>;
+  getChatMessages(chatId: string, limit?: number, offset?: number): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   markMessagesAsRead(chatId: string, userId: string): Promise<void>;
   getUnreadMessagesCount(chatId: string, userId: string): Promise<number>;
@@ -250,8 +250,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Messages
-  async getChatMessages(chatId: string, limit = 100): Promise<Message[]> {
-    return db.select().from(messages).where(eq(messages.chatId, chatId)).orderBy(desc(messages.createdAt)).limit(limit);
+  async getChatMessages(chatId: string, limit = 100, offset = 0): Promise<Message[]> {
+    return db.select().from(messages).where(eq(messages.chatId, chatId)).orderBy(desc(messages.createdAt)).limit(limit).offset(offset);
   }
 
   async createMessage(message: InsertMessage): Promise<Message> {

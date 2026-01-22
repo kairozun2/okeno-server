@@ -477,8 +477,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Messages routes
   app.get("/api/chats/:id/messages", async (req, res) => {
     try {
-      const limit = parseInt(req.query.limit as string) || 100;
-      const messages = await storage.getChatMessages(req.params.id, limit);
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const messages = await storage.getChatMessages(req.params.id, limit, offset);
       res.json(messages);
     } catch (error) {
       console.error("Get messages error:", error);
