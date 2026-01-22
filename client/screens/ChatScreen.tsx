@@ -251,19 +251,19 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [showActionModal, setShowActionModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const emojiPickerTranslateY = useSharedValue(50);
+  const emojiPickerTranslateY = useSharedValue(0);
   const emojiPickerOpacity = useSharedValue(0);
 
   const REACTION_EMOJIS = ["❤️", "👍", "🔥", "😂", "😮", "😢", "🙏"];
 
   const openEmojiPicker = useCallback(() => {
     setShowEmojiPicker(true);
-    emojiPickerTranslateY.value = withSpring(0);
+    emojiPickerTranslateY.value = withSpring(0, { damping: 15 });
     emojiPickerOpacity.value = withSpring(1);
   }, []);
 
   const closeEmojiPicker = useCallback(() => {
-    emojiPickerTranslateY.value = withSpring(50);
+    emojiPickerTranslateY.value = withSpring(20);
     emojiPickerOpacity.value = withSpring(0, {}, () => {
       runOnJS(setShowEmojiPicker)(false);
     });
@@ -742,8 +742,9 @@ export default function ChatScreen({ route, navigation }: Props) {
                       key={emoji}
                       onPress={() => handleReaction(emoji)}
                       style={styles.emojiButton}
+                      hitSlop={8}
                     >
-                      <ThemedText style={{ fontSize: 24 }}>{emoji}</ThemedText>
+                      <ThemedText style={{ fontSize: 28 }}>{emoji}</ThemedText>
                     </Pressable>
                   ))}
                 </Animated.View>
@@ -925,16 +926,20 @@ const styles = StyleSheet.create({
     width: 280,
     alignSelf: 'center',
     position: 'absolute',
+    overflow: 'hidden',
   },
   emojiPicker: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: Spacing.sm,
+    justifyContent: "space-between",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "rgba(255,255,255,0.1)",
   },
   emojiButton: {
     padding: Spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionItem: {
     flexDirection: "row",
