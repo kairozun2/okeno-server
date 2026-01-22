@@ -12,6 +12,7 @@ import { format } from "date-fns";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
@@ -279,6 +280,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       return response.json() as Promise<Message[]>;
     },
     getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length === 0) return undefined;
       return lastPage.length === 20 ? allPages.length * 20 : undefined;
     },
     initialPageParam: 0,
@@ -477,7 +479,10 @@ export default function ChatScreen({ route, navigation }: Props) {
               />
             )}
             <View style={{ marginRight: Spacing.sm }}>
-              <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
+                {userData?.isVerified ? <VerifiedBadge size={14} /> : null}
+              </View>
               {isOtherUserTyping ? (
                 <ThemedText type="caption" style={{ color: theme.link }}>{t("typing...", "печатает...")}</ThemedText>
               ) : displayUsername ? (
