@@ -67,13 +67,13 @@ export default function LoginScreen({ navigation }: Props) {
       >
         <Animated.View entering={FadeInUp.delay(100).duration(800).springify()}>
           <ThemedText type="h2" style={styles.title}>
-            С возвращением
+            Welcome back
           </ThemedText>
           <ThemedText
             type="body"
             style={[styles.subtitle, { color: theme.textSecondary, opacity: 0.8 }]}
           >
-            Введите ID и PIN для входа
+            Enter your ID and PIN to login
           </ThemedText>
         </Animated.View>
 
@@ -82,8 +82,8 @@ export default function LoginScreen({ navigation }: Props) {
           style={styles.form}
         >
           <Input
-            label="ID пользователя"
-            placeholder="Введите ваш ID"
+            label="User ID"
+            placeholder="Enter your ID"
             value={userId}
             onChangeText={(text) => {
               setUserId(text);
@@ -95,7 +95,7 @@ export default function LoginScreen({ navigation }: Props) {
 
           <View style={styles.pinSection}>
             <ThemedText type="small" style={[styles.pinLabel, { color: theme.textSecondary }]}>
-              4-значный PIN
+              4-digit PIN
             </ThemedText>
             <PinInput
               value={pin}
@@ -112,7 +112,7 @@ export default function LoginScreen({ navigation }: Props) {
             disabled={isLoading || !userId.trim() || pin.length !== 4}
             style={styles.button}
           >
-            {isLoading ? "Вход..." : "Войти"}
+            {isLoading ? "Logging in..." : "Login"}
           </Button>
         </Animated.View>
 
@@ -121,10 +121,10 @@ export default function LoginScreen({ navigation }: Props) {
           style={styles.footer}
         >
           <ThemedText type="body" style={{ color: theme.textSecondary }}>
-            Нет аккаунта?{" "}
+            No account?{" "}
           </ThemedText>
           <Pressable onPress={() => navigation.navigate("Register")}>
-            <ThemedText type="link">Создать</ThemedText>
+            <ThemedText type="link">Create</ThemedText>
           </Pressable>
         </Animated.View>
       </KeyboardAwareScrollView>

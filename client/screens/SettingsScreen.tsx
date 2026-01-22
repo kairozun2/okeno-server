@@ -383,8 +383,12 @@ export default function SettingsScreen({ navigation }: Props) {
               <Button 
                 onPress={handleCopyId}
                 style={{ marginTop: Spacing.md }}
+                textStyle={{ color: "#fff" }}
               >
-                Скопировать ID
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <ThemedText style={{ color: "#fff", fontWeight: "600" }}>Скопировать ID</ThemedText>
+                  <Feather name="copy" size={16} color="#fff" />
+                </View>
               </Button>
             </View>
 
