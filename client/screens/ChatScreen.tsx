@@ -197,13 +197,13 @@ function MessageBubble({
           
           {(message as any).reactions && (message as any).reactions.length > 0 && (
             <View 
-              pointerEvents="none"
+              pointerEvents="box-none"
               style={[
                 styles.reactionsBadge,
                 { 
                   backgroundColor: 'transparent',
-                  right: isOwn ? -10 : undefined, // Moved right for own messages
-                  left: !isOwn ? -10 : undefined, // Moved left for other user messages
+                  right: isOwn ? -10 : undefined,
+                  left: !isOwn ? -10 : undefined,
                 }
               ]}
             >
@@ -282,12 +282,14 @@ export default function ChatScreen({ route, navigation }: Props) {
   }, []);
 
   const closeEmojiPicker = useCallback(() => {
+    // Immediate state cleanup
+    setShowEmojiPicker(false);
+    setSelectedMessage(null);
+    setShowActionModal(false);
+    
+    // Animate shared values
     emojiPickerTranslateY.value = 0;
     emojiPickerOpacity.value = 0;
-    runOnJS(setShowEmojiPicker)(false);
-    // Ensure scrolling isn't blocked by resetting selection state
-    setSelectedMessage(null);
-    setShowActionModal(false); // Explicitly ensure modal is closed
   }, []);
 
   const handleReaction = useCallback(async (emoji: string) => {
@@ -302,7 +304,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     try {
-      // 2. Perform optimistic update
+      // 2. Perform optimistic update - logic changed to only allow one reaction per user
       queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
         if (!oldData) return oldData;
         return {
@@ -311,12 +313,13 @@ export default function ChatScreen({ route, navigation }: Props) {
             page.map((msg: Message) => {
               if (msg.id === targetMessageId) {
                 const currentReactions = (msg as any).reactions || [];
-                const alreadyReacted = currentReactions.some((r: any) => r.emoji === emoji && r.userId === user?.id);
-                if (alreadyReacted) return msg;
-
+                
+                // Filter out any existing reaction from this user
+                const otherReactions = currentReactions.filter((r: any) => r.userId !== user?.id);
+                
                 return {
                   ...msg,
-                  reactions: [...currentReactions, { emoji, userId: user?.id }]
+                  reactions: [...otherReactions, { emoji, userId: user?.id }]
                 };
               }
               return msg;
@@ -332,7 +335,6 @@ export default function ChatScreen({ route, navigation }: Props) {
       });
     } catch (error) {
       console.error("Failed to save reaction:", error);
-      // Optional: rollback on error if needed
     }
   }, [selectedMessage, closeEmojiPicker, chatId, user?.id, queryClient]);
 

@@ -336,17 +336,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addMessageReaction(reaction: InsertMessageReaction): Promise<MessageReaction> {
-    // Check if already exists
-    const existing = await db.select().from(messageReactions).where(
+    // Delete any existing reaction from this user for this message (only one reaction allowed)
+    await db.delete(messageReactions).where(
       and(
         eq(messageReactions.messageId, reaction.messageId),
-        eq(messageReactions.userId, reaction.userId),
-        eq(messageReactions.emoji, reaction.emoji)
+        eq(messageReactions.userId, reaction.userId)
       )
     );
-    if (existing.length > 0) {
-      return existing[0];
-    }
+    
     const [newReaction] = await db.insert(messageReactions).values(reaction).returning();
     return newReaction;
   }
