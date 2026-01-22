@@ -311,23 +311,27 @@ export default function ChatsListScreen({ navigation }: Props) {
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.md }]}>
-            <View style={styles.modalHeaderButton} />
+            <View style={styles.modalHeaderButton}>
+              {selectedChat && (
+                <Pressable onPress={() => setSelectedChat(null)} style={styles.modalHeaderButton}>
+                  <Feather name="chevron-left" size={24} color={theme.text} />
+                </Pressable>
+              )}
+            </View>
             <ThemedText type="h3" style={styles.modalTitle}>
               {selectedChat ? "Настройки чата" : "Выберите чат"}
             </ThemedText>
-            {selectedChat ? (
-              <Pressable 
-                onPress={handleSaveSettings} 
-                style={styles.modalHeaderButton}
-                disabled={saveChatSettingsMutation.isPending}
-              >
-                <Feather name="check" size={24} color={theme.link} />
-              </Pressable>
-            ) : (
-              <Pressable onPress={handleCloseModal} style={styles.modalHeaderButton}>
-                <Feather name="x" size={24} color={theme.text} />
-              </Pressable>
-            )}
+            <Pressable 
+              onPress={selectedChat ? handleSaveSettings : handleCloseModal} 
+              style={styles.modalHeaderButton}
+              disabled={selectedChat ? saveChatSettingsMutation.isPending : false}
+            >
+              <Feather 
+                name={selectedChat ? "check" : "x"} 
+                size={24} 
+                color={selectedChat ? theme.link : theme.text} 
+              />
+            </Pressable>
           </View>
 
           {!selectedChat ? (
@@ -374,9 +378,6 @@ export default function ChatsListScreen({ navigation }: Props) {
               contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
             >
               <View style={styles.selectedUserHeader}>
-                <Pressable onPress={() => setSelectedChat(null)} style={styles.backButton}>
-                  <Feather name="chevron-left" size={24} color={theme.text} />
-                </Pressable>
                 <Avatar emoji={selectedChat.otherUser?.emoji || "🐸"} size={48} />
                 <ThemedText type="h3" style={{ marginTop: Spacing.sm }} truncate maxLength={20}>
                   {selectedChat.otherUser?.username}
