@@ -164,13 +164,15 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         </Animated.View>
       ),
       headerRight: () => (
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={{ flexDirection: "row", alignItems: "center", paddingRight: 8 }}>
           <Pressable 
             onPress={() => setShowActionSheet(true)} 
             hitSlop={20}
             style={{ 
-              marginRight: Spacing.xs,
-              padding: 8,
+              width: 40,
+              height: 40,
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Feather name="more-horizontal" size={24} color={theme.text} />
