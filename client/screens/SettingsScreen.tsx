@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TextInput, Linking } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TextInput, Linking, Platform } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -382,10 +382,10 @@ export default function SettingsScreen({ navigation }: Props) {
 
               <Button 
                 onPress={handleCopyId}
-                variant="secondary"
                 style={{ marginTop: Spacing.md }}
-                text="Скопировать ID"
-              />
+              >
+                Скопировать ID
+              </Button>
             </View>
 
             <View style={{ height: Spacing.xl }} />
