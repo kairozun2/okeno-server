@@ -17,6 +17,7 @@ import NotificationsScreen from "@/screens/NotificationsScreen";
 import PostDetailScreen from "@/screens/PostDetailScreen";
 import QRCodeScreen from "@/screens/QRCodeScreen";
 import UserSearchScreen from "@/screens/UserSearchScreen";
+import PrivacyPolicyScreen from "@/screens/PrivacyPolicyScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
@@ -37,6 +38,7 @@ export type RootStackParamList = {
   PostDetail: { postId: string };
   QRCode: undefined;
   UserSearch: undefined;
+  PrivacyPolicy: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -209,6 +211,15 @@ export default function RootStackNavigator() {
               presentation: "modal",
               animation: "slide_from_bottom",
             }}
+          />
+          <Stack.Screen
+            name="PrivacyPolicy"
+            component={PrivacyPolicyScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: "Конфиденциальность",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            })}
           />
         </>
       ) : (

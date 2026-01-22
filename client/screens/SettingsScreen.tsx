@@ -126,11 +126,7 @@ export default function SettingsScreen({ navigation }: Props) {
           icon: "lock",
           title: "Конфиденциальность",
           subtitle: "Политика и использование данных",
-          onPress: () => {
-            import("expo-web-browser").then(WebBrowser => {
-              WebBrowser.openBrowserAsync("https://skaisay.github.io/App-Privacy/");
-            });
-          },
+          onPress: () => navigation.navigate("PrivacyPolicy"),
         },
         {
           icon: "smartphone",
