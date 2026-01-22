@@ -117,18 +117,39 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     if (isOwner) {
       navigation.setOptions({
         headerRight: () => (
-          <View style={{ flexDirection: "row", alignItems: "center", paddingRight: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", paddingRight: 4 }}>
             <Pressable
-              onPress={() => navigation.navigate("EditPost", { postId })}
-              style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate("EditPost", { postId });
+              }}
+              style={({ pressed }) => ({
+                width: 38,
+                height: 38,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 12,
+                marginRight: 4,
+                backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
+              })}
             >
-              <Feather name="edit-2" size={22} color={theme.text} />
+              <Feather name="edit-2" size={20} color={theme.text} />
             </Pressable>
             <Pressable
-              onPress={handleDelete}
-              style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                handleDelete();
+              }}
+              style={({ pressed }) => ({
+                width: 38,
+                height: 38,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 12,
+                backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
+              })}
             >
-              <Feather name="trash-2" size={22} color={theme.error} />
+              <Feather name="trash-2" size={20} color={theme.error} />
             </Pressable>
           </View>
         ),

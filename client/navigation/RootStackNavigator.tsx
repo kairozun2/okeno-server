@@ -20,6 +20,7 @@ import UserSearchScreen from "@/screens/UserSearchScreen";
 import PrivacyPolicyScreen from "@/screens/PrivacyPolicyScreen";
 import CacheSettingsScreen from "@/screens/CacheSettingsScreen";
 import EditPostScreen from "@/screens/EditPostScreen";
+import ArchiveScreen from "@/screens/ArchiveScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
@@ -43,6 +44,7 @@ export type RootStackParamList = {
   PrivacyPolicy: undefined;
   CacheSettings: undefined;
   EditPost: { postId: string };
+  Archive: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -242,6 +244,16 @@ export default function RootStackNavigator() {
             options={({ navigation }) => ({
               ...modalOptions,
               headerTitle: "Редактировать",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
+          />
+          <Stack.Screen
+            name="Archive"
+            component={ArchiveScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: "Архив",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               headerShadowVisible: false,
             })}

@@ -170,7 +170,7 @@ export default function SettingsScreen({ navigation }: Props) {
           icon: "archive",
           title: "Архив",
           subtitle: "Просмотр архивных воспоминаний",
-          onPress: () => {},
+          onPress: () => navigation.navigate("Archive"),
         },
         {
           icon: "eye-off",
