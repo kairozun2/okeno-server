@@ -451,6 +451,15 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 </Pressable>
               )}
 
+              {isOwner && (
+                <Pressable
+                  onPress={handleEdit}
+                  style={[styles.actionButton, { marginLeft: Spacing.sm }]}
+                >
+                  <Feather name="edit-2" size={22} color={theme.textSecondary} />
+                </Pressable>
+              )}
+
               <View style={{ flex: 1 }} />
 
               <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle]}>
