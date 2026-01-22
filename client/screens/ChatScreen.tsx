@@ -676,6 +676,20 @@ export default function ChatScreen({ route, navigation }: Props) {
             <Feather name={chatFullscreen ? "arrow-left" : "x"} size={20} color={theme.text} />
           </Pressable>
 
+          <View style={styles.headerCenter}>
+            {isOtherUserTyping ? (
+              <Animated.View 
+                entering={FadeIn.duration(400)} 
+                exiting={FadeOut.duration(400)}
+                style={styles.typingIndicator}
+              >
+                <ThemedText type="caption" style={{ color: theme.link, fontSize: 12, fontWeight: "600" }}>
+                  {t("typing...", "печатает...")}
+                </ThemedText>
+              </Animated.View>
+            ) : null}
+          </View>
+
           <Pressable
             onPress={() => otherUserId && navigation.navigate("UserProfile", { userId: otherUserId })}
             style={styles.userInfo}
@@ -692,11 +706,6 @@ export default function ChatScreen({ route, navigation }: Props) {
                 <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
                 {userData?.isVerified ? <VerifiedBadge size={14} /> : null}
               </View>
-              {isOtherUserTyping ? (
-                <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)}>
-                  <ThemedText type="caption" style={{ color: theme.link, fontSize: 10 }}>{t("typing...", "печатает...")}</ThemedText>
-                </Animated.View>
-              ) : null}
             </View>
             <Avatar emoji={displayEmoji} size={32} />
           </Pressable>
@@ -925,6 +934,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typingIndicator: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   userInfo: {
     flexDirection: 'row',
