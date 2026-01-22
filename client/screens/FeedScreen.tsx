@@ -376,13 +376,7 @@ export default function FeedScreen({ navigation }: Props) {
     reportMutation.mutate();
   };
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useInfiniteQuery<PostWithUser[]>({
+  const queryResult = useInfiniteQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
     queryFn: async ({ pageParam }) => {
       const response = await apiRequest("GET", `/api/posts?limit=10&offset=${pageParam}`, null);
@@ -397,7 +391,18 @@ export default function FeedScreen({ navigation }: Props) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const postsData = data?.pages ? data.pages.flat().filter(post => post !== null) : [];
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = queryResult;
+
+  const postsData = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flat().filter(post => post !== null);
+  }, [data]);
 
 
   const likeMutation = useMutation({
