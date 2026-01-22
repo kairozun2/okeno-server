@@ -147,15 +147,24 @@ function MessageBubble({
               {t("edited", "изм.")}
             </ThemedText>
           ) : null}
-          <ThemedText
-            type="caption"
-            style={[
-              styles.messageTime,
-              { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary },
-            ]}
-          >
-            {formatMessageTime(new Date(message.createdAt))}
-          </ThemedText>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ThemedText
+              type="caption"
+              style={[
+                styles.messageTime,
+                { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, marginRight: 2 },
+              ]}
+            >
+              {formatMessageTime(new Date(message.createdAt))}
+            </ThemedText>
+            {isOwn && (
+              <Feather 
+                name={message.isRead ? "check-circle" : "check"} 
+                size={10} 
+                color="rgba(255,255,255,0.7)" 
+              />
+            )}
+          </View>
         </View>
       </View>
     </Pressable>
@@ -573,7 +582,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               </Pressable>
             </Animated.View>
           ) : null}
-          <View style={styles.inputWrapper}>
+          <View style={[styles.inputWrapper, { paddingBottom: insets.bottom > 0 ? insets.bottom / 2 : Spacing.sm }]}>
             <TextInput
               style={[
                 styles.input,
@@ -608,7 +617,6 @@ export default function ChatScreen({ route, navigation }: Props) {
               />
             </Pressable>
           </View>
-          <View style={{ height: insets.bottom > 0 ? insets.bottom : Spacing.md }} />
         </View>
 
         <Modal
