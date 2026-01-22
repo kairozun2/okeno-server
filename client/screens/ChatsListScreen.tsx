@@ -20,6 +20,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
+import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { CompositeScreenProps } from "@react-navigation/native";
@@ -149,6 +150,7 @@ export default function ChatsListScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const { setChatsRefreshing } = useRefresh();
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedChat, setSelectedChat] = useState<ChatWithDetails | null>(null);
   const [nickname, setNickname] = useState("");
@@ -256,9 +258,11 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setChatsRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "chats"] });
     setRefreshing(false);
-  }, [queryClient, user?.id]);
+    setChatsRefreshing(false);
+  }, [queryClient, user?.id, setChatsRefreshing]);
 
   const sortedChats = useMemo(() => {
     return [...chatsData].sort((a, b) => 

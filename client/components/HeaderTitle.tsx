@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -16,12 +16,14 @@ import { Spacing } from "@/constants/theme";
 interface HeaderTitleProps {
   title: string;
   onFadeComplete?: () => void;
+  refreshing?: boolean;
 }
 
-export function HeaderTitle({ title, onFadeComplete }: HeaderTitleProps) {
+export function HeaderTitle({ title, onFadeComplete, refreshing = false }: HeaderTitleProps) {
   const { theme, language } = useTheme();
   const { user } = useAuth();
   const opacity = useSharedValue(1);
+  const refreshOpacity = useSharedValue(0);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -46,13 +48,22 @@ export function HeaderTitle({ title, onFadeComplete }: HeaderTitleProps) {
     );
   }, []);
 
+  useEffect(() => {
+    refreshOpacity.value = withTiming(refreshing ? 1 : 0, { duration: 200 });
+  }, [refreshing]);
+
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));
 
   const mainTitleStyle = useAnimatedStyle(() => ({
-    opacity: 1 - opacity.value,
+    opacity: (1 - opacity.value) * (1 - refreshOpacity.value),
     transform: [{ translateY: (1 - opacity.value) * 0 }],
+  }));
+
+  const spinnerStyle = useAnimatedStyle(() => ({
+    opacity: refreshOpacity.value,
+    position: 'absolute' as const,
   }));
 
   return (
@@ -62,6 +73,9 @@ export function HeaderTitle({ title, onFadeComplete }: HeaderTitleProps) {
       </Animated.View>
       <Animated.View style={[styles.greetingContainer, mainTitleStyle]}>
         <ThemedText style={styles.titleText}>{title}</ThemedText>
+      </Animated.View>
+      <Animated.View style={[styles.greetingContainer, spinnerStyle]}>
+        <ActivityIndicator size="small" color={theme.text} />
       </Animated.View>
     </View>
   );

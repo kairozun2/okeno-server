@@ -12,6 +12,7 @@ import FeedScreen from "@/screens/FeedScreen";
 import ChatsListScreen from "@/screens/ChatsListScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import { HeaderTitle } from "@/components/HeaderTitle";
+import { RefreshableTitle } from "@/components/RefreshableTitle";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -19,6 +20,7 @@ import type { RootStackParamList } from "./RootStackNavigator";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "@/contexts/AuthContext";
 import { getApiUrl } from "@/lib/query-client";
+import { useRefresh } from "@/contexts/RefreshContext";
 
 export type MainTabParamList = {
   FeedTab: undefined;
@@ -130,6 +132,7 @@ export default function MainTabNavigator() {
   const { theme, isDark, language } = useTheme();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { feedRefreshing, chatsRefreshing } = useRefresh();
   const [showPlus, setShowPlus] = useState(false);
 
   const { data: unreadData } = useQuery<{ count: number }>({
@@ -201,6 +204,7 @@ export default function MainTabNavigator() {
               <HeaderTitle 
                 title={language === "ru" ? "Моменты" : "Moments"} 
                 onFadeComplete={() => setShowPlus(true)} 
+                refreshing={feedRefreshing}
               />
             ),
             headerLeft: () => (
@@ -227,7 +231,12 @@ export default function MainTabNavigator() {
           name="ChatsTab"
           component={ChatsListScreen}
           options={{
-            headerTitle: language === "ru" ? "Чаты" : "Chats",
+            headerTitle: () => (
+              <RefreshableTitle 
+                title={language === "ru" ? "Чаты" : "Chats"} 
+                refreshing={chatsRefreshing}
+              />
+            ),
             tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
             tabBarBadgeStyle: {
               backgroundColor: theme.error,

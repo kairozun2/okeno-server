@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from "react";
-import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList } from "react-native";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList, ActivityIndicator } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,7 +12,8 @@ import Animated, {
   useSharedValue, 
   useAnimatedStyle, 
   interpolate,
-  Extrapolate
+  Extrapolate,
+  withTiming
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
@@ -24,6 +25,7 @@ import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { CompositeScreenProps } from "@react-navigation/native";
@@ -82,7 +84,13 @@ export default function ProfileScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const { setProfileRefreshing } = useRefresh();
   const scrollY = useSharedValue(0);
+  const refreshOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    refreshOpacity.value = withTiming(refreshing ? 1 : 0, { duration: 200 });
+  }, [refreshing]);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -94,9 +102,11 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setProfileRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "posts"] });
     setRefreshing(false);
-  }, [queryClient, user?.id]);
+    setProfileRefreshing(false);
+  }, [queryClient, user?.id, setProfileRefreshing]);
 
   const handleCopyId = async () => {
     if (user?.id) {
@@ -112,14 +122,19 @@ export default function ProfileScreen({ navigation }: Props) {
   });
 
   const headerTitleStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
+    const scrollOpacity = interpolate(
       scrollY.value,
       [100, 150],
       [1, 0],
       Extrapolate.CLAMP
     );
-    return { opacity };
+    return { opacity: scrollOpacity * (1 - refreshOpacity.value) };
   });
+
+  const spinnerStyle = useAnimatedStyle(() => ({
+    opacity: refreshOpacity.value,
+    position: 'absolute' as const,
+  }));
 
   const emojiStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
@@ -215,6 +230,9 @@ export default function ProfileScreen({ navigation }: Props) {
           <View style={styles.headerCenter}>
             <Animated.View style={[styles.headerTitleContainer, headerTitleStyle]}>
               <ThemedText style={styles.headerTitleText}>{t("Profile", "Профиль")}</ThemedText>
+            </Animated.View>
+            <Animated.View style={[styles.headerTitleContainer, spinnerStyle]}>
+              <ActivityIndicator size="small" color={theme.text} />
             </Animated.View>
             <Animated.View style={[styles.headerEmojiContainer, emojiStyle]}>
               <ThemedText style={styles.headerEmojiText}>{user?.emoji || "🐸"}</ThemedText>

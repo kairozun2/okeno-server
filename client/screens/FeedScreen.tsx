@@ -24,6 +24,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { CompositeScreenProps } from "@react-navigation/native";
@@ -310,6 +311,7 @@ export default function FeedScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const { setFeedRefreshing } = useRefresh();
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -407,9 +409,11 @@ export default function FeedScreen({ navigation }: Props) {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setFeedRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     setRefreshing(false);
-  }, [queryClient]);
+    setFeedRefreshing(false);
+  }, [queryClient, setFeedRefreshing]);
 
   const renderItem = useCallback(
     ({ item }: { item: PostWithUser }) => (

@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LoadingScreen } from "@/components/LoadingScreen";
 
 import { ThemeProvider } from "./hooks/useTheme";
+import { RefreshProvider } from "@/contexts/RefreshContext";
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -49,13 +50,15 @@ export default function App() {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <SafeAreaProvider>
-              <GestureHandlerRootView style={styles.root}>
-                <KeyboardProvider>
-                  <AppContent />
-                </KeyboardProvider>
-              </GestureHandlerRootView>
-            </SafeAreaProvider>
+            <RefreshProvider>
+              <SafeAreaProvider>
+                <GestureHandlerRootView style={styles.root}>
+                  <KeyboardProvider>
+                    <AppContent />
+                  </KeyboardProvider>
+                </GestureHandlerRootView>
+              </SafeAreaProvider>
+            </RefreshProvider>
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>
