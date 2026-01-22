@@ -43,7 +43,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "UserProfile">;
 
 export default function UserProfileScreen({ route, navigation }: Props) {
   const { userId } = route.params;
-  const { theme } = useTheme();
+  const { theme, language } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -53,6 +53,8 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportCategory, setReportCategory] = useState<string | null>(null);
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const REPORT_CATEGORIES = [
     { id: "spam", label: "Spam" },
@@ -293,15 +295,15 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           <View style={styles.stat}>
             <ThemedText type="h4">{posts.length}</ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              posts
+              {t("posts", "посты")}
             </ThemedText>
           </View>
         </View>
 
-        {currentUser?.id !== userId ? (
+        {String(currentUser?.id) !== String(userId) ? (
           <View style={styles.actions}>
             <Button onPress={handleMessage} style={styles.messageButton}>
-              Message
+              {t("Message", "Сообщение")}
             </Button>
           </View>
         ) : (
@@ -311,7 +313,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               style={[styles.messageButton, { backgroundColor: theme.backgroundSecondary }]}
               textStyle={{ color: theme.text }}
             >
-              Share Profile
+              {t("Share Profile", "Поделиться профилем")}
             </Button>
           </View>
         )}
@@ -403,7 +405,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               style={styles.actionSheetItem}
             >
               <Feather name="send" size={20} color={theme.text} />
-              <ThemedText style={styles.actionSheetText}>Share Profile</ThemedText>
+              <ThemedText style={styles.actionSheetText}>{t("Share Profile", "Поделиться профилем")}</ThemedText>
             </Pressable>
             
             <View style={[styles.actionSheetDivider, { backgroundColor: theme.border }]} />
@@ -416,7 +418,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               style={styles.actionSheetItem}
             >
               <Feather name="flag" size={20} color={theme.error} />
-              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>Report</ThemedText>
+              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>{t("Report", "Пожаловаться")}</ThemedText>
             </Pressable>
             
             <View style={[styles.actionSheetDivider, { backgroundColor: theme.border }]} />
@@ -429,7 +431,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
               style={styles.actionSheetItem}
             >
               <Feather name="slash" size={20} color={theme.error} />
-              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>Block</ThemedText>
+              <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>{t("Block", "Заблокировать")}</ThemedText>
             </Pressable>
           </Animated.View>
         </Pressable>
