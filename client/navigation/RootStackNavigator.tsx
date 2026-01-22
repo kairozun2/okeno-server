@@ -1,6 +1,6 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Pressable } from "react-native";
+import { Pressable, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
@@ -14,7 +14,7 @@ import CreatePostScreen from "@/screens/CreatePostScreen";
 import SessionsScreen from "@/screens/SessionsScreen";
 import NotificationsScreen from "@/screens/NotificationsScreen";
 import PostDetailScreen from "@/screens/PostDetailScreen";
-import { useScreenOptions } from "@/hooks/useScreenOptions";
+import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
@@ -45,13 +45,15 @@ function CloseButton({ onPress }: { onPress: () => void }) {
       }}
       style={{ padding: Spacing.sm }}
     >
-      <Feather name="x" size={24} color={theme.text} />
+      <Feather name="x" size={22} color={theme.text} />
     </Pressable>
   );
 }
 
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
+  const modalOptions = useModalScreenOptions();
+  const { theme, isDark } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -71,42 +73,33 @@ export default function RootStackNavigator() {
             name="Chat"
             component={ChatScreen}
             options={({ navigation }) => ({
-              presentation: "modal",
+              ...modalOptions,
               headerTitle: "Chat",
-              headerTransparent: true,
-              headerBlurEffect: "dark",
               gestureEnabled: false,
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
-              headerStyle: {
-                backgroundColor: 'transparent',
-              },
             })}
           />
           <Stack.Screen
             name="Comments"
             component={CommentsScreen}
             options={{
-              presentation: "modal",
+              ...modalOptions,
               headerTitle: "Comments",
-              headerTransparent: true,
-              headerBlurEffect: "dark",
             }}
           />
           <Stack.Screen
             name="Settings"
             component={SettingsScreen}
             options={{
-              presentation: "modal",
+              ...modalOptions,
               headerTitle: "Settings",
-              headerTransparent: true,
-              headerBlurEffect: "dark",
             }}
           />
           <Stack.Screen
             name="UserProfile"
             component={UserProfileScreen}
             options={{
-              presentation: "modal",
+              ...modalOptions,
               headerTitle: "",
             }}
           />
@@ -114,7 +107,7 @@ export default function RootStackNavigator() {
             name="CreatePost"
             component={CreatePostScreen}
             options={{
-              presentation: "modal",
+              ...modalOptions,
               headerTitle: "New Post",
             }}
           />
@@ -122,6 +115,7 @@ export default function RootStackNavigator() {
             name="Sessions"
             component={SessionsScreen}
             options={{
+              ...modalOptions,
               headerTitle: "Active Sessions",
             }}
           />
@@ -129,7 +123,7 @@ export default function RootStackNavigator() {
             name="Notifications"
             component={NotificationsScreen}
             options={{
-              presentation: "modal",
+              ...modalOptions,
               headerTitle: "Notifications",
             }}
           />
@@ -137,7 +131,7 @@ export default function RootStackNavigator() {
             name="PostDetail"
             component={PostDetailScreen}
             options={{
-              presentation: "modal",
+              ...modalOptions,
               headerTitle: "",
             }}
           />

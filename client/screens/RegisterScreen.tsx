@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Alert } from "react-native";
+import { View, StyleSheet, Pressable, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   FadeInDown,
   FadeInUp,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import * as Clipboard from "expo-clipboard";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -16,7 +15,7 @@ import { Button } from "@/components/Button";
 import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius, getRandomEmoji } from "@/constants/theme";
+import { Spacing, getRandomEmoji } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "@/navigation/AuthStackNavigator";
 
@@ -33,7 +32,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
   const [step, setStep] = useState<"username" | "pin" | "confirm">("username");
-  const [previewEmoji] = useState("✨");
+  const [previewEmoji] = useState(getRandomEmoji());
 
   const handleNext = () => {
     if (step === "username") {
@@ -86,10 +85,13 @@ export default function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing["4xl"] }]}>
-      <Animated.View entering={FadeInUp.delay(100).springify()}>
-        <View style={styles.header}>
-          <Avatar emoji={previewEmoji} size={80} />
+    <ThemedView style={styles.container}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={[styles.content, { paddingTop: insets.top + Spacing["3xl"] }]}
+      >
+        <Animated.View entering={FadeInUp.delay(100).springify()} style={styles.header}>
+          <Avatar emoji={previewEmoji} size={72} />
           <ThemedText type="h1" style={styles.title}>
             {step === "username"
               ? "Create Account"
@@ -107,81 +109,80 @@ export default function RegisterScreen({ navigation }: Props) {
               ? "Create a 4-digit PIN to secure your account"
               : "Enter your PIN again to confirm"}
           </ThemedText>
-        </View>
-      </Animated.View>
+        </Animated.View>
 
-      <Animated.View
-        entering={FadeInDown.delay(200).springify()}
-        style={styles.form}
-      >
-        {step === "username" ? (
-          <Input
-            label="Username"
-            placeholder="Enter your username"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoFocus
-          />
-        ) : (
-          <View style={styles.pinSection}>
-            <PinInput
-              value={step === "pin" ? pin : confirmPin}
-              onChange={(value) => {
-                if (step === "pin") {
-                  setPin(value);
-                } else {
-                  setConfirmPin(value);
-                }
-                setError(false);
-              }}
-              error={error}
+        <Animated.View
+          entering={FadeInDown.delay(200).springify()}
+          style={styles.form}
+        >
+          {step === "username" ? (
+            <Input
+              placeholder="Username"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
             />
-          </View>
-        )}
-
-        <View style={styles.buttons}>
-          {step !== "username" ? (
-            <Pressable onPress={handleBack} style={styles.backButton}>
-              <ThemedText type="link">Back</ThemedText>
-            </Pressable>
-          ) : null}
-
-          {step === "confirm" ? (
-            <Button
-              onPress={handleRegister}
-              disabled={isLoading || confirmPin.length !== 4}
-              style={styles.button}
-            >
-              {isLoading ? "Creating..." : "Create Account"}
-            </Button>
           ) : (
-            <Button
-              onPress={handleNext}
-              disabled={
-                (step === "username" && !username.trim()) ||
-                (step === "pin" && pin.length !== 4)
-              }
-              style={styles.button}
-            >
-              Continue
-            </Button>
+            <View style={styles.pinSection}>
+              <PinInput
+                value={step === "pin" ? pin : confirmPin}
+                onChange={(value) => {
+                  if (step === "pin") {
+                    setPin(value);
+                  } else {
+                    setConfirmPin(value);
+                  }
+                  setError(false);
+                }}
+                error={error}
+              />
+            </View>
           )}
-        </View>
-      </Animated.View>
 
-      <Animated.View
-        entering={FadeInUp.delay(300).springify()}
-        style={styles.footer}
-      >
-        <ThemedText type="body" style={{ color: theme.textSecondary }}>
-          Already have an account?{" "}
-        </ThemedText>
-        <Pressable onPress={() => navigation.navigate("Login")}>
-          <ThemedText type="link">Sign In</ThemedText>
-        </Pressable>
-      </Animated.View>
+          <View style={styles.buttons}>
+            {step !== "username" ? (
+              <Pressable onPress={handleBack} style={styles.backButton}>
+                <ThemedText type="link">Back</ThemedText>
+              </Pressable>
+            ) : null}
+
+            {step === "confirm" ? (
+              <Button
+                onPress={handleRegister}
+                disabled={isLoading || confirmPin.length !== 4}
+                style={styles.button}
+              >
+                {isLoading ? "Creating..." : "Create Account"}
+              </Button>
+            ) : (
+              <Button
+                onPress={handleNext}
+                disabled={
+                  (step === "username" && !username.trim()) ||
+                  (step === "pin" && pin.length !== 4)
+                }
+                style={styles.button}
+              >
+                Continue
+              </Button>
+            )}
+          </View>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInUp.delay(300).springify()}
+          style={[styles.footer, { paddingBottom: insets.bottom + Spacing.xl }]}
+        >
+          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+            Already have an account?{" "}
+          </ThemedText>
+          <Pressable onPress={() => navigation.navigate("Login")}>
+            <ThemedText type="link">Sign In</ThemedText>
+          </Pressable>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -189,15 +190,18 @@ export default function RegisterScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: Spacing.xl,
   },
   header: {
     alignItems: "center",
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing["2xl"],
   },
   title: {
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.xs,
     textAlign: "center",
   },
   subtitle: {
@@ -207,12 +211,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pinSection: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   buttons: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.lg,
+    gap: Spacing.md,
   },
   backButton: {
     paddingHorizontal: Spacing.lg,
@@ -225,6 +229,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingBottom: Spacing["3xl"],
   },
 });

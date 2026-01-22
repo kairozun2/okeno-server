@@ -37,7 +37,7 @@ function CreatePostButton() {
       }}
       style={[styles.fabButton, { backgroundColor: theme.link }]}
     >
-      <Feather name="plus" size={28} color="#fff" />
+      <Feather name="plus" size={24} color="#fff" />
     </Pressable>
   );
 }
@@ -101,37 +101,44 @@ export default function MainTabNavigator() {
       <Tab.Navigator
         initialRouteName="FeedTab"
         screenOptions={{
-          tabBarActiveTintColor: theme.tabIconSelected,
-          tabBarInactiveTintColor: theme.tabIconDefault,
+          tabBarActiveTintColor: theme.link,
+          tabBarInactiveTintColor: theme.textSecondary,
+          tabBarShowLabel: false,
           tabBarStyle: {
             position: "absolute",
-            backgroundColor: Platform.select({
-              ios: "transparent",
-              android: theme.backgroundRoot,
-            }),
+            backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundRoot,
             borderTopWidth: 0,
             elevation: 0,
+            height: 50 + insets.bottom,
           },
           tabBarBackground: () =>
             Platform.OS === "ios" ? (
               <BlurView
-                intensity={100}
-                tint={isDark ? "dark" : "light"}
+                intensity={80}
+                tint={isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight"}
                 style={StyleSheet.absoluteFill}
               />
             ) : null,
-          ...screenOptions,
+          headerTransparent: true,
+          headerBlurEffect: isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight",
+          headerStyle: {
+            backgroundColor: "transparent",
+          },
+          headerTintColor: theme.text,
+          headerTitleStyle: {
+            fontWeight: "600",
+            fontSize: 17,
+          },
         }}
       >
         <Tab.Screen
           name="FeedTab"
           component={FeedScreen}
           options={{
-            title: "Feed",
             headerTitle: () => <HeaderTitle title="Moments" />,
             headerRight: () => <NotificationsButton />,
             tabBarIcon: ({ color, size }) => (
-              <Feather name="home" size={size} color={color} />
+              <Feather name="home" size={24} color={color} />
             ),
           }}
         />
@@ -139,11 +146,10 @@ export default function MainTabNavigator() {
           name="ChatsTab"
           component={ChatsListScreen}
           options={{
-            title: "Chats",
             headerTitle: "Chats",
             headerRight: () => <NewChatButton />,
             tabBarIcon: ({ color, size }) => (
-              <Feather name="message-circle" size={size} color={color} />
+              <Feather name="message-circle" size={24} color={color} />
             ),
           }}
         />
@@ -151,16 +157,15 @@ export default function MainTabNavigator() {
           name="ProfileTab"
           component={ProfileScreen}
           options={{
-            title: "Profile",
             headerTitle: "Profile",
             headerRight: () => <SettingsButton />,
             tabBarIcon: ({ color, size }) => (
-              <Feather name="user" size={size} color={color} />
+              <Feather name="user" size={24} color={color} />
             ),
           }}
         />
       </Tab.Navigator>
-      <View style={[styles.fabContainer, { bottom: 80 + insets.bottom }]}>
+      <View style={[styles.fabContainer, { bottom: 60 + insets.bottom }]}>
         <CreatePostButton />
       </View>
     </View>
@@ -170,21 +175,21 @@ export default function MainTabNavigator() {
 const styles = StyleSheet.create({
   headerButton: {
     padding: Spacing.sm,
-    marginRight: Spacing.sm,
+    marginRight: Spacing.xs,
   },
   fabContainer: {
     position: "absolute",
     right: Spacing.lg,
   },
   fabButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 8,
   },

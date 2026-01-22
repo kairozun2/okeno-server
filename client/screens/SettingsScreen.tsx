@@ -42,7 +42,7 @@ function SettingRow({ item }: { item: SettingItem }) {
         {
           backgroundColor: pressed
             ? theme.backgroundSecondary
-            : theme.cardBackground,
+            : "transparent",
         },
       ]}
     >
@@ -54,8 +54,8 @@ function SettingRow({ item }: { item: SettingItem }) {
       >
         <Feather
           name={item.icon}
-          size={20}
-          color={item.danger ? theme.error : theme.text}
+          size={18}
+          color={item.danger ? theme.error : theme.textSecondary}
         />
       </View>
       <View style={styles.settingInfo}>
@@ -69,12 +69,12 @@ function SettingRow({ item }: { item: SettingItem }) {
           {item.title}
         </ThemedText>
         {item.subtitle ? (
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
             {item.subtitle}
           </ThemedText>
         ) : null}
       </View>
-      <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+      <Feather name="chevron-right" size={18} color={theme.textSecondary} />
     </Pressable>
   );
 }
@@ -160,23 +160,6 @@ export default function SettingsScreen({ navigation }: Props) {
       ],
     },
     {
-      title: "Preferences",
-      items: [
-        {
-          icon: "volume-2",
-          title: "Sound Effects",
-          subtitle: "Disabled",
-          onPress: () => {},
-        },
-        {
-          icon: "moon",
-          title: "Appearance",
-          subtitle: "System",
-          onPress: () => {},
-        },
-      ],
-    },
-    {
       title: "",
       items: [
         {
@@ -193,12 +176,12 @@ export default function SettingsScreen({ navigation }: Props) {
     <ScrollView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       contentContainerStyle={{
-        paddingTop: headerHeight + Spacing.lg,
+        paddingTop: headerHeight + Spacing.xl,
         paddingBottom: insets.bottom + Spacing.xl,
       }}
     >
       <Animated.View entering={FadeIn} style={styles.profileSection}>
-        <Avatar emoji={user?.emoji || "🐸"} size={80} />
+        <Avatar emoji={user?.emoji || "🐸"} size={72} />
         <ThemedText type="h3" style={styles.username}>
           {user?.username}
         </ThemedText>
@@ -206,7 +189,7 @@ export default function SettingsScreen({ navigation }: Props) {
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
             {user?.id}
           </ThemedText>
-          <Feather name="copy" size={14} color={theme.textSecondary} />
+          <Feather name="copy" size={12} color={theme.textSecondary} style={{ marginLeft: 6 }} />
         </Pressable>
       </Animated.View>
 
@@ -256,7 +239,7 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     alignItems: "center",
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing.lg,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
   },
@@ -266,7 +249,6 @@ const styles = StyleSheet.create({
   idRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.xs,
     marginTop: Spacing.xs,
   },
   section: {
@@ -275,7 +257,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     marginBottom: Spacing.sm,
-    marginLeft: Spacing.md,
+    marginLeft: Spacing.sm,
     fontWeight: "500",
     letterSpacing: 0.5,
   },
@@ -289,9 +271,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.sm,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -304,6 +286,6 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    marginLeft: 36 + Spacing.lg + Spacing.md,
+    marginLeft: 32 + Spacing.lg + Spacing.md,
   },
 });

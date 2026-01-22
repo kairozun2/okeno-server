@@ -14,7 +14,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
-import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -25,9 +24,9 @@ import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { MainTabParamList } from "@/navigation/MainTabNavigator";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const GRID_GAP = Spacing.xs;
+const GRID_GAP = 2;
 const NUM_COLUMNS = 3;
-const ITEM_SIZE = (SCREEN_WIDTH - Spacing.lg * 2 - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+const ITEM_SIZE = (SCREEN_WIDTH - GRID_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
 interface Post {
   id: string;
@@ -37,13 +36,7 @@ interface Post {
   createdAt: string;
 }
 
-function ProfileHeader({
-  onSettings,
-  onCopyId,
-}: {
-  onSettings: () => void;
-  onCopyId: () => void;
-}) {
+function ProfileHeader({ onCopyId }: { onCopyId: () => void }) {
   const { theme } = useTheme();
   const { user } = useAuth();
   const { data: posts = [] } = useQuery<Post[]>({
@@ -53,44 +46,28 @@ function ProfileHeader({
 
   return (
     <Animated.View entering={FadeIn} style={styles.header}>
-      <View style={styles.headerTop}>
-        <Avatar emoji={user?.emoji || "🐸"} size={100} />
-        <ThemedText type="h2" style={styles.username}>
-          {user?.username}
+      <Avatar emoji={user?.emoji || "🐸"} size={80} />
+      <ThemedText type="h3" style={styles.username}>
+        {user?.username}
+      </ThemedText>
+      <Pressable
+        onPress={() => {
+          onCopyId();
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }}
+        style={[styles.idButton, { backgroundColor: theme.backgroundSecondary }]}
+      >
+        <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+          {user?.id?.slice(0, 12)}...
         </ThemedText>
-        <Pressable
-          onPress={() => {
-            onCopyId();
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }}
-          style={[styles.idButton, { backgroundColor: theme.backgroundSecondary }]}
-        >
-          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            ID: {user?.id?.slice(0, 8)}...
-          </ThemedText>
-          <Feather name="copy" size={14} color={theme.textSecondary} />
-        </Pressable>
-      </View>
+        <Feather name="copy" size={12} color={theme.textSecondary} />
+      </Pressable>
 
       <View style={styles.stats}>
         <View style={styles.stat}>
           <ThemedText type="h4">{posts.length}</ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
             Posts
-          </ThemedText>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-        <View style={styles.stat}>
-          <ThemedText type="h4">0</ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            Likes
-          </ThemedText>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-        <View style={styles.stat}>
-          <ThemedText type="h4">0</ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            Saved
           </ThemedText>
         </View>
       </View>
@@ -105,7 +82,7 @@ function PostGridItem({ post, onPress }: { post: Post; onPress: () => void }) {
         source={{ uri: post.imageUrl }}
         style={styles.gridImage}
         contentFit="cover"
-        transition={200}
+        transition={150}
       />
     </Pressable>
   );
@@ -116,7 +93,7 @@ function EmptyPosts() {
 
   return (
     <View style={styles.emptyContainer}>
-      <Feather name="image" size={48} color={theme.textSecondary} />
+      <Feather name="image" size={40} color={theme.textSecondary} />
       <ThemedText type="body" style={[styles.emptyText, { color: theme.textSecondary }]}>
         No posts yet
       </ThemedText>
@@ -157,14 +134,13 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const renderItem = useCallback(
     ({ item, index }: { item: Post; index: number }) => {
-      const isLastRow = Math.floor(index / NUM_COLUMNS) === Math.floor((posts.length - 1) / NUM_COLUMNS);
       const column = index % NUM_COLUMNS;
 
       return (
         <View
           style={{
             marginRight: column < NUM_COLUMNS - 1 ? GRID_GAP : 0,
-            marginBottom: isLastRow ? 0 : GRID_GAP,
+            marginBottom: GRID_GAP,
           }}
         >
           <PostGridItem
@@ -174,7 +150,7 @@ export default function ProfileScreen({ navigation }: Props) {
         </View>
       );
     },
-    [posts.length, navigation]
+    [navigation]
   );
 
   return (
@@ -187,7 +163,6 @@ export default function ProfileScreen({ navigation }: Props) {
         contentContainerStyle={{
           paddingTop: headerHeight + Spacing.lg,
           paddingBottom: tabBarHeight + Spacing.lg,
-          paddingHorizontal: Spacing.lg,
         }}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         refreshControl={
@@ -197,12 +172,7 @@ export default function ProfileScreen({ navigation }: Props) {
             tintColor={theme.text}
           />
         }
-        ListHeaderComponent={
-          <ProfileHeader
-            onSettings={() => navigation.navigate("Settings")}
-            onCopyId={handleCopyId}
-          />
-        }
+        ListHeaderComponent={<ProfileHeader onCopyId={handleCopyId} />}
         ListEmptyComponent={<EmptyPosts />}
       />
     </ThemedView>
@@ -214,20 +184,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    marginBottom: Spacing.xl,
-  },
-  headerTop: {
     alignItems: "center",
-    marginBottom: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    marginBottom: Spacing.lg,
   },
   username: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
   idButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.xs,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.xs,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
@@ -236,20 +204,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    marginTop: Spacing.lg,
   },
   stat: {
     alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
   },
   gridItem: {
     width: ITEM_SIZE,
     height: ITEM_SIZE,
-    borderRadius: BorderRadius.sm,
-    overflow: "hidden",
   },
   gridImage: {
     width: "100%",
@@ -261,6 +223,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing["4xl"],
   },
   emptyText: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
   },
 });

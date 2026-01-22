@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Alert } from "react-native";
+import { View, StyleSheet, Pressable, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   FadeInDown,
@@ -14,7 +14,7 @@ import { PinInput } from "@/components/PinInput";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "@/navigation/AuthStackNavigator";
 
@@ -52,69 +52,74 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: insets.top + Spacing["4xl"] }]}>
-      <Animated.View entering={FadeInUp.delay(100).springify()}>
-        <ThemedText type="h1" style={styles.title}>
-          Welcome Back
-        </ThemedText>
-        <ThemedText
-          type="body"
-          style={[styles.subtitle, { color: theme.textSecondary }]}
-        >
-          Enter your ID and PIN to continue
-        </ThemedText>
-      </Animated.View>
-
-      <Animated.View
-        entering={FadeInDown.delay(200).springify()}
-        style={styles.form}
+    <ThemedView style={styles.container}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={[styles.content, { paddingTop: insets.top + Spacing["3xl"] }]}
       >
-        <Input
-          label="User ID"
-          placeholder="Enter your ID"
-          value={userId}
-          onChangeText={(text) => {
-            setUserId(text);
-            setError(false);
-          }}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <View style={styles.pinSection}>
-          <ThemedText type="small" style={styles.pinLabel}>
-            4-Digit PIN
+        <Animated.View entering={FadeInUp.delay(100).springify()}>
+          <ThemedText type="h1" style={styles.title}>
+            Welcome Back
           </ThemedText>
-          <PinInput
-            value={pin}
-            onChange={(value) => {
-              setPin(value);
+          <ThemedText
+            type="body"
+            style={[styles.subtitle, { color: theme.textSecondary }]}
+          >
+            Enter your ID and PIN to continue
+          </ThemedText>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.delay(200).springify()}
+          style={styles.form}
+        >
+          <Input
+            label="User ID"
+            placeholder="Enter your ID"
+            value={userId}
+            onChangeText={(text) => {
+              setUserId(text);
               setError(false);
             }}
-            error={error}
+            autoCapitalize="none"
+            autoCorrect={false}
           />
-        </View>
 
-        <Button
-          onPress={handleLogin}
-          disabled={isLoading || !userId.trim() || pin.length !== 4}
-          style={styles.button}
+          <View style={styles.pinSection}>
+            <ThemedText type="small" style={[styles.pinLabel, { color: theme.textSecondary }]}>
+              4-Digit PIN
+            </ThemedText>
+            <PinInput
+              value={pin}
+              onChange={(value) => {
+                setPin(value);
+                setError(false);
+              }}
+              error={error}
+            />
+          </View>
+
+          <Button
+            onPress={handleLogin}
+            disabled={isLoading || !userId.trim() || pin.length !== 4}
+            style={styles.button}
+          >
+            {isLoading ? "Signing In..." : "Sign In"}
+          </Button>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInUp.delay(300).springify()}
+          style={[styles.footer, { paddingBottom: insets.bottom + Spacing.xl }]}
         >
-          {isLoading ? "Signing In..." : "Sign In"}
-        </Button>
-      </Animated.View>
-
-      <Animated.View
-        entering={FadeInUp.delay(300).springify()}
-        style={styles.footer}
-      >
-        <ThemedText type="body" style={{ color: theme.textSecondary }}>
-          Don't have an account?{" "}
-        </ThemedText>
-        <Pressable onPress={() => navigation.navigate("Register")}>
-          <ThemedText type="link">Create one</ThemedText>
-        </Pressable>
-      </Animated.View>
+          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+            Don't have an account?{" "}
+          </ThemedText>
+          <Pressable onPress={() => navigation.navigate("Register")}>
+            <ThemedText type="link">Create one</ThemedText>
+          </Pressable>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -122,31 +127,33 @@ export default function LoginScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: Spacing.xl,
   },
   title: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   subtitle: {
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing["2xl"],
   },
   form: {
     flex: 1,
   },
   pinSection: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   pinLabel: {
     marginBottom: Spacing.xs,
     fontWeight: "500",
   },
   button: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingBottom: Spacing["3xl"],
   },
 });

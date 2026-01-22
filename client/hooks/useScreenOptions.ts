@@ -6,24 +6,21 @@ import { useTheme } from "@/hooks/useTheme";
 
 interface UseScreenOptionsParams {
   transparent?: boolean;
+  modal?: boolean;
 }
 
 export function useScreenOptions({
   transparent = true,
+  modal = false,
 }: UseScreenOptionsParams = {}): NativeStackNavigationOptions {
   const { theme, isDark } = useTheme();
 
-  return {
+  const baseOptions: NativeStackNavigationOptions = {
     headerTitleAlign: "center",
-    headerTransparent: transparent,
-    headerBlurEffect: isDark ? "dark" : "light",
     headerTintColor: theme.text,
-    headerStyle: {
-      backgroundColor: Platform.select({
-        ios: undefined,
-        android: theme.backgroundRoot,
-        web: theme.backgroundRoot,
-      }),
+    headerTitleStyle: {
+      fontWeight: "600",
+      fontSize: 17,
     },
     gestureEnabled: true,
     gestureDirection: "horizontal",
@@ -31,5 +28,47 @@ export function useScreenOptions({
     contentStyle: {
       backgroundColor: theme.backgroundRoot,
     },
+  };
+
+  if (transparent) {
+    return {
+      ...baseOptions,
+      headerTransparent: true,
+      headerBlurEffect: isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight",
+      headerStyle: {
+        backgroundColor: "transparent",
+      },
+    };
+  }
+
+  return {
+    ...baseOptions,
+    headerTransparent: false,
+    headerStyle: {
+      backgroundColor: theme.backgroundDefault,
+    },
+  };
+}
+
+export function useModalScreenOptions(): NativeStackNavigationOptions {
+  const { theme, isDark } = useTheme();
+
+  return {
+    presentation: "modal",
+    headerTitleAlign: "center",
+    headerTintColor: theme.text,
+    headerTitleStyle: {
+      fontWeight: "600",
+      fontSize: 17,
+    },
+    headerTransparent: true,
+    headerBlurEffect: isDark ? "systemThinMaterialDark" : "systemThinMaterialLight",
+    headerStyle: {
+      backgroundColor: "transparent",
+    },
+    contentStyle: {
+      backgroundColor: theme.backgroundRoot,
+    },
+    gestureEnabled: true,
   };
 }

@@ -21,7 +21,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { apiRequest } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -59,14 +59,12 @@ function PostCard({
   onSave,
   onComment,
   onUserPress,
-  currentUserId,
 }: {
   post: PostWithUser;
   onLike: () => void;
   onSave: () => void;
   onComment: () => void;
   onUserPress: () => void;
-  currentUserId: string;
 }) {
   const { theme } = useTheme();
   const likeScale = useSharedValue(1);
@@ -97,83 +95,67 @@ function PostCard({
   };
 
   return (
-    <Animated.View
-      entering={FadeIn.delay(100)}
-      style={[styles.postCard, { backgroundColor: theme.cardBackground }]}
-    >
+    <Animated.View entering={FadeIn.delay(100)} style={styles.postCard}>
       <Pressable onPress={onUserPress} style={styles.postHeader}>
-        <Avatar emoji={post.user?.emoji || "🐸"} size={40} />
+        <Avatar emoji={post.user?.emoji || "🐸"} size={36} />
         <View style={styles.postHeaderInfo}>
-          <ThemedText type="body" style={styles.username}>
+          <ThemedText type="small" style={styles.username}>
             {post.user?.username || "User"}
           </ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-          </ThemedText>
+          {post.location ? (
+            <View style={styles.locationRow}>
+              <Feather name="map-pin" size={10} color={theme.textSecondary} />
+              <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 2 }}>
+                {post.location}
+              </ThemedText>
+            </View>
+          ) : null}
         </View>
+        <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+        </ThemedText>
       </Pressable>
-
-      {post.location ? (
-        <View style={styles.locationRow}>
-          <Feather name="map-pin" size={14} color={theme.textSecondary} />
-          <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 4 }}>
-            {post.location}
-          </ThemedText>
-        </View>
-      ) : null}
 
       <Image
         source={{ uri: post.imageUrl }}
         style={styles.postImage}
         contentFit="cover"
-        transition={300}
+        transition={200}
       />
 
       <View style={styles.postActions}>
         <View style={styles.leftActions}>
-          <AnimatedPressable
-            onPress={handleLike}
-            style={[styles.actionButton, likeAnimatedStyle]}
-          >
+          <AnimatedPressable onPress={handleLike} style={[styles.actionButton, likeAnimatedStyle]}>
             <Feather
-              name={post.isLiked ? "heart" : "heart"}
-              size={24}
+              name="heart"
+              size={22}
               color={post.isLiked ? theme.error : theme.text}
-              style={{ opacity: post.isLiked ? 1 : 0.8 }}
             />
-            {post.likesCount > 0 ? (
-              <ThemedText type="small" style={styles.actionCount}>
-                {post.likesCount}
-              </ThemedText>
-            ) : null}
           </AnimatedPressable>
 
           <Pressable onPress={onComment} style={styles.actionButton}>
-            <Feather name="message-circle" size={24} color={theme.text} style={{ opacity: 0.8 }} />
-            {post.commentsCount > 0 ? (
-              <ThemedText type="small" style={styles.actionCount}>
-                {post.commentsCount}
-              </ThemedText>
-            ) : null}
+            <Feather name="message-circle" size={22} color={theme.text} />
           </Pressable>
 
           <Pressable style={styles.actionButton}>
-            <Feather name="share" size={24} color={theme.text} style={{ opacity: 0.8 }} />
+            <Feather name="send" size={22} color={theme.text} />
           </Pressable>
         </View>
 
-        <AnimatedPressable
-          onPress={handleSave}
-          style={[styles.actionButton, saveAnimatedStyle]}
-        >
+        <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle]}>
           <Feather
-            name={post.isSaved ? "bookmark" : "bookmark"}
-            size={24}
+            name="bookmark"
+            size={22}
             color={post.isSaved ? theme.accent : theme.text}
-            style={{ opacity: post.isSaved ? 1 : 0.8 }}
           />
         </AnimatedPressable>
       </View>
+
+      {post.likesCount > 0 ? (
+        <ThemedText type="small" style={styles.likesText}>
+          {post.likesCount} {post.likesCount === 1 ? "like" : "likes"}
+        </ThemedText>
+      ) : null}
     </Animated.View>
   );
 }
@@ -183,7 +165,7 @@ function EmptyFeed() {
 
   return (
     <View style={styles.emptyContainer}>
-      <Feather name="camera" size={64} color={theme.textSecondary} />
+      <Feather name="camera" size={48} color={theme.textSecondary} />
       <ThemedText type="h3" style={styles.emptyTitle}>
         No Posts Yet
       </ThemedText>
@@ -211,7 +193,7 @@ export default function FeedScreen({ navigation }: Props) {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: posts = [], isLoading } = useQuery<Post[]>({
+  const { data: posts = [] } = useQuery<Post[]>({
     queryKey: ["/api/posts"],
   });
 
@@ -260,15 +242,10 @@ export default function FeedScreen({ navigation }: Props) {
       return (
         <PostCard
           post={postWithMeta}
-          currentUserId={user?.id || ""}
           onLike={() => likeMutation.mutate({ postId: item.id, isLiked: postWithMeta.isLiked })}
           onSave={() => saveMutation.mutate({ postId: item.id, isSaved: postWithMeta.isSaved })}
-          onComment={() =>
-            navigation.navigate("Comments", { postId: item.id })
-          }
-          onUserPress={() =>
-            navigation.navigate("UserProfile", { userId: item.userId })
-          }
+          onComment={() => navigation.navigate("Comments", { postId: item.id })}
+          onUserPress={() => navigation.navigate("UserProfile", { userId: item.userId })}
         />
       );
     },
@@ -280,11 +257,10 @@ export default function FeedScreen({ navigation }: Props) {
       <FlashList
         data={posts}
         renderItem={renderItem}
-        estimatedItemSize={400}
+        estimatedItemSize={450}
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.lg,
+          paddingTop: headerHeight + Spacing.sm,
           paddingBottom: tabBarHeight + Spacing.lg,
-          paddingHorizontal: Spacing.lg,
         }}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         refreshControl={
@@ -295,7 +271,7 @@ export default function FeedScreen({ navigation }: Props) {
           />
         }
         ListEmptyComponent={<EmptyFeed />}
-        ItemSeparatorComponent={() => <View style={{ height: Spacing.lg }} />}
+        ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
       />
     </ThemedView>
   );
@@ -306,16 +282,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   postCard: {
-    borderRadius: BorderRadius.xl,
-    overflow: "hidden",
+    marginHorizontal: Spacing.sm,
   },
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
   },
   postHeaderInfo: {
-    marginLeft: Spacing.md,
+    marginLeft: Spacing.sm,
     flex: 1,
   },
   username: {
@@ -324,30 +300,31 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
+    marginTop: 1,
   },
   postImage: {
-    width: "100%",
+    width: SCREEN_WIDTH - Spacing.sm * 2,
     aspectRatio: 1,
+    borderRadius: BorderRadius.md,
   },
   postActions: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
   },
   leftActions: {
     flexDirection: "row",
-    gap: Spacing.lg,
+    gap: Spacing.md,
   },
   actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
+    padding: Spacing.xs,
   },
-  actionCount: {
-    fontWeight: "500",
+  likesText: {
+    fontWeight: "600",
+    paddingHorizontal: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   emptyContainer: {
     flex: 1,
@@ -356,8 +333,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing["6xl"],
   },
   emptyTitle: {
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.xs,
   },
   emptyText: {
     textAlign: "center",

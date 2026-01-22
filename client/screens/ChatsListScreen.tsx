@@ -58,13 +58,11 @@ function ChatItem({
         style={({ pressed }) => [
           styles.chatItem,
           {
-            backgroundColor: pressed
-              ? theme.backgroundSecondary
-              : theme.cardBackground,
+            backgroundColor: pressed ? theme.backgroundSecondary : "transparent",
           },
         ]}
       >
-        <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={56} />
+        <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={48} />
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <ThemedText type="body" style={styles.chatName}>
@@ -101,7 +99,7 @@ function EmptyChats() {
 
   return (
     <View style={styles.emptyContainer}>
-      <Feather name="message-circle" size={64} color={theme.textSecondary} />
+      <Feather name="message-circle" size={48} color={theme.textSecondary} />
       <ThemedText type="h3" style={styles.emptyTitle}>
         No Chats Yet
       </ThemedText>
@@ -129,7 +127,7 @@ export default function ChatsListScreen({ navigation }: Props) {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: chats = [], isLoading } = useQuery<Chat[]>({
+  const { data: chats = [] } = useQuery<Chat[]>({
     queryKey: ["/api/users", user?.id, "chats"],
     enabled: !!user?.id,
   });
@@ -166,9 +164,9 @@ export default function ChatsListScreen({ navigation }: Props) {
       <FlashList
         data={chats}
         renderItem={renderItem}
-        estimatedItemSize={80}
+        estimatedItemSize={72}
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.lg,
+          paddingTop: headerHeight + Spacing.sm,
           paddingBottom: tabBarHeight + Spacing.lg,
         }}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
@@ -203,7 +201,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
   },
   chatName: {
     fontWeight: "600",
@@ -214,13 +212,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   unreadBadge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: Spacing.sm,
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
   },
   emptyContainer: {
     flex: 1,
@@ -230,8 +228,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   emptyTitle: {
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.xs,
   },
   emptyText: {
     textAlign: "center",
