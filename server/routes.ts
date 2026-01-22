@@ -228,6 +228,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/posts/:id", async (req, res) => {
+    try {
+      const { location } = req.body;
+      const post = await storage.updatePost(req.params.id, { location: location || null });
+      if (!post) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+      res.json(post);
+    } catch (error) {
+      console.error("Update post error:", error);
+      res.status(500).json({ error: "Failed to update post" });
+    }
+  });
+
+  app.post("/api/posts/:id/archive", async (req, res) => {
+    try {
+      const post = await storage.getPost(req.params.id);
+      if (!post) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+      await storage.archivePost(post.userId, post.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Archive post error:", error);
+      res.status(500).json({ error: "Failed to archive post" });
+    }
+  });
+
   // Likes routes
   app.get("/api/posts/:id/likes", async (req, res) => {
     try {

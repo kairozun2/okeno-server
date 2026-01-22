@@ -120,13 +120,13 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Pressable
               onPress={() => navigation.navigate("EditPost", { postId })}
-              style={{ marginRight: Spacing.sm, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
             >
               <Feather name="edit-2" size={22} color={theme.text} />
             </Pressable>
             <Pressable
               onPress={handleDelete}
-              style={{ marginRight: Spacing.sm, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
             >
               <Feather name="trash-2" size={22} color={theme.error} />
             </Pressable>
