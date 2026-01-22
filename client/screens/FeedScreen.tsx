@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, Pressable, Dimensions, Modal, Platform } from "react-native";
+import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -86,7 +86,7 @@ function PostCard({
   }));
 
   const handleLike = () => {
-    likeScale.value = withSpring(1.2, { damping: 4 }, () => {
+    likeScale.value = withSpring(1.2, { damping: 10, stiffness: 200 }, () => {
       likeScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -94,11 +94,24 @@ function PostCard({
   };
 
   const handleSave = () => {
-    saveScale.value = withSpring(1.2, { damping: 4 }, () => {
+    saveScale.value = withSpring(1.2, { damping: 10, stiffness: 200 }, () => {
       saveScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onSave();
+  };
+
+  const handleShare = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const shareUrl = `https://${process.env.EXPO_PUBLIC_DOMAIN}/post/${post.id}`;
+      await Share.share({
+        message: `Посмотри этот момент в приложении Moments: ${shareUrl}`,
+        url: shareUrl,
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
   };
 
   const truncatedLocation = post.location && post.location.length > 20 
@@ -160,7 +173,10 @@ function PostCard({
         </View>
 
         <View style={styles.rightActions}>
-          <Pressable style={[styles.actionButton, { backgroundColor: theme.backgroundSecondary }]}>
+          <Pressable 
+            onPress={handleShare}
+            style={[styles.actionButton, { backgroundColor: theme.backgroundSecondary }]}
+          >
             <Feather name="send" size={18} color={theme.textSecondary} />
           </Pressable>
 
