@@ -147,14 +147,14 @@ export default function ChatScreen({ route, navigation }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
       >
-        <View style={[styles.header, { top: insets.top + Spacing.xs }]}>
+        <View style={[styles.header, { top: Spacing.sm }]}>
           <Pressable
             onPress={() => navigation.goBack()}
             style={styles.headerButton}
           >
             {Platform.OS === 'ios' && (
               <BlurView
-                intensity={40} // Немного увеличим интенсивность для лучшей видимости
+                intensity={45} // Еще больше интенсивности
                 tint={isDark ? "dark" : "light"}
                 style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
               />
@@ -168,7 +168,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           >
             {Platform.OS === 'ios' && (
               <BlurView
-                intensity={40} // Немного увеличим интенсивность для лучшей видимости
+                intensity={45}
                 tint={isDark ? "dark" : "light"}
                 style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
               />
