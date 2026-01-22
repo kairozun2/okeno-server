@@ -85,8 +85,8 @@ function ChatItem({
       >
         <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
         <View style={styles.chatInfo}>
-          <View style={styles.chatHeader}>
-            <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
               <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
                 {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
               </ThemedText>
