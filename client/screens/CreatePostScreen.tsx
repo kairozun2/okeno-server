@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
-import { View, StyleSheet, Pressable, Alert, Platform, TextInput, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, Alert, Platform, TextInput, ScrollView, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Image } from "expo-image";
@@ -165,99 +165,108 @@ export default function CreatePostScreen({ navigation }: Props) {
   }, [navigation, language]);
 
   return (
-    <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
-      <Animated.View entering={FadeIn} style={styles.content}>
-        {image ? (
-          <Animated.View entering={FadeInDown} style={styles.imageContainer}>
-            <Image
-              source={{ uri: image }}
-              style={styles.previewImage}
-              contentFit="cover"
-            />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Animated.View entering={FadeIn}>
+            {image ? (
+              <Animated.View entering={FadeInDown} style={styles.imageContainer}>
+                <Image
+                  source={{ uri: image }}
+                  style={styles.previewImage}
+                  contentFit="cover"
+                />
+                <Pressable
+                  onPress={() => setImage(null)}
+                  style={[styles.removeButton, { backgroundColor: theme.backgroundRoot }]}
+                >
+                  <Feather name="x" size={20} color={theme.text} />
+                </Pressable>
+              </Animated.View>
+            ) : (
+              <View style={styles.imagePickers}>
+                <Pressable
+                  onPress={takePhoto}
+                  style={[styles.pickerButton, { backgroundColor: theme.backgroundSecondary }]}
+                >
+                  <Feather name="camera" size={24} color={theme.text} />
+                  <ThemedText type="caption" style={{ marginTop: Spacing.xs }}>
+                    {t("Photo", "Фото")}
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={pickImage}
+                  style={[styles.pickerButton, { backgroundColor: theme.backgroundSecondary }]}
+                >
+                  <Feather name="image" size={24} color={theme.text} />
+                  <ThemedText type="caption" style={{ marginTop: Spacing.xs }}>
+                    {t("Gallery", "Галерея")}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            )}
+
+            <View style={[styles.captionContainer, { backgroundColor: theme.backgroundSecondary }]}>
+              <Feather name="edit-3" size={20} color={caption ? theme.link : theme.textSecondary} style={{ marginRight: Spacing.sm, marginTop: 2 }} />
+              <TextInput
+                value={caption}
+                onChangeText={setCaption}
+                placeholder={t("Add a caption...", "Добавить описание...")}
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.captionInput, { color: theme.text }]}
+                multiline
+                maxLength={500}
+                blurOnSubmit={true}
+              />
+            </View>
+
             <Pressable
-              onPress={() => setImage(null)}
-              style={[styles.removeButton, { backgroundColor: theme.backgroundRoot }]}
+              onPress={getLocation}
+              disabled={isLoadingLocation}
+              style={[styles.locationButton, { backgroundColor: theme.backgroundSecondary }]}
             >
-              <Feather name="x" size={20} color={theme.text} />
+              <Feather
+                name="map-pin"
+                size={20}
+                color={location.name ? theme.link : theme.textSecondary}
+              />
+              <ThemedText
+                type="body"
+                style={{
+                  flex: 1,
+                  marginLeft: Spacing.md,
+                  color: location.name ? theme.text : theme.textSecondary,
+                }}
+              >
+                {isLoadingLocation
+                  ? t("Getting location...", "Получение...")
+                  : location.name || t("Add location", "Добавить место")}
+              </ThemedText>
+              {location.name ? (
+                <Pressable
+                  onPress={() => setLocation({ name: null, latitude: null, longitude: null })}
+                >
+                  <Feather name="x" size={20} color={theme.textSecondary} />
+                </Pressable>
+              ) : null}
             </Pressable>
           </Animated.View>
-        ) : (
-          <View style={styles.imagePickers}>
-            <Pressable
-              onPress={takePhoto}
-              style={[styles.pickerButton, { backgroundColor: theme.backgroundSecondary }]}
-            >
-              <Feather name="camera" size={32} color={theme.text} />
-              <ThemedText type="small" style={{ marginTop: Spacing.sm }}>
-                {t("Take Photo", "Сделать фото")}
-              </ThemedText>
-            </Pressable>
-            <Pressable
-              onPress={pickImage}
-              style={[styles.pickerButton, { backgroundColor: theme.backgroundSecondary }]}
-            >
-              <Feather name="image" size={32} color={theme.text} />
-              <ThemedText type="small" style={{ marginTop: Spacing.sm }}>
-                {t("Gallery", "Галерея")}
-              </ThemedText>
-            </Pressable>
-          </View>
-        )}
+        </ScrollView>
 
-        <View style={[styles.captionContainer, { backgroundColor: theme.backgroundSecondary }]}>
-          <Feather name="edit-3" size={20} color={caption ? theme.link : theme.textSecondary} style={{ marginRight: Spacing.sm }} />
-          <TextInput
-            value={caption}
-            onChangeText={setCaption}
-            placeholder={t("Add a caption...", "Добавить описание...")}
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.captionInput, { color: theme.text }]}
-            multiline
-            maxLength={500}
-          />
-        </View>
-
-        <Pressable
-          onPress={getLocation}
-          disabled={isLoadingLocation}
-          style={[styles.locationButton, { backgroundColor: theme.backgroundSecondary }]}
-        >
-          <Feather
-            name="map-pin"
-            size={20}
-            color={location.name ? theme.link : theme.textSecondary}
-          />
-          <ThemedText
-            type="body"
-            style={{
-              flex: 1,
-              marginLeft: Spacing.md,
-              color: location.name ? theme.text : theme.textSecondary,
-            }}
+        <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
+          <Button
+            onPress={handlePost}
+            disabled={!image || createPostMutation.isPending}
           >
-            {isLoadingLocation
-              ? t("Getting location...", "Получение местоположения...")
-              : location.name || t("Add location", "Добавить местоположение")}
-          </ThemedText>
-          {location.name ? (
-            <Pressable
-              onPress={() => setLocation({ name: null, latitude: null, longitude: null })}
-            >
-              <Feather name="x" size={20} color={theme.textSecondary} />
-            </Pressable>
-          ) : null}
-        </Pressable>
-      </Animated.View>
-
-      <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
-        <Button
-          onPress={handlePost}
-          disabled={!image || createPostMutation.isPending}
-        >
-          {createPostMutation.isPending ? t("Posting...", "Публикация...") : t("Share", "Поделиться")}
-        </Button>
-      </View>
-    </ThemedView>
+            {createPostMutation.isPending ? t("Posting...", "Публикация...") : t("Share", "Поделиться")}
+          </Button>
+        </View>
+      </ThemedView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -271,18 +280,18 @@ const styles = StyleSheet.create({
   },
   imagePickers: {
     flexDirection: "row",
-    gap: Spacing.lg,
-    marginBottom: Spacing.xl,
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
   },
   pickerButton: {
     flex: 1,
-    aspectRatio: 1,
-    borderRadius: BorderRadius.xl,
+    height: 80,
+    borderRadius: BorderRadius.lg,
     alignItems: "center",
     justifyContent: "center",
   },
   imageContainer: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
     borderRadius: BorderRadius.xl,
     overflow: "hidden",
   },
