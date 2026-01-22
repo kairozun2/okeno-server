@@ -18,6 +18,7 @@ import PostDetailScreen from "@/screens/PostDetailScreen";
 import QRCodeScreen from "@/screens/QRCodeScreen";
 import UserSearchScreen from "@/screens/UserSearchScreen";
 import PrivacyPolicyScreen from "@/screens/PrivacyPolicyScreen";
+import CacheSettingsScreen from "@/screens/CacheSettingsScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { useScreenOptions, useModalScreenOptions } from "@/hooks/useScreenOptions";
@@ -39,6 +40,7 @@ export type RootStackParamList = {
   QRCode: undefined;
   UserSearch: undefined;
   PrivacyPolicy: undefined;
+  CacheSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -218,6 +220,15 @@ export default function RootStackNavigator() {
             options={({ navigation }) => ({
               ...modalOptions,
               headerTitle: "Конфиденциальность",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+            })}
+          />
+          <Stack.Screen
+            name="CacheSettings"
+            component={CacheSettingsScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: "Данные и память",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
             })}
           />

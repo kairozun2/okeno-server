@@ -146,24 +146,7 @@ export default function SettingsScreen({ navigation }: Props) {
           icon: "database",
           title: "Использование памяти",
           subtitle: "Очистка кэша и управление данными",
-          onPress: () => {
-            Alert.alert(
-              "Управление кэшем",
-              "Приложение занимает ~1.2% памяти устройства (45 МБ).\n\nСообщений в кэше: ~200\nИзображений: 12",
-              [
-                { text: "Отмена", style: "cancel" },
-                { 
-                  text: "Очистить кэш", 
-                  style: "destructive",
-                  onPress: async () => {
-                    await queryClient.clear();
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    Alert.alert("Готово", "Кэш успешно очищен");
-                  }
-                }
-              ]
-            );
-          },
+          onPress: () => navigation.navigate("CacheSettings"),
         },
       ],
     },
