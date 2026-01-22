@@ -200,12 +200,12 @@ function MessageBubble({
               styles.reactionsBadge,
               { 
                 backgroundColor: 'transparent',
-                right: isOwn ? -20 : undefined, // Moved further left for own messages (right: -20 instead of 0)
-                left: !isOwn ? -5 : undefined, // Also moved slightly left for others
+                right: isOwn ? -25 : undefined, // Moved even further left (right -25)
+                left: !isOwn ? -10 : undefined, // Moved further left for others too
               }
             ]}>
               {(message as any).reactions.map((r: any, idx: number) => (
-                <ThemedText key={idx} style={{ fontSize: 13 }}>{r.emoji}</ThemedText>
+                <ThemedText key={idx} style={{ fontSize: 13, lineHeight: 18 }}>{r.emoji}</ThemedText>
               ))}
             </View>
           )}
@@ -270,7 +270,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   const emojiPickerTranslateY = useSharedValue(0);
   const emojiPickerOpacity = useSharedValue(0);
 
-  const REACTION_EMOJIS = ["❤️", "👍", "🔥", "😂", "😮", "😢", "🙏"];
+  const REACTION_EMOJIS = ["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟"];
 
   const openEmojiPicker = useCallback(() => {
     setShowEmojiPicker(true);
@@ -1020,9 +1020,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 20, // Significantly increased to prevent clipping
+    paddingVertical: 30, // Even more padding to ensure no clipping
     marginBottom: Spacing.sm,
-    height: 80, // Explicit height to ensure space for emojis
+    minHeight: 100, // Increased minHeight
     alignItems: 'center',
   },
   actionSheetContent: {
