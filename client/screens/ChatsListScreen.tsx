@@ -1,14 +1,16 @@
-import React, { useState, useCallback, useMemo } from "react";
-import { View, StyleSheet, RefreshControl, Pressable, FlatList } from "react-native";
+import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
+import { View, StyleSheet, RefreshControl, Pressable, FlatList, Modal, TextInput, ScrollView, Dimensions } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { Image } from "expo-image";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -16,11 +18,22 @@ import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing } from "@/constants/theme";
+import { apiRequest } from "@/lib/query-client";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { CompositeScreenProps } from "@react-navigation/native";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { MainTabParamList } from "@/navigation/MainTabNavigator";
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+interface ChatSettings {
+  id: string;
+  userId: string;
+  otherUserId: string;
+  nickname: string | null;
+  backgroundImage: string | null;
+}
 
 interface Chat {
   id: string;
@@ -133,12 +146,87 @@ export default function ChatsListScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [selectedChat, setSelectedChat] = useState<ChatWithDetails | null>(null);
+  const [nickname, setNickname] = useState("");
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowSettingsModal(true);
+          }}
+          style={{ padding: Spacing.sm, marginRight: Spacing.sm }}
+        >
+          <Feather name="edit" size={20} color={theme.text} />
+        </Pressable>
+      ),
+    });
+  }, [navigation, theme.text]);
 
   const { data: chatsData = [], isLoading } = useQuery<ChatWithDetails[]>({
     queryKey: ["/api/users", user?.id, "chats"],
     enabled: !!user?.id,
     refetchInterval: 3000,
   });
+
+  const { data: allChatSettings = [] } = useQuery<ChatSettings[]>({
+    queryKey: ["/api/users", user?.id, "chat-settings"],
+    enabled: !!user?.id,
+  });
+
+  const saveChatSettingsMutation = useMutation({
+    mutationFn: async (data: { otherUserId: string; nickname?: string | null; backgroundImage?: string | null }) => {
+      await apiRequest("POST", `/api/users/${user?.id}/chat-settings`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "chat-settings"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowSettingsModal(false);
+      setSelectedChat(null);
+      setNickname("");
+      setBackgroundImage(null);
+    },
+  });
+
+  const pickBackgroundImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [9, 16],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setBackgroundImage(result.assets[0].uri);
+    }
+  };
+
+  const handleSelectChat = (chat: ChatWithDetails) => {
+    setSelectedChat(chat);
+    const existing = allChatSettings.find(s => s.otherUserId === chat.otherUser?.id);
+    setNickname(existing?.nickname || "");
+    setBackgroundImage(existing?.backgroundImage || null);
+  };
+
+  const handleSaveSettings = () => {
+    if (!selectedChat?.otherUser?.id) return;
+    saveChatSettingsMutation.mutate({
+      otherUserId: selectedChat.otherUser.id,
+      nickname: nickname || null,
+      backgroundImage,
+    });
+  };
+
+  const handleCloseModal = () => {
+    setShowSettingsModal(false);
+    setSelectedChat(null);
+    setNickname("");
+    setBackgroundImage(null);
+  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -191,6 +279,150 @@ export default function ChatsListScreen({ navigation }: Props) {
         ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
         showsVerticalScrollIndicator={false}
       />
+
+      <Modal
+        visible={showSettingsModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={handleCloseModal}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.md }]}>
+            <Pressable onPress={handleCloseModal} style={styles.modalHeaderButton}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+            <ThemedText type="h3" style={styles.modalTitle}>
+              {selectedChat ? "Настройки чата" : "Выберите чат"}
+            </ThemedText>
+            {selectedChat ? (
+              <Pressable 
+                onPress={handleSaveSettings} 
+                style={styles.modalHeaderButton}
+                disabled={saveChatSettingsMutation.isPending}
+              >
+                <Feather name="check" size={24} color={theme.link} />
+              </Pressable>
+            ) : (
+              <View style={styles.modalHeaderButton} />
+            )}
+          </View>
+
+          {!selectedChat ? (
+            <ScrollView 
+              style={styles.chatsList}
+              contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
+            >
+              <ThemedText type="body" style={[styles.selectHint, { color: theme.textSecondary }]}>
+                Выберите чат для настройки
+              </ThemedText>
+              {sortedChats.map((chat) => (
+                <Pressable
+                  key={chat.id}
+                  onPress={() => handleSelectChat(chat)}
+                  style={({ pressed }) => [
+                    styles.chatSelectItem,
+                    { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
+                  ]}
+                >
+                  <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
+                  <View style={styles.chatSelectInfo}>
+                    <ThemedText type="body" style={{ fontWeight: "500" }}>
+                      {chat.otherUser?.username || "Пользователь"}
+                    </ThemedText>
+                    <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                      @{chat.otherUser?.username}
+                    </ThemedText>
+                  </View>
+                  <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+                </Pressable>
+              ))}
+              {sortedChats.length === 0 ? (
+                <View style={styles.noChatsContainer}>
+                  <Feather name="message-circle" size={40} color={theme.textSecondary} />
+                  <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}>
+                    У вас пока нет чатов
+                  </ThemedText>
+                </View>
+              ) : null}
+            </ScrollView>
+          ) : (
+            <ScrollView 
+              style={styles.settingsContent}
+              contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
+            >
+              <View style={styles.selectedUserHeader}>
+                <Pressable onPress={() => setSelectedChat(null)} style={styles.backButton}>
+                  <Feather name="chevron-left" size={24} color={theme.text} />
+                </Pressable>
+                <Avatar emoji={selectedChat.otherUser?.emoji || "🐸"} size={48} />
+                <ThemedText type="h3" style={{ marginTop: Spacing.sm }}>
+                  {selectedChat.otherUser?.username}
+                </ThemedText>
+              </View>
+
+              <View style={styles.settingSection}>
+                <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
+                  Никнейм в чате
+                </ThemedText>
+                <TextInput
+                  value={nickname}
+                  onChangeText={setNickname}
+                  placeholder="Введите никнейм..."
+                  placeholderTextColor={theme.textSecondary}
+                  style={[
+                    styles.nicknameInput,
+                    {
+                      backgroundColor: theme.backgroundSecondary,
+                      color: theme.text,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                  maxLength={30}
+                />
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
+                  Этот никнейм виден только вам
+                </ThemedText>
+              </View>
+
+              <View style={styles.settingSection}>
+                <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
+                  Фон чата
+                </ThemedText>
+                <Pressable
+                  onPress={pickBackgroundImage}
+                  style={[styles.backgroundPreview, { borderColor: theme.border }]}
+                >
+                  {backgroundImage ? (
+                    <Image
+                      source={{ uri: backgroundImage }}
+                      style={styles.backgroundImage}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <View style={[styles.backgroundPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
+                      <Feather name="image" size={40} color={theme.textSecondary} />
+                      <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+                        Нажмите для выбора
+                      </ThemedText>
+                    </View>
+                  )}
+                </Pressable>
+                {backgroundImage ? (
+                  <Pressable
+                    onPress={() => setBackgroundImage(null)}
+                    style={[styles.removeButton, { backgroundColor: theme.backgroundSecondary }]}
+                  >
+                    <Feather name="trash-2" size={16} color={theme.error} />
+                    <ThemedText type="caption" style={{ color: theme.error, marginLeft: Spacing.xs }}>
+                      Удалить фон
+                    </ThemedText>
+                  </Pressable>
+                ) : null}
+              </View>
+            </ScrollView>
+          )}
+        </View>
+      </Modal>
     </ThemedView>
   );
 }
@@ -245,5 +477,104 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: "center",
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  modalHeaderButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalTitle: {
+    flex: 1,
+    textAlign: "center",
+  },
+  chatsList: {
+    flex: 1,
+  },
+  selectHint: {
+    textAlign: "center",
+    marginVertical: Spacing.lg,
+  },
+  chatSelectItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+  },
+  chatSelectInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  noChatsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing["5xl"],
+  },
+  settingsContent: {
+    flex: 1,
+  },
+  selectedUserHeader: {
+    alignItems: "center",
+    paddingVertical: Spacing.lg,
+  },
+  backButton: {
+    position: "absolute",
+    left: Spacing.lg,
+    top: Spacing.lg,
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  settingSection: {
+    paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.xl,
+  },
+  settingLabel: {
+    marginBottom: Spacing.sm,
+    fontWeight: "500",
+  },
+  nicknameInput: {
+    height: 48,
+    borderRadius: 12,
+    paddingHorizontal: Spacing.md,
+    fontSize: 16,
+    borderWidth: 1,
+  },
+  backgroundPreview: {
+    width: "100%",
+    aspectRatio: 9 / 16,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+  },
+  backgroundImage: {
+    width: "100%",
+    height: "100%",
+  },
+  backgroundPlaceholder: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  removeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 8,
+    marginTop: Spacing.md,
+    alignSelf: "center",
   },
 });

@@ -107,15 +107,16 @@ function SettingsButton() {
   );
 }
 
-function NewChatButton() {
+function EditChatButton({ onPress }: { onPress: () => void }) {
   const { theme } = useTheme();
 
   return (
     <Pressable
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
       }}
-      style={styles.headerButton}
+      style={[styles.headerButton, { marginRight: Spacing.sm }]}
     >
       <Feather name="edit" size={20} color={theme.text} />
     </Pressable>
@@ -205,7 +206,6 @@ export default function MainTabNavigator() {
           component={ChatsListScreen}
           options={{
             headerTitle: "Чаты",
-            headerRight: () => <NewChatButton />,
             tabBarIcon: ({ color }) => (
               <Feather name="message-circle" size={22} color={color} />
             ),
