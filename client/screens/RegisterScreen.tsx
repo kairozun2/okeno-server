@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Alert, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -37,7 +38,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const handleNext = () => {
     if (step === "username") {
       if (!username.trim()) {
-        Alert.alert("Error", "Please enter a username");
+        Alert.alert("Ошибка", "Введите имя пользователя");
         return;
       }
       setStep("pin");
@@ -55,7 +56,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const handleRegister = async () => {
     if (pin !== confirmPin) {
       setError(true);
-      Alert.alert("Error", "PINs do not match");
+      Alert.alert("Ошибка", "PIN-коды не совпадают");
       return;
     }
 
@@ -68,7 +69,7 @@ export default function RegisterScreen({ navigation }: Props) {
     } catch (err: any) {
       setError(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Error", err.message || "Failed to register");
+      Alert.alert("Ошибка", err.message || "Не удалось зарегистрироваться");
     } finally {
       setIsLoading(false);
     }
@@ -86,28 +87,35 @@ export default function RegisterScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={[styles.content, { paddingTop: insets.top + Spacing["3xl"] }]}
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: insets.top + Spacing["3xl"],
+            paddingBottom: insets.bottom + Spacing.xl,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
       >
         <Animated.View entering={FadeInUp.delay(100).springify()} style={styles.header}>
-          <Avatar emoji={previewEmoji} size={72} />
-          <ThemedText type="h1" style={styles.title}>
+          <Avatar emoji={previewEmoji} size={64} />
+          <ThemedText type="h2" style={styles.title}>
             {step === "username"
-              ? "Create Account"
+              ? "Создать аккаунт"
               : step === "pin"
-              ? "Set Your PIN"
-              : "Confirm PIN"}
+              ? "Создайте PIN"
+              : "Подтвердите PIN"}
           </ThemedText>
           <ThemedText
             type="body"
             style={[styles.subtitle, { color: theme.textSecondary }]}
           >
             {step === "username"
-              ? "Choose a username for your profile"
+              ? "Выберите имя для вашего профиля"
               : step === "pin"
-              ? "Create a 4-digit PIN to secure your account"
-              : "Enter your PIN again to confirm"}
+              ? "Создайте 4-значный PIN для защиты"
+              : "Введите PIN ещё раз для подтверждения"}
           </ThemedText>
         </Animated.View>
 
@@ -117,7 +125,7 @@ export default function RegisterScreen({ navigation }: Props) {
         >
           {step === "username" ? (
             <Input
-              placeholder="Username"
+              placeholder="Имя пользователя"
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -144,7 +152,7 @@ export default function RegisterScreen({ navigation }: Props) {
           <View style={styles.buttons}>
             {step !== "username" ? (
               <Pressable onPress={handleBack} style={styles.backButton}>
-                <ThemedText type="link">Back</ThemedText>
+                <ThemedText type="link">Назад</ThemedText>
               </Pressable>
             ) : null}
 
@@ -154,7 +162,7 @@ export default function RegisterScreen({ navigation }: Props) {
                 disabled={isLoading || confirmPin.length !== 4}
                 style={styles.button}
               >
-                {isLoading ? "Creating..." : "Create Account"}
+                {isLoading ? "Создание..." : "Создать аккаунт"}
               </Button>
             ) : (
               <Button
@@ -165,7 +173,7 @@ export default function RegisterScreen({ navigation }: Props) {
                 }
                 style={styles.button}
               >
-                Continue
+                Далее
               </Button>
             )}
           </View>
@@ -173,16 +181,16 @@ export default function RegisterScreen({ navigation }: Props) {
 
         <Animated.View
           entering={FadeInUp.delay(300).springify()}
-          style={[styles.footer, { paddingBottom: insets.bottom + Spacing.xl }]}
+          style={styles.footer}
         >
           <ThemedText type="body" style={{ color: theme.textSecondary }}>
-            Already have an account?{" "}
+            Уже есть аккаунт?{" "}
           </ThemedText>
           <Pressable onPress={() => navigation.navigate("Login")}>
-            <ThemedText type="link">Sign In</ThemedText>
+            <ThemedText type="link">Войти</ThemedText>
           </Pressable>
         </Animated.View>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </ThemedView>
   );
 }
@@ -191,8 +199,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
     paddingHorizontal: Spacing.xl,
   },
   header: {
@@ -200,7 +211,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["2xl"],
   },
   title: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
     marginBottom: Spacing.xs,
     textAlign: "center",
   },
@@ -211,7 +222,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pinSection: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   buttons: {
     flexDirection: "row",
@@ -229,5 +240,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    paddingTop: Spacing.xl,
   },
 });

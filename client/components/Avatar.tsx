@@ -1,8 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ViewStyle } from "react-native";
-import { ThemedText } from "./ThemedText";
-import { useTheme } from "@/hooks/useTheme";
-import { BorderRadius } from "@/constants/theme";
+import { View, Text, StyleSheet, ViewStyle } from "react-native";
 
 interface AvatarProps {
   emoji: string;
@@ -10,25 +7,10 @@ interface AvatarProps {
   style?: ViewStyle;
 }
 
-export function Avatar({ emoji, size = 48, style }: AvatarProps) {
-  const { theme } = useTheme();
-
+export function Avatar({ emoji, size = 40, style }: AvatarProps) {
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: theme.backgroundSecondary,
-        },
-        style,
-      ]}
-    >
-      <ThemedText style={[styles.emoji, { fontSize: size * 0.5 }]}>
-        {emoji}
-      </ThemedText>
+    <View style={[styles.container, { width: size, height: size }, style]}>
+      <Text style={[styles.emoji, { fontSize: size * 0.7 }]}>{emoji}</Text>
     </View>
   );
 }

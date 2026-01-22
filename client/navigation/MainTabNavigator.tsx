@@ -11,7 +11,6 @@ import ChatsListScreen from "@/screens/ChatsListScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import { HeaderTitle } from "@/components/HeaderTitle";
 import { useTheme } from "@/hooks/useTheme";
-import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { Spacing } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./RootStackNavigator";
@@ -37,7 +36,7 @@ function CreatePostButton() {
       }}
       style={[styles.fabButton, { backgroundColor: theme.link }]}
     >
-      <Feather name="plus" size={24} color="#fff" />
+      <Feather name="plus" size={22} color="#fff" />
     </Pressable>
   );
 }
@@ -54,7 +53,7 @@ function NotificationsButton() {
       }}
       style={styles.headerButton}
     >
-      <Feather name="bell" size={22} color={theme.text} />
+      <Feather name="bell" size={20} color={theme.textSecondary} />
     </Pressable>
   );
 }
@@ -71,7 +70,7 @@ function SettingsButton() {
       }}
       style={styles.headerButton}
     >
-      <Feather name="settings" size={22} color={theme.text} />
+      <Feather name="settings" size={20} color={theme.textSecondary} />
     </Pressable>
   );
 }
@@ -86,7 +85,7 @@ function NewChatButton() {
       }}
       style={styles.headerButton}
     >
-      <Feather name="edit" size={22} color={theme.text} />
+      <Feather name="edit" size={20} color={theme.textSecondary} />
     </Pressable>
   );
 }
@@ -94,7 +93,6 @@ function NewChatButton() {
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const screenOptions = useScreenOptions();
 
   return (
     <View style={{ flex: 1 }}>
@@ -114,13 +112,13 @@ export default function MainTabNavigator() {
           tabBarBackground: () =>
             Platform.OS === "ios" ? (
               <BlurView
-                intensity={80}
-                tint={isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight"}
+                intensity={60}
+                tint={isDark ? "dark" : "light"}
                 style={StyleSheet.absoluteFill}
               />
             ) : null,
           headerTransparent: true,
-          headerBlurEffect: isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight",
+          headerBlurEffect: isDark ? "systemThinMaterialDark" : "systemThinMaterialLight",
           headerStyle: {
             backgroundColor: "transparent",
           },
@@ -137,8 +135,8 @@ export default function MainTabNavigator() {
           options={{
             headerTitle: () => <HeaderTitle title="Moments" />,
             headerRight: () => <NotificationsButton />,
-            tabBarIcon: ({ color, size }) => (
-              <Feather name="home" size={24} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Feather name="home" size={22} color={color} />
             ),
           }}
         />
@@ -146,10 +144,10 @@ export default function MainTabNavigator() {
           name="ChatsTab"
           component={ChatsListScreen}
           options={{
-            headerTitle: "Chats",
+            headerTitle: "Чаты",
             headerRight: () => <NewChatButton />,
-            tabBarIcon: ({ color, size }) => (
-              <Feather name="message-circle" size={24} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Feather name="message-circle" size={22} color={color} />
             ),
           }}
         />
@@ -157,10 +155,10 @@ export default function MainTabNavigator() {
           name="ProfileTab"
           component={ProfileScreen}
           options={{
-            headerTitle: "Profile",
+            headerTitle: "Профиль",
             headerRight: () => <SettingsButton />,
-            tabBarIcon: ({ color, size }) => (
-              <Feather name="user" size={24} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Feather name="user" size={22} color={color} />
             ),
           }}
         />
@@ -182,15 +180,15 @@ const styles = StyleSheet.create({
     right: Spacing.lg,
   },
   fabButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
 });

@@ -9,13 +9,14 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { CompositeScreenProps } from "@react-navigation/native";
@@ -62,14 +63,14 @@ function ChatItem({
           },
         ]}
       >
-        <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={48} />
+        <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <ThemedText type="body" style={styles.chatName}>
-              {chat.otherUser?.username || "User"}
+              {chat.otherUser?.username || "Пользователь"}
             </ThemedText>
             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-              {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true })}
+              {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: ru })}
             </ThemedText>
           </View>
           <View style={styles.chatPreview}>
@@ -78,11 +79,11 @@ function ChatItem({
               numberOfLines={1}
               style={{ color: theme.textSecondary, flex: 1 }}
             >
-              {chat.lastMessage || "Start a conversation"}
+              {chat.lastMessage || "Начните переписку"}
             </ThemedText>
             {chat.unreadCount && chat.unreadCount > 0 ? (
               <View style={[styles.unreadBadge, { backgroundColor: theme.link }]}>
-                <ThemedText type="caption" style={{ color: "#fff", fontWeight: "600" }}>
+                <ThemedText type="caption" style={{ color: "#fff", fontWeight: "600", fontSize: 11 }}>
                   {chat.unreadCount}
                 </ThemedText>
               </View>
@@ -99,15 +100,15 @@ function EmptyChats() {
 
   return (
     <View style={styles.emptyContainer}>
-      <Feather name="message-circle" size={48} color={theme.textSecondary} />
+      <Feather name="message-circle" size={40} color={theme.textSecondary} />
       <ThemedText type="h3" style={styles.emptyTitle}>
-        No Chats Yet
+        Пока нет чатов
       </ThemedText>
       <ThemedText
         type="body"
         style={[styles.emptyText, { color: theme.textSecondary }]}
       >
-        Start a conversation by tapping on a user's profile
+        Начните переписку, нажав на профиль пользователя
       </ThemedText>
     </View>
   );
@@ -144,7 +145,7 @@ export default function ChatsListScreen({ navigation }: Props) {
         ...item,
         otherUser: {
           id: item.user1Id === user?.id ? item.user2Id : item.user1Id,
-          username: "User",
+          username: "Пользователь",
           emoji: "🐸",
         },
       };
@@ -164,9 +165,9 @@ export default function ChatsListScreen({ navigation }: Props) {
       <FlashList
         data={chats}
         renderItem={renderItem}
-        estimatedItemSize={72}
+        estimatedItemSize={68}
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.sm,
+          paddingTop: headerHeight + Spacing.xs,
           paddingBottom: tabBarHeight + Spacing.lg,
         }}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
@@ -174,7 +175,7 @@ export default function ChatsListScreen({ navigation }: Props) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={theme.text}
+            tintColor={theme.textSecondary}
           />
         }
         ListEmptyComponent={<EmptyChats />}
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   chatInfo: {
     flex: 1,
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   chatName: {
-    fontWeight: "600",
+    fontWeight: "500",
     flex: 1,
   },
   chatPreview: {
@@ -212,23 +213,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   unreadBadge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: Spacing.sm,
-    paddingHorizontal: 5,
+    paddingHorizontal: 4,
   },
   emptyContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing["6xl"],
+    paddingVertical: Spacing["5xl"],
     paddingHorizontal: Spacing.xl,
   },
   emptyTitle: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
   emptyText: {

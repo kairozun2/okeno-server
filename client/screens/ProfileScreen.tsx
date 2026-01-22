@@ -46,7 +46,7 @@ function ProfileHeader({ onCopyId }: { onCopyId: () => void }) {
 
   return (
     <Animated.View entering={FadeIn} style={styles.header}>
-      <Avatar emoji={user?.emoji || "🐸"} size={80} />
+      <Avatar emoji={user?.emoji || "🐸"} size={72} />
       <ThemedText type="h3" style={styles.username}>
         {user?.username}
       </ThemedText>
@@ -55,19 +55,19 @@ function ProfileHeader({ onCopyId }: { onCopyId: () => void }) {
           onCopyId();
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }}
-        style={[styles.idButton, { backgroundColor: theme.backgroundSecondary }]}
+        style={styles.idButton}
       >
         <ThemedText type="caption" style={{ color: theme.textSecondary }}>
           {user?.id?.slice(0, 12)}...
         </ThemedText>
-        <Feather name="copy" size={12} color={theme.textSecondary} />
+        <Feather name="copy" size={11} color={theme.textSecondary} />
       </Pressable>
 
       <View style={styles.stats}>
         <View style={styles.stat}>
           <ThemedText type="h4">{posts.length}</ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            Posts
+            публикаций
           </ThemedText>
         </View>
       </View>
@@ -82,7 +82,7 @@ function PostGridItem({ post, onPress }: { post: Post; onPress: () => void }) {
         source={{ uri: post.imageUrl }}
         style={styles.gridImage}
         contentFit="cover"
-        transition={150}
+        transition={100}
       />
     </Pressable>
   );
@@ -93,9 +93,9 @@ function EmptyPosts() {
 
   return (
     <View style={styles.emptyContainer}>
-      <Feather name="image" size={40} color={theme.textSecondary} />
+      <Feather name="image" size={36} color={theme.textSecondary} />
       <ThemedText type="body" style={[styles.emptyText, { color: theme.textSecondary }]}>
-        No posts yet
+        Пока нет публикаций
       </ThemedText>
     </View>
   );
@@ -161,7 +161,7 @@ export default function ProfileScreen({ navigation }: Props) {
         numColumns={NUM_COLUMNS}
         estimatedItemSize={ITEM_SIZE}
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.lg,
+          paddingTop: headerHeight + Spacing.md,
           paddingBottom: tabBarHeight + Spacing.lg,
         }}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
@@ -169,7 +169,7 @@ export default function ProfileScreen({ navigation }: Props) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={theme.text}
+            tintColor={theme.textSecondary}
           />
         }
         ListHeaderComponent={<ProfileHeader onCopyId={handleCopyId} />}
@@ -186,10 +186,10 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     paddingVertical: Spacing.lg,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   username: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
   },
   idButton: {
     flexDirection: "row",
@@ -198,13 +198,12 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
   },
   stats: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
   stat: {
     alignItems: "center",
@@ -220,7 +219,7 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing["4xl"],
+    paddingVertical: Spacing["3xl"],
   },
   emptyText: {
     marginTop: Spacing.sm,

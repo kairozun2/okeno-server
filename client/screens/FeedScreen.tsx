@@ -15,6 +15,7 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -79,7 +80,7 @@ function PostCard({
   }));
 
   const handleLike = () => {
-    likeScale.value = withSpring(1.3, { damping: 3 }, () => {
+    likeScale.value = withSpring(1.2, { damping: 4 }, () => {
       likeScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -87,7 +88,7 @@ function PostCard({
   };
 
   const handleSave = () => {
-    saveScale.value = withSpring(1.3, { damping: 3 }, () => {
+    saveScale.value = withSpring(1.2, { damping: 4 }, () => {
       saveScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -95,9 +96,9 @@ function PostCard({
   };
 
   return (
-    <Animated.View entering={FadeIn.delay(100)} style={styles.postCard}>
+    <Animated.View entering={FadeIn.delay(50)} style={styles.postCard}>
       <Pressable onPress={onUserPress} style={styles.postHeader}>
-        <Avatar emoji={post.user?.emoji || "🐸"} size={36} />
+        <Avatar emoji={post.user?.emoji || "🐸"} size={32} />
         <View style={styles.postHeaderInfo}>
           <ThemedText type="small" style={styles.username}>
             {post.user?.username || "User"}
@@ -112,7 +113,7 @@ function PostCard({
           ) : null}
         </View>
         <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ru })}
         </ThemedText>
       </Pressable>
 
@@ -120,7 +121,7 @@ function PostCard({
         source={{ uri: post.imageUrl }}
         style={styles.postImage}
         contentFit="cover"
-        transition={200}
+        transition={150}
       />
 
       <View style={styles.postActions}>
@@ -128,32 +129,32 @@ function PostCard({
           <AnimatedPressable onPress={handleLike} style={[styles.actionButton, likeAnimatedStyle]}>
             <Feather
               name="heart"
-              size={22}
-              color={post.isLiked ? theme.error : theme.text}
+              size={20}
+              color={post.isLiked ? theme.error : theme.textSecondary}
             />
           </AnimatedPressable>
 
           <Pressable onPress={onComment} style={styles.actionButton}>
-            <Feather name="message-circle" size={22} color={theme.text} />
+            <Feather name="message-circle" size={20} color={theme.textSecondary} />
           </Pressable>
 
           <Pressable style={styles.actionButton}>
-            <Feather name="send" size={22} color={theme.text} />
+            <Feather name="send" size={20} color={theme.textSecondary} />
           </Pressable>
         </View>
 
         <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle]}>
           <Feather
             name="bookmark"
-            size={22}
-            color={post.isSaved ? theme.accent : theme.text}
+            size={20}
+            color={post.isSaved ? theme.link : theme.textSecondary}
           />
         </AnimatedPressable>
       </View>
 
       {post.likesCount > 0 ? (
         <ThemedText type="small" style={styles.likesText}>
-          {post.likesCount} {post.likesCount === 1 ? "like" : "likes"}
+          {post.likesCount} {post.likesCount === 1 ? "лайк" : "лайков"}
         </ThemedText>
       ) : null}
     </Animated.View>
@@ -165,15 +166,15 @@ function EmptyFeed() {
 
   return (
     <View style={styles.emptyContainer}>
-      <Feather name="camera" size={48} color={theme.textSecondary} />
+      <Feather name="camera" size={40} color={theme.textSecondary} />
       <ThemedText type="h3" style={styles.emptyTitle}>
-        No Posts Yet
+        Пока нет публикаций
       </ThemedText>
       <ThemedText
         type="body"
         style={[styles.emptyText, { color: theme.textSecondary }]}
       >
-        Be the first to share a moment!
+        Будьте первыми, кто поделится моментом!
       </ThemedText>
     </View>
   );
@@ -257,9 +258,9 @@ export default function FeedScreen({ navigation }: Props) {
       <FlashList
         data={posts}
         renderItem={renderItem}
-        estimatedItemSize={450}
+        estimatedItemSize={400}
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.sm,
+          paddingTop: headerHeight + Spacing.xs,
           paddingBottom: tabBarHeight + Spacing.lg,
         }}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
@@ -267,7 +268,7 @@ export default function FeedScreen({ navigation }: Props) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={theme.text}
+            tintColor={theme.textSecondary}
           />
         }
         ListEmptyComponent={<EmptyFeed />}
@@ -287,7 +288,7 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
     paddingVertical: Spacing.sm,
   },
   postHeaderInfo: {
@@ -295,7 +296,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   username: {
-    fontWeight: "600",
+    fontWeight: "500",
   },
   locationRow: {
     flexDirection: "row",
@@ -322,18 +323,18 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
   },
   likesText: {
-    fontWeight: "600",
-    paddingHorizontal: Spacing.sm,
+    fontWeight: "500",
+    paddingHorizontal: Spacing.xs,
     marginBottom: Spacing.xs,
   },
   emptyContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing["6xl"],
+    paddingVertical: Spacing["5xl"],
   },
   emptyTitle: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
   emptyText: {

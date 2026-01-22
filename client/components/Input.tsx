@@ -28,7 +28,7 @@ export function Input({
   return (
     <View style={[styles.container, containerStyle]}>
       {label ? (
-        <ThemedText type="small" style={styles.label}>
+        <ThemedText type="small" style={[styles.label, { color: theme.textSecondary }]}>
           {label}
         </ThemedText>
       ) : null}
@@ -59,16 +59,17 @@ export function Input({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   label: {
     marginBottom: Spacing.xs,
     fontWeight: "500",
+    fontSize: 13,
   },
   input: {
     height: Spacing.inputHeight,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.md,
     borderWidth: 1,
     ...Typography.body,
   },

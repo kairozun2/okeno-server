@@ -8,7 +8,6 @@ import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -28,7 +27,7 @@ interface SettingSection {
   items: SettingItem[];
 }
 
-function SettingRow({ item }: { item: SettingItem }) {
+function SettingRow({ item, isLast }: { item: SettingItem; isLast: boolean }) {
   const { theme } = useTheme();
 
   return (
@@ -44,20 +43,15 @@ function SettingRow({ item }: { item: SettingItem }) {
             ? theme.backgroundSecondary
             : "transparent",
         },
+        !isLast && { borderBottomWidth: 1, borderBottomColor: theme.border },
       ]}
     >
-      <View
-        style={[
-          styles.iconContainer,
-          { backgroundColor: theme.backgroundSecondary },
-        ]}
-      >
-        <Feather
-          name={item.icon}
-          size={18}
-          color={item.danger ? theme.error : theme.textSecondary}
-        />
-      </View>
+      <Feather
+        name={item.icon}
+        size={20}
+        color={item.danger ? theme.error : theme.textSecondary}
+        style={styles.rowIcon}
+      />
       <View style={styles.settingInfo}>
         <ThemedText
           type="body"
@@ -91,18 +85,18 @@ export default function SettingsScreen({ navigation }: Props) {
     if (user?.id) {
       await Clipboard.setStringAsync(user.id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Copied", "Your ID has been copied to clipboard");
+      Alert.alert("Скопировано", "Ваш ID скопирован в буфер обмена");
     }
   };
 
   const handleLogout = () => {
     Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out?",
+      "Выйти",
+      "Вы уверены, что хотите выйти?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: "Отмена", style: "cancel" },
         {
-          text: "Sign Out",
+          text: "Выйти",
           style: "destructive",
           onPress: async () => {
             await logout();
@@ -115,46 +109,68 @@ export default function SettingsScreen({ navigation }: Props) {
 
   const sections: SettingSection[] = [
     {
-      title: "Account",
+      title: "АККАУНТ",
       items: [
         {
           icon: "user",
-          title: "Account",
-          subtitle: "ID recovery and account settings",
+          title: "Аккаунт",
+          subtitle: "ID восстановления и настройки аккаунта",
           onPress: handleCopyId,
         },
       ],
     },
     {
-      title: "Privacy",
+      title: "КОНФИДЕНЦИАЛЬНОСТЬ",
       items: [
         {
           icon: "shield",
-          title: "Privacy & Security",
-          subtitle: "Permissions and data protection",
+          title: "Конфиденциальность и безопасность",
+          subtitle: "Разрешения и защита данных",
           onPress: () => {},
         },
         {
           icon: "smartphone",
-          title: "Active Sessions",
-          subtitle: "Manage devices",
+          title: "Активные сеансы",
+          subtitle: "Управление устройствами",
           onPress: () => navigation.navigate("Sessions"),
         },
       ],
     },
     {
-      title: "Archive",
+      title: "АРХИВ",
       items: [
         {
           icon: "archive",
-          title: "Archive",
-          subtitle: "View archived posts",
+          title: "Архив",
+          subtitle: "Просмотр архивных воспоминаний",
           onPress: () => {},
         },
         {
           icon: "eye-off",
-          title: "Hidden Users",
-          subtitle: "Manage hidden users",
+          title: "Скрытые пользователи",
+          subtitle: "Управление скрытыми пользователями",
+          onPress: () => {},
+        },
+      ],
+    },
+    {
+      title: "ЗВУК И ОТКЛИК",
+      items: [
+        {
+          icon: "volume-x",
+          title: "Звуковые эффекты",
+          subtitle: "Выключено",
+          onPress: () => {},
+        },
+      ],
+    },
+    {
+      title: "ВНЕШНИЙ ВИД",
+      items: [
+        {
+          icon: "moon",
+          title: "Затемнить фон",
+          subtitle: "Выключено",
           onPress: () => {},
         },
       ],
@@ -164,7 +180,7 @@ export default function SettingsScreen({ navigation }: Props) {
       items: [
         {
           icon: "log-out",
-          title: "Sign Out",
+          title: "Выйти из аккаунта",
           onPress: handleLogout,
           danger: true,
         },
@@ -176,27 +192,14 @@ export default function SettingsScreen({ navigation }: Props) {
     <ScrollView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       contentContainerStyle={{
-        paddingTop: headerHeight + Spacing.xl,
+        paddingTop: headerHeight + Spacing.lg,
         paddingBottom: insets.bottom + Spacing.xl,
       }}
     >
-      <Animated.View entering={FadeIn} style={styles.profileSection}>
-        <Avatar emoji={user?.emoji || "🐸"} size={72} />
-        <ThemedText type="h3" style={styles.username}>
-          {user?.username}
-        </ThemedText>
-        <Pressable onPress={handleCopyId} style={styles.idRow}>
-          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {user?.id}
-          </ThemedText>
-          <Feather name="copy" size={12} color={theme.textSecondary} style={{ marginLeft: 6 }} />
-        </Pressable>
-      </Animated.View>
-
       {sections.map((section, sectionIndex) => (
         <Animated.View
           key={sectionIndex}
-          entering={FadeIn.delay(sectionIndex * 50)}
+          entering={FadeIn.delay(sectionIndex * 30)}
           style={styles.section}
         >
           {section.title ? (
@@ -204,7 +207,7 @@ export default function SettingsScreen({ navigation }: Props) {
               type="caption"
               style={[styles.sectionTitle, { color: theme.textSecondary }]}
             >
-              {section.title.toUpperCase()}
+              {section.title}
             </ThemedText>
           ) : null}
           <View
@@ -214,17 +217,11 @@ export default function SettingsScreen({ navigation }: Props) {
             ]}
           >
             {section.items.map((item, itemIndex) => (
-              <React.Fragment key={itemIndex}>
-                <SettingRow item={item} />
-                {itemIndex < section.items.length - 1 ? (
-                  <View
-                    style={[
-                      styles.separator,
-                      { backgroundColor: theme.border },
-                    ]}
-                  />
-                ) : null}
-              </React.Fragment>
+              <SettingRow
+                key={itemIndex}
+                item={item}
+                isLast={itemIndex === section.items.length - 1}
+              />
             ))}
           </View>
         </Animated.View>
@@ -237,22 +234,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  profileSection: {
-    alignItems: "center",
-    paddingVertical: Spacing.lg,
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
-  },
-  username: {
-    marginTop: Spacing.md,
-  },
-  idRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: Spacing.xs,
-  },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
     marginHorizontal: Spacing.lg,
   },
   sectionTitle: {
@@ -260,6 +243,7 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
     fontWeight: "500",
     letterSpacing: 0.5,
+    fontSize: 11,
   },
   sectionContent: {
     overflow: "hidden",
@@ -267,25 +251,17 @@ const styles = StyleSheet.create({
   settingRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
+  rowIcon: {
+    marginRight: Spacing.md,
   },
   settingInfo: {
     flex: 1,
-    marginLeft: Spacing.md,
   },
   settingTitle: {
-    fontWeight: "500",
-  },
-  separator: {
-    height: 1,
-    marginLeft: 32 + Spacing.lg + Spacing.md,
+    fontWeight: "400",
+    fontSize: 15,
   },
 });

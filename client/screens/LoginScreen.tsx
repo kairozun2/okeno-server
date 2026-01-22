@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -45,7 +46,7 @@ export default function LoginScreen({ navigation }: Props) {
     } catch (err) {
       setError(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Error", "Invalid ID or PIN. Please try again.");
+      Alert.alert("Ошибка", "Неверный ID или PIN. Попробуйте снова.");
     } finally {
       setIsLoading(false);
     }
@@ -53,19 +54,26 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={[styles.content, { paddingTop: insets.top + Spacing["3xl"] }]}
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: insets.top + Spacing["3xl"],
+            paddingBottom: insets.bottom + Spacing.xl,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
       >
         <Animated.View entering={FadeInUp.delay(100).springify()}>
-          <ThemedText type="h1" style={styles.title}>
-            Welcome Back
+          <ThemedText type="h2" style={styles.title}>
+            С возвращением
           </ThemedText>
           <ThemedText
             type="body"
             style={[styles.subtitle, { color: theme.textSecondary }]}
           >
-            Enter your ID and PIN to continue
+            Введите ID и PIN для входа
           </ThemedText>
         </Animated.View>
 
@@ -74,8 +82,8 @@ export default function LoginScreen({ navigation }: Props) {
           style={styles.form}
         >
           <Input
-            label="User ID"
-            placeholder="Enter your ID"
+            label="ID пользователя"
+            placeholder="Введите ваш ID"
             value={userId}
             onChangeText={(text) => {
               setUserId(text);
@@ -87,7 +95,7 @@ export default function LoginScreen({ navigation }: Props) {
 
           <View style={styles.pinSection}>
             <ThemedText type="small" style={[styles.pinLabel, { color: theme.textSecondary }]}>
-              4-Digit PIN
+              4-значный PIN
             </ThemedText>
             <PinInput
               value={pin}
@@ -104,22 +112,22 @@ export default function LoginScreen({ navigation }: Props) {
             disabled={isLoading || !userId.trim() || pin.length !== 4}
             style={styles.button}
           >
-            {isLoading ? "Signing In..." : "Sign In"}
+            {isLoading ? "Вход..." : "Войти"}
           </Button>
         </Animated.View>
 
         <Animated.View
           entering={FadeInUp.delay(300).springify()}
-          style={[styles.footer, { paddingBottom: insets.bottom + Spacing.xl }]}
+          style={styles.footer}
         >
           <ThemedText type="body" style={{ color: theme.textSecondary }}>
-            Don't have an account?{" "}
+            Нет аккаунта?{" "}
           </ThemedText>
           <Pressable onPress={() => navigation.navigate("Register")}>
-            <ThemedText type="link">Create one</ThemedText>
+            <ThemedText type="link">Создать</ThemedText>
           </Pressable>
         </Animated.View>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </ThemedView>
   );
 }
@@ -128,8 +136,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
     paddingHorizontal: Spacing.xl,
   },
   title: {
@@ -142,11 +153,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pinSection: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   pinLabel: {
     marginBottom: Spacing.xs,
     fontWeight: "500",
+    fontSize: 13,
   },
   button: {
     marginTop: Spacing.md,
@@ -155,5 +167,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    paddingTop: Spacing.xl,
   },
 });
