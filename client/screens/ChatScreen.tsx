@@ -119,80 +119,80 @@ function MessageBubble({
     );
   };
 
-    return (
-      <View style={{ zIndex: isSelected ? 1001 : 1 }}>
-        <Pressable 
-          onLongPress={() => onLongPress(message)}
-          delayLongPress={300}
-          style={({ pressed }) => [
-            styles.messageBubble,
-            isOwn ? styles.ownMessage : styles.otherMessage,
-            { 
-              backgroundColor: isOwn 
-                ? (isSelected ? (isDark ? "#4a9eff" : "#2a89ff") : theme.link) 
-                : (isSelected ? (isDark ? "#323235" : "#f0f0f2") : theme.cardBackground),
-              opacity: pressed ? 0.9 : 1,
-              transform: [{ scale: isSelected ? 1.05 : 1 }],
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: isSelected ? 0.3 : 0,
-              shadowRadius: 8,
-              elevation: isSelected ? 10 : 0,
-            },
-          ]}
-        >
-          {replyMessage ? (
-            <View style={[styles.replyContainer, { borderLeftColor: isOwn ? "rgba(255,255,255,0.5)" : theme.link }]}>
-              <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontWeight: "600" }}>
-                {t("Reply", "Ответ")}
-              </ThemedText>
-              <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
-                {typeof replyMessage.content === 'string' ? replyMessage.content : ""}
-              </ThemedText>
-            </View>
-          ) : null}
-          {renderContent(typeof message.content === 'string' ? message.content : "", isOwn)}
-          <View style={styles.messageFooter}>
-            {message.isEdited ? (
-              <ThemedText
-                type="caption"
-                style={[styles.editedLabel, { color: isOwn ? "rgba(255,255,255,0.5)" : theme.textSecondary }]}
-              >
-                {t("edited", "изм.")}
-              </ThemedText>
-            ) : null}
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <ThemedText
-                type="caption"
-                style={[
-                  styles.messageTime,
-                  { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, marginRight: 2 },
-                ]}
-              >
-                {formatMessageTime(new Date(message.createdAt))}
-              </ThemedText>
-              {isOwn && (
-                <Feather 
-                  name="check" 
-                  size={11} 
-                  color={message.isRead ? "#fff" : "rgba(255,255,255,0.4)"} 
-                  style={{ marginLeft: 2 }}
-                />
-              )}
-              {isOwn && message.isRead && (
-                <Feather 
-                  name="check" 
-                  size={11} 
-                  color="#fff" 
-                  style={{ marginLeft: -7 }}
-                />
-              )}
-            </View>
+  return (
+    <View style={{ zIndex: isSelected ? 1001 : 1 }}>
+      <Pressable 
+        onLongPress={() => onLongPress(message)}
+        delayLongPress={300}
+        style={({ pressed }) => [
+          styles.messageBubble,
+          isOwn ? styles.ownMessage : styles.otherMessage,
+          { 
+            backgroundColor: isOwn 
+              ? (isSelected ? (isDark ? "#4a9eff" : "#2a89ff") : theme.link) 
+              : (isSelected ? (isDark ? "#323235" : "#f0f0f2") : theme.cardBackground),
+            opacity: pressed ? 0.9 : 1,
+            transform: [{ scale: isSelected ? 1.05 : 1 }],
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isSelected ? 0.3 : 0,
+            shadowRadius: 8,
+            elevation: isSelected ? 10 : 0,
+          },
+        ]}
+      >
+        {replyMessage ? (
+          <View style={[styles.replyContainer, { borderLeftColor: isOwn ? "rgba(255,255,255,0.5)" : theme.link }]}>
+            <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontWeight: "600" }}>
+              {t("Reply", "Ответ")}
+            </ThemedText>
+            <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
+              {typeof replyMessage.content === 'string' ? replyMessage.content : ""}
+            </ThemedText>
           </View>
-        </Pressable>
-      </View>
-    );
-  }
+        ) : null}
+        {renderContent(typeof message.content === 'string' ? message.content : "", isOwn)}
+        <View style={styles.messageFooter}>
+          {message.isEdited ? (
+            <ThemedText
+              type="caption"
+              style={[styles.editedLabel, { color: isOwn ? "rgba(255,255,255,0.5)" : theme.textSecondary }]}
+            >
+              {t("edited", "изм.")}
+            </ThemedText>
+          ) : null}
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ThemedText
+              type="caption"
+              style={[
+                styles.messageTime,
+                { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, marginRight: 2 },
+              ]}
+            >
+              {formatMessageTime(new Date(message.createdAt))}
+            </ThemedText>
+            {isOwn && (
+              <Feather 
+                name="check" 
+                size={11} 
+                color={message.isRead ? "#fff" : "rgba(255,255,255,0.4)"} 
+                style={{ marginLeft: 2 }}
+              />
+            )}
+            {isOwn && message.isRead && (
+              <Feather 
+                name="check" 
+                size={11} 
+                color="#fff" 
+                style={{ marginLeft: -7 }}
+              />
+            )}
+          </View>
+        </View>
+      </Pressable>
+    </View>
+  );
+}
 
 type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
@@ -549,9 +549,8 @@ export default function ChatScreen({ route, navigation }: Props) {
 
         <LinearGradient
           colors={[
-            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.95)' : 'rgba(0,0,0,0.8)') : (chatFullscreen ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.8)'),
-            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)') : (chatFullscreen ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)'),
-            isDark ? (chatFullscreen ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.2)') : (chatFullscreen ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)'),
+            isDark ? 'rgba(28,28,30,0.85)' : 'rgba(255,255,255,0.85)',
+            isDark ? 'rgba(28,28,30,0.5)' : 'rgba(255,255,255,0.5)',
             'transparent'
           ]}
           style={{
@@ -559,7 +558,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             top: 0,
             left: 0,
             right: 0,
-            height: insets.top + (chatFullscreen ? 180 : 140),
+            height: insets.top + (chatFullscreen ? 140 : 100),
             zIndex: 90, 
             pointerEvents: 'none',
           }}
