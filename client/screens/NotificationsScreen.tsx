@@ -102,7 +102,7 @@ function NotificationItem({
         </View>
         <View style={styles.notificationContent}>
           <ThemedText type="body">
-            <ThemedText type="body" style={{ fontWeight: "600" }}>
+            <ThemedText type="body" style={{ fontWeight: "600" }} truncate maxLength={12}>
               Someone
             </ThemedText>{" "}
             {getNotificationText()}

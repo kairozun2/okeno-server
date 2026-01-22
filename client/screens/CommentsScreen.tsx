@@ -52,7 +52,7 @@ function CommentItem({
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
           <Pressable onPress={onUserPress}>
-            <ThemedText type="small" style={styles.commentUsername}>
+            <ThemedText type="small" style={styles.commentUsername} truncate maxLength={12}>
               {comment.user?.username || "Пользователь"}
             </ThemedText>
           </Pressable>

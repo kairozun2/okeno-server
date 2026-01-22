@@ -208,7 +208,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             >
               <Avatar emoji={postUser?.emoji || "🐸"} size={40} />
               <View style={styles.userInfo}>
-                <ThemedText type="body" style={styles.username}>
+                <ThemedText type="body" style={styles.username} truncate maxLength={15}>
                   {postUser?.username || "Пользователь"}
                 </ThemedText>
                 <ThemedText type="caption" style={{ color: theme.textSecondary }}>

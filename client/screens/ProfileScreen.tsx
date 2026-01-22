@@ -181,7 +181,7 @@ export default function ProfileScreen({ navigation }: Props) {
       <Animated.View style={[styles.avatarContainer, mainAvatarStyle]}>
         <Avatar emoji={user?.emoji || "🐸"} size={80} />
       </Animated.View>
-      <ThemedText type="h3" style={styles.username}>
+      <ThemedText type="h3" style={styles.username} truncate maxLength={15}>
         {user?.username}
       </ThemedText>
       <Pressable onPress={handleCopyId} style={styles.idButton}>

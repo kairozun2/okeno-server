@@ -156,8 +156,8 @@ export default function ChatScreen({ route, navigation }: Props) {
               />
             )}
             <View style={{ marginRight: Spacing.sm }}>
-              <ThemedText type="small" style={{ fontWeight: "600" }}>{otherUserName || "Пользователь"}</ThemedText>
-              {otherUserUsername ? <ThemedText type="caption" style={{ opacity: 0.6 }}>@{otherUserUsername}</ThemedText> : null}
+              <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{otherUserName || "Пользователь"}</ThemedText>
+              {otherUserUsername ? <ThemedText type="caption" style={{ opacity: 0.6 }} truncate maxLength={15}>@{otherUserUsername}</ThemedText> : null}
             </View>
             <Avatar emoji={otherUserEmoji || "🐸"} size={32} />
           </Pressable>

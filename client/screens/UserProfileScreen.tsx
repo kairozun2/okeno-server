@@ -170,7 +170,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     return (
       <Animated.View entering={FadeIn} style={styles.header}>
         <Avatar emoji={profileUser?.emoji || "🐸"} size={72} />
-        <ThemedText type="h3" style={styles.username}>
+        <ThemedText type="h3" style={styles.username} truncate maxLength={15}>
           {profileUser?.username}
         </ThemedText>
 

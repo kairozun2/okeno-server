@@ -109,7 +109,7 @@ function PostCard({
       <Pressable onPress={onUserPress} style={styles.postHeader}>
         <Avatar emoji={post.user?.emoji || "🐸"} size={32} />
         <View style={styles.postHeaderInfo}>
-          <ThemedText type="small" style={styles.username}>
+          <ThemedText type="small" style={styles.username} truncate maxLength={12}>
             {post.user?.username || "..."}
           </ThemedText>
           {post.location ? (

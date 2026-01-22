@@ -68,10 +68,10 @@ function ChatItem({
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
-              <ThemedText type="body" style={styles.chatName}>
+              <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
                 {chat.otherUser?.username || "Пользователь"}
               </ThemedText>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={15}>
                 @{chat.otherUser?.username || "user"}
               </ThemedText>
             </View>
