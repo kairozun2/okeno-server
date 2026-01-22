@@ -92,6 +92,13 @@ export default function ChatScreen({ route, navigation }: Props) {
     enabled: !!user?.id && !!otherUserId,
   });
 
+  const getDirectLink = (url: string) => {
+    if (url.includes("imgbly.com") && !url.includes("i.imgbly.com")) {
+      return url.replace("www.imgbly.com", "i.imgbly.com");
+    }
+    return url;
+  };
+
   const displayName = chatSettings?.nickname || otherUserName || "Пользователь";
   const backgroundImage = chatSettings?.backgroundImage;
 
@@ -285,7 +292,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
       {backgroundImage ? (
         <ImageBackground
-          source={{ uri: backgroundImage }}
+          source={{ uri: getDirectLink(backgroundImage) }}
           style={{ flex: 1 }}
           resizeMode="cover"
         >

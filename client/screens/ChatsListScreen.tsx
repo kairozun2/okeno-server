@@ -161,6 +161,14 @@ export default function ChatsListScreen({ navigation }: Props) {
     "https://www.imgbly.com/sXwxiUNCKhTknmC.png"
   ];
 
+  // Helper function to get direct image links for imgbly
+  const getDirectLink = (url: string) => {
+    if (url.includes("imgbly.com") && !url.includes("i.imgbly.com")) {
+      return url.replace("www.imgbly.com", "i.imgbly.com");
+    }
+    return url;
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -434,7 +442,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                       ]}
                     >
                       <Image 
-                        source={{ uri: url }} 
+                        source={{ uri: getDirectLink(url) }} 
                         style={styles.presetImage} 
                         contentFit="cover"
                         cachePolicy="memory-disk"
@@ -454,7 +462,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                 >
                   {backgroundImage ? (
                     <Image
-                      source={{ uri: backgroundImage }}
+                      source={{ uri: getDirectLink(backgroundImage) }}
                       style={styles.backgroundImage}
                       contentFit="cover"
                       cachePolicy="memory-disk"
