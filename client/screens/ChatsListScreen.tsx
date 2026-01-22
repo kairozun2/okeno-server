@@ -299,7 +299,6 @@ export default function ChatsListScreen({ navigation }: Props) {
           paddingTop: headerHeight + Spacing.xs,
           paddingBottom: tabBarHeight + Spacing.lg,
         }}
-        estimatedItemSize={70}
         onRefresh={onRefresh}
         refreshing={refreshing}
         ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
