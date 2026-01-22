@@ -92,11 +92,6 @@ function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; us
         <ThemedText type="body" style={{ fontWeight: "600", lineHeight: 18 }}>
           {name || "Пользователь"}
         </ThemedText>
-        {username ? (
-          <ThemedText type="caption" style={{ opacity: 0.7, lineHeight: 14 }}>
-            @{username}
-          </ThemedText>
-        ) : null}
       </View>
       <View style={{ borderRadius: 20, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.05)" }}>
         <BlurView

@@ -194,29 +194,27 @@ export default function ChatScreen({ route, navigation }: Props) {
     refetchInterval: 1500,
   });
 
-  const isOtherUserTyping = typingData?.isTyping || false;
+    const isOtherUserTyping = typingData?.isTyping || false;
 
-  // Send typing status when user types
-  const sendTypingStatus = useCallback(() => {
-    if (!user?.id) return;
-    
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    apiRequest("POST", `/api/chats/${chatId}/typing`, { userId: user.id }).catch(() => {});
-    
-    typingTimeoutRef.current = setTimeout(() => {
-      typingTimeoutRef.current = null;
-    }, 2000);
-  }, [chatId, user?.id]);
+    // Send typing status when user types
+    const sendTypingStatus = useCallback(() => {
+        if (!user?.id) return;
+        
+        // Use a simple fetch with no-cache to be as fast as possible
+        fetch(new URL(`/api/chats/${chatId}/typing`, getApiUrl()).toString(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user.id }),
+            credentials: "include"
+        }).catch(() => {});
+    }, [chatId, user?.id]);
 
-  const handleTextChange = (text: string) => {
-    setMessage(text);
-    if (text.length > 0) {
-      sendTypingStatus();
-    }
-  };
+    const handleTextChange = (text: string) => {
+        setMessage(text);
+        if (text.length > 0) {
+            sendTypingStatus();
+        }
+    };
 
   const { data: chatSettings } = useQuery<ChatSettings | null>({
     queryKey: ["/api/users", user?.id, "chat-settings", otherUserId],
@@ -302,14 +300,37 @@ export default function ChatScreen({ route, navigation }: Props) {
       });
       return response.json();
     },
-    onSuccess: (newMessage) => {
+    onMutate: async (newMessageData) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/chats", chatId, "messages"] });
+      const previousMessages = queryClient.getQueryData(["/api/chats", chatId, "messages"]);
+      
+      const tempId = Math.random().toString(36).substring(7);
+      const optimisticMessage = {
+        id: tempId,
+        chatId,
+        senderId: user?.id || "",
+        content: newMessageData.content,
+        replyToId: newMessageData.replyToId,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        isOptimistic: true,
+      };
+
       queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
-        if (!oldData) return { pages: [[newMessage]], pageParams: [0] };
+        if (!oldData) return { pages: [[optimisticMessage]], pageParams: [0] };
         return {
           ...oldData,
-          pages: [[newMessage, ...oldData.pages[0]], ...oldData.pages.slice(1)],
+          pages: [[optimisticMessage, ...oldData.pages[0]], ...oldData.pages.slice(1)],
         };
       });
+
+      return { previousMessages };
+    },
+    onError: (err, newMessage, context) => {
+      queryClient.setQueryData(["/api/chats", chatId, "messages"], context?.previousMessages);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chats", chatId, "messages"] });
     },
   });
 
@@ -454,7 +475,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
         <View style={[styles.header, { top: Spacing.sm }]}>
           <Pressable
@@ -489,8 +510,6 @@ export default function ChatScreen({ route, navigation }: Props) {
               </View>
               {isOtherUserTyping ? (
                 <ThemedText type="caption" style={{ color: theme.link }}>{t("typing...", "печатает...")}</ThemedText>
-              ) : displayUsername ? (
-                <ThemedText type="caption" style={{ opacity: 0.6 }} truncate maxLength={15}>@{displayUsername}</ThemedText>
               ) : null}
             </View>
             <Avatar emoji={displayEmoji} size={32} />
