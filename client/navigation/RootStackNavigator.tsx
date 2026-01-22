@@ -52,25 +52,20 @@ function CloseButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-function ChatHeaderTitle({ name, username, onPress }: { name?: string; username?: string; onPress: () => void }) {
+function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; username?: string; emoji?: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress}>
-      <ThemedText type="body" style={{ fontWeight: "600" }}>
-        {name || "Пользователь"}
-      </ThemedText>
-      {username ? (
-        <ThemedText type="caption" style={{ opacity: 0.7 }}>
-          @{username}
-        </ThemedText>
-      ) : null}
-    </Pressable>
-  );
-}
-
-function ChatHeaderRight({ emoji, onPress }: { emoji?: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={{ marginRight: Spacing.md }}>
+    <Pressable onPress={onPress} style={{ flexDirection: "row", alignItems: "center" }}>
       <Avatar emoji={emoji || "🐸"} size={32} />
+      <View style={{ marginLeft: Spacing.sm }}>
+        <ThemedText type="body" style={{ fontWeight: "600", lineHeight: 18 }}>
+          {name || "Пользователь"}
+        </ThemedText>
+        {username ? (
+          <ThemedText type="caption" style={{ opacity: 0.7, lineHeight: 14 }}>
+            @{username}
+          </ThemedText>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
@@ -103,6 +98,7 @@ export default function RootStackNavigator() {
                 <ChatHeaderTitle 
                   name={route.params?.otherUserName}
                   username={route.params?.otherUserUsername}
+                  emoji={route.params?.otherUserEmoji}
                   onPress={() => {
                     if (route.params?.otherUserId) {
                       navigation.navigate("UserProfile", { userId: route.params.otherUserId });
@@ -110,16 +106,7 @@ export default function RootStackNavigator() {
                   }}
                 />
               ),
-              headerRight: () => (
-                <ChatHeaderRight 
-                  emoji={route.params?.otherUserEmoji} 
-                  onPress={() => {
-                    if (route.params?.otherUserId) {
-                      navigation.navigate("UserProfile", { userId: route.params.otherUserId });
-                    }
-                  }}
-                />
-              ),
+              headerRight: () => null,
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               gestureEnabled: false, // Disable swipe-to-close as requested
             })}

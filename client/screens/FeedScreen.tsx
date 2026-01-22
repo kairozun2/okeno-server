@@ -269,6 +269,7 @@ export default function FeedScreen({ navigation }: Props) {
       <FlatList
         data={posts}
         renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: headerHeight + Spacing.xs,
           paddingBottom: tabBarHeight + Spacing.lg,

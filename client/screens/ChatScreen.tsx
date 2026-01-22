@@ -150,7 +150,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       <KeyboardAvoidingView
         style={styles.container}
         behavior="padding"
-        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <FlatList
           ref={flatListRef}
@@ -171,16 +171,11 @@ export default function ChatScreen({ route, navigation }: Props) {
           style={[
             styles.inputContainer,
             {
-              backgroundColor: "transparent",
+              backgroundColor: theme.backgroundRoot,
               paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md,
             },
           ]}
         >
-          <BlurView
-            intensity={80}
-            tint={isDark ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
-          />
           <View style={styles.inputWrapper}>
             <TextInput
               style={[
