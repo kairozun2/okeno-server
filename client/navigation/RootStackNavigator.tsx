@@ -38,7 +38,7 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function CloseButton({ onPress }: { onPress: () => void }) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
 
   return (
     <Pressable
@@ -46,14 +46,21 @@ function CloseButton({ onPress }: { onPress: () => void }) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
       }}
-      style={{ padding: Spacing.sm }}
+      style={{ borderRadius: 16, overflow: "hidden" }}
     >
-      <Feather name="x" size={22} color={theme.text} />
+      <BlurView
+        intensity={60}
+        tint={isDark ? "dark" : "light"}
+        style={{ padding: Spacing.sm, borderRadius: 16 }}
+      >
+        <Feather name="x" size={22} color={theme.text} />
+      </BlurView>
     </Pressable>
   );
 }
 
 function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; username?: string; emoji?: string; onPress: () => void }) {
+  const { isDark } = useTheme();
   return (
     <Pressable 
       onPress={onPress} 
@@ -75,7 +82,15 @@ function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; us
           </ThemedText>
         ) : null}
       </View>
-      <Avatar emoji={emoji || "🐸"} size={32} />
+      <View style={{ borderRadius: 20, overflow: "hidden" }}>
+        <BlurView
+          intensity={60}
+          tint={isDark ? "dark" : "light"}
+          style={{ padding: 4, borderRadius: 20 }}
+        >
+          <Avatar emoji={emoji || "🐸"} size={32} />
+        </BlurView>
+      </View>
     </Pressable>
   );
 }

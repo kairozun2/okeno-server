@@ -173,7 +173,6 @@ export default function ChatScreen({ route, navigation }: Props) {
           style={[
             styles.inputContainer,
             {
-              backgroundColor: theme.backgroundRoot,
               paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
             },
           ]}

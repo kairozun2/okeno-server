@@ -153,7 +153,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
           styles.inputContainer,
           {
             backgroundColor: theme.backgroundRoot,
-            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.lg : Spacing.xl,
             borderTopWidth: 1,
             borderTopColor: theme.border,
           },
