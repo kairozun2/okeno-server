@@ -48,6 +48,13 @@ function MessageBubble({
 }) {
   const { theme } = useTheme();
 
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   return (
     <Animated.View
       entering={FadeInDown.springify()}
@@ -59,24 +66,23 @@ function MessageBubble({
         },
       ]}
     >
-      <ThemedText
-        type="body"
-        style={{ color: isOwn ? "#fff" : theme.text }}
-      >
-        {message.content}
-      </ThemedText>
-      <ThemedText
-        type="caption"
-        style={[
-          styles.messageTime,
-          { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary },
-        ]}
-      >
-        {formatDistanceToNow(new Date(message.createdAt), { 
-          addSuffix: true, 
-          locale: language === "ru" ? ru : enUS 
-        })}
-      </ThemedText>
+      <View style={styles.messageContentContainer}>
+        <ThemedText
+          type="body"
+          style={{ color: isOwn ? "#fff" : theme.text, marginRight: 45 }}
+        >
+          {message.content}
+        </ThemedText>
+        <ThemedText
+          type="caption"
+          style={[
+            styles.messageTime,
+            { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary },
+          ]}
+        >
+          {formatTime(message.createdAt)}
+        </ThemedText>
+      </View>
     </Animated.View>
   );
 }
@@ -347,9 +353,15 @@ const styles = StyleSheet.create({
   messageBubble: {
     maxWidth: "80%",
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  messageContentContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
   ownMessage: {
     alignSelf: "flex-end",
@@ -360,8 +372,9 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: Spacing.xs,
   },
   messageTime: {
-    marginTop: Spacing.xs,
-    alignSelf: "flex-end",
+    position: 'absolute',
+    right: 0,
+    bottom: -2,
     fontSize: 10,
   },
   inputContainer: {
