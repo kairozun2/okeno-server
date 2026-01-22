@@ -16,7 +16,7 @@ export function QRCodeDisplay({
   backgroundColor = "#fff",
   color = "#000" 
 }: QRCodeDisplayProps) {
-  // Use a more reliable way to generate the matrix
+  // Use the qrcode library to generate the modules
   const qr = qrcode.create(value, { errorCorrectionLevel: 'M' });
   const moduleCount = qr.modules.size;
   const moduleSize = size / moduleCount;
