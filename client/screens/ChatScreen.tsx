@@ -200,7 +200,7 @@ function MessageBubble({
               styles.reactionsBadge,
               { 
                 backgroundColor: 'transparent',
-                right: isOwn ? 10 : undefined,
+                right: isOwn ? 0 : undefined, // Moved further right for own messages
                 left: !isOwn ? 10 : undefined,
               }
             ]}>
@@ -289,21 +289,23 @@ export default function ChatScreen({ route, navigation }: Props) {
   const handleReaction = useCallback(async (emoji: string) => {
     if (!selectedMessage) return;
     
-    try {
-      // Send to server to persist
-      await apiRequest("POST", `/api/messages/${selectedMessage.id}/reactions`, { 
-        emoji,
-        userId: user?.id 
-      });
+    // 1. Immediate UI state cleanup to restore scrolling
+    const targetMessageId = selectedMessage.id;
+    setShowActionModal(false);
+    setSelectedMessage(null);
+    closeEmojiPicker();
+    
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Update local query cache
+    try {
+      // 2. Perform optimistic update
       queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
           pages: oldData.pages.map((page: Message[]) =>
             page.map((msg: Message) => {
-              if (msg.id === selectedMessage.id) {
+              if (msg.id === targetMessageId) {
                 const currentReactions = (msg as any).reactions || [];
                 const alreadyReacted = currentReactions.some((r: any) => r.emoji === emoji && r.userId === user?.id);
                 if (alreadyReacted) return msg;
@@ -318,14 +320,16 @@ export default function ChatScreen({ route, navigation }: Props) {
           ),
         };
       });
+
+      // 3. Persist to server
+      await apiRequest("POST", `/api/messages/${targetMessageId}/reactions`, { 
+        emoji,
+        userId: user?.id 
+      });
     } catch (error) {
       console.error("Failed to save reaction:", error);
+      // Optional: rollback on error if needed
     }
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    closeEmojiPicker();
-    setShowActionModal(false);
-    setSelectedMessage(null);
   }, [selectedMessage, closeEmojiPicker, chatId, user?.id, queryClient]);
 
   const emojiPickerStyle = useAnimatedStyle(() => ({
@@ -464,7 +468,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       return lastPage.length === 20 ? allPages.length * 20 : undefined;
     },
     initialPageParam: 0,
-    refetchInterval: 2000,
+    refetchInterval: 3000, // Reduced polling frequency to prevent flickering/resets
   });
 
   const messages = data?.pages.flat() || [];
@@ -1016,6 +1020,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.xs,
+    paddingVertical: 12, // Added vertical padding to prevent clipping
     marginBottom: Spacing.sm,
   },
   actionSheetContent: {
