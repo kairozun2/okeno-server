@@ -132,7 +132,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   );
 
   const sortedMessages = [...messages].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
   const EmptyChatState = () => (
@@ -156,14 +156,15 @@ export default function ChatScreen({ route, navigation }: Props) {
           data={sortedMessages}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          inverted={messages.length > 0}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: headerHeight + Spacing.md },
+            { paddingTop: headerHeight + Spacing.md, paddingBottom: Spacing.xl },
             messages.length === 0 && { flex: 1 },
           ]}
           ListEmptyComponent={EmptyChatState}
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
 
         <View
@@ -179,10 +180,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               style={[
                 styles.input,
                 {
-                  backgroundColor: theme.inputBackground,
                   color: theme.text,
-                  borderWidth: 1,
-                  borderColor: theme.border,
                 },
               ]}
               placeholder="Сообщение..."
@@ -264,7 +262,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 40,
     maxHeight: 150,
-    borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     fontSize: 15,

@@ -162,10 +162,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
           style={[
             styles.input,
             {
-              backgroundColor: theme.inputBackground,
               color: theme.text,
-              borderWidth: 1,
-              borderColor: theme.border,
             },
           ]}
           placeholder="Комментарий..."
@@ -236,7 +233,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 36,
     maxHeight: 100,
-    borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     fontSize: 15,
