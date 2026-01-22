@@ -65,20 +65,20 @@ export default function LoginScreen({ navigation }: Props) {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <Animated.View entering={FadeInUp.delay(100).springify()}>
+        <Animated.View entering={FadeInUp.delay(100).duration(800).springify()}>
           <ThemedText type="h2" style={styles.title}>
             С возвращением
           </ThemedText>
           <ThemedText
             type="body"
-            style={[styles.subtitle, { color: theme.textSecondary }]}
+            style={[styles.subtitle, { color: theme.textSecondary, opacity: 0.8 }]}
           >
             Введите ID и PIN для входа
           </ThemedText>
         </Animated.View>
 
         <Animated.View
-          entering={FadeInDown.delay(200).springify()}
+          entering={FadeInDown.delay(200).duration(800).springify()}
           style={styles.form}
         >
           <Input
@@ -145,9 +145,11 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: Spacing.xs,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing["3xl"],
+    lineHeight: 20,
   },
   form: {
     flex: 1,

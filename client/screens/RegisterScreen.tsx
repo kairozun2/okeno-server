@@ -98,8 +98,8 @@ export default function RegisterScreen({ navigation }: Props) {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <Animated.View entering={FadeInUp.delay(100).springify()} style={styles.header}>
-          <Avatar emoji={previewEmoji} size={64} />
+        <Animated.View entering={FadeInUp.delay(100).duration(800).springify()} style={styles.header}>
+          <Avatar emoji={previewEmoji} size={80} />
           <ThemedText type="h2" style={styles.title}>
             {step === "username"
               ? "Создать аккаунт"
@@ -109,7 +109,7 @@ export default function RegisterScreen({ navigation }: Props) {
           </ThemedText>
           <ThemedText
             type="body"
-            style={[styles.subtitle, { color: theme.textSecondary }]}
+            style={[styles.subtitle, { color: theme.textSecondary, opacity: 0.8 }]}
           >
             {step === "username"
               ? "Выберите имя для вашего профиля"
@@ -120,7 +120,7 @@ export default function RegisterScreen({ navigation }: Props) {
         </Animated.View>
 
         <Animated.View
-          entering={FadeInDown.delay(200).springify()}
+          entering={FadeInDown.delay(200).duration(800).springify()}
           style={styles.form}
         >
           {step === "username" ? (
@@ -208,15 +208,18 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing["3xl"],
   },
   title: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
     marginBottom: Spacing.xs,
     textAlign: "center",
+    letterSpacing: -0.5,
   },
   subtitle: {
     textAlign: "center",
+    paddingHorizontal: Spacing.xl,
+    lineHeight: 20,
   },
   form: {
     flex: 1,
