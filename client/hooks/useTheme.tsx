@@ -7,30 +7,38 @@ type ThemeContextType = {
   theme: typeof Colors.light;
   isDark: boolean;
   accentColor: string | null;
+  language: "en" | "ru";
   setAccentColor: (color: string | null) => Promise<void>;
+  setLanguage: (lang: "en" | "ru") => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_ACCENT_KEY = "theme_accent_color";
+const THEME_LANGUAGE_KEY = "theme_language";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const colorScheme = useColorScheme();
   const [accentColor, setAccentState] = useState<string | null>(null);
+  const [language, setLanguageState] = useState<"en" | "ru">("en");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function loadAccent() {
+    async function loadSettings() {
       try {
-        const saved = await AsyncStorage.getItem(THEME_ACCENT_KEY);
-        if (saved) setAccentState(saved);
+        const [savedAccent, savedLang] = await Promise.all([
+          AsyncStorage.getItem(THEME_ACCENT_KEY),
+          AsyncStorage.getItem(THEME_LANGUAGE_KEY),
+        ]);
+        if (savedAccent) setAccentState(savedAccent);
+        if (savedLang) setLanguageState(savedLang as "en" | "ru");
       } catch (e) {
-        console.error("Load accent color error:", e);
+        console.error("Load theme settings error:", e);
       } finally {
         setIsLoading(false);
       }
     }
-    loadAccent();
+    loadSettings();
   }, []);
 
   const setAccentColor = async (color: string | null) => {
@@ -43,6 +51,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setAccentState(color);
     } catch (e) {
       console.error("Save accent color error:", e);
+    }
+  };
+
+  const setLanguage = async (lang: "en" | "ru") => {
+    try {
+      await AsyncStorage.setItem(THEME_LANGUAGE_KEY, lang);
+      setLanguageState(lang);
+    } catch (e) {
+      console.error("Save language error:", e);
     }
   };
 
@@ -79,7 +96,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   if (isLoading) return null;
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, accentColor, setAccentColor }}>
+    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, setAccentColor, setLanguage }}>
       {children}
     </ThemeContext.Provider>
   );

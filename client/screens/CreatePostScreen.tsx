@@ -23,11 +23,13 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 type Props = NativeStackScreenProps<RootStackParamList, "CreatePost">;
 
 export default function CreatePostScreen({ navigation }: Props) {
-  const { theme } = useTheme();
+  const { theme, language } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
   const [image, setImage] = useState<string | null>(null);
   const [location, setLocation] = useState<{
@@ -43,7 +45,7 @@ export default function CreatePostScreen({ navigation }: Props) {
 
   const createPostMutation = useMutation({
     mutationFn: async () => {
-      if (!image) throw new Error("No image selected");
+      if (!image) throw new Error(t("No image selected", "Изображение не выбрано"));
 
       const response = await apiRequest("POST", "/api/posts", {
         userId: user?.id,
@@ -55,13 +57,13 @@ export default function CreatePostScreen({ navigation }: Props) {
       return response.json();
     },
     onSuccess: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.notificationAsync(Haptics.ImpactFeedbackStyle.Light);
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "posts"] });
       navigation.goBack();
     },
     onError: (error) => {
-      Alert.alert("Error", "Failed to create post");
+      Alert.alert(t("Error", "Ошибка"), t("Failed to create post", "Не удалось создать пост"));
     },
   });
 
@@ -69,7 +71,7 @@ export default function CreatePostScreen({ navigation }: Props) {
     if (!mediaPermission?.granted) {
       const result = await requestMediaPermission();
       if (!result.granted) {
-        Alert.alert("Permission needed", "Please allow access to your photos");
+        Alert.alert(t("Permission needed", "Требуется разрешение"), t("Please allow access to your photos", "Пожалуйста, разрешите доступ к вашим фотографиям"));
         return;
       }
     }
@@ -91,7 +93,7 @@ export default function CreatePostScreen({ navigation }: Props) {
     if (!cameraPermission?.granted) {
       const result = await requestCameraPermission();
       if (!result.granted) {
-        Alert.alert("Permission needed", "Please allow camera access");
+        Alert.alert(t("Permission needed", "Требуется разрешение"), t("Please allow camera access", "Пожалуйста, разрешите доступ к камере"));
         return;
       }
     }
@@ -112,7 +114,7 @@ export default function CreatePostScreen({ navigation }: Props) {
     if (!locationPermission?.granted) {
       const result = await requestLocationPermission();
       if (!result.granted) {
-        Alert.alert("Permission needed", "Please allow location access");
+        Alert.alert(t("Permission needed", "Требуется разрешение"), t("Please allow location access", "Пожалуйста, разрешите доступ к местоположению"));
         return;
       }
     }
@@ -130,7 +132,7 @@ export default function CreatePostScreen({ navigation }: Props) {
 
       const locationName = address
         ? [address.city, address.region, address.country].filter(Boolean).join(", ")
-        : "Unknown location";
+        : t("Unknown location", "Неизвестное местоположение");
 
       setLocation({
         name: locationName,
@@ -140,7 +142,7 @@ export default function CreatePostScreen({ navigation }: Props) {
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
-      Alert.alert("Error", "Failed to get location");
+      Alert.alert(t("Error", "Ошибка"), t("Failed to get location", "Не удалось получить местоположение"));
     } finally {
       setIsLoadingLocation(false);
     }
@@ -148,11 +150,17 @@ export default function CreatePostScreen({ navigation }: Props) {
 
   const handlePost = () => {
     if (!image) {
-      Alert.alert("Select an image", "Please select or take a photo first");
+      Alert.alert(t("Select an image", "Выберите изображение"), t("Please select or take a photo first", "Пожалуйста, сначала выберите или сделайте фото"));
       return;
     }
     createPostMutation.mutate();
   };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: t("New Post", "Новый пост"),
+    });
+  }, [navigation, language]);
 
   return (
     <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
@@ -179,7 +187,7 @@ export default function CreatePostScreen({ navigation }: Props) {
             >
               <Feather name="camera" size={32} color={theme.text} />
               <ThemedText type="small" style={{ marginTop: Spacing.sm }}>
-                Take Photo
+                {t("Take Photo", "Сделать фото")}
               </ThemedText>
             </Pressable>
             <Pressable
@@ -188,7 +196,7 @@ export default function CreatePostScreen({ navigation }: Props) {
             >
               <Feather name="image" size={32} color={theme.text} />
               <ThemedText type="small" style={{ marginTop: Spacing.sm }}>
-                Gallery
+                {t("Gallery", "Галерея")}
               </ThemedText>
             </Pressable>
           </View>
@@ -213,8 +221,8 @@ export default function CreatePostScreen({ navigation }: Props) {
             }}
           >
             {isLoadingLocation
-              ? "Getting location..."
-              : location.name || "Add location"}
+              ? t("Getting location...", "Получение местоположения...")
+              : location.name || t("Add location", "Добавить местоположение")}
           </ThemedText>
           {location.name ? (
             <Pressable
@@ -231,7 +239,7 @@ export default function CreatePostScreen({ navigation }: Props) {
           onPress={handlePost}
           disabled={!image || createPostMutation.isPending}
         >
-          {createPostMutation.isPending ? "Posting..." : "Share"}
+          {createPostMutation.isPending ? t("Posting...", "Публикация...") : t("Share", "Поделиться")}
         </Button>
       </View>
     </ThemedView>

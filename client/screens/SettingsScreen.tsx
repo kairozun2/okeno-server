@@ -97,22 +97,25 @@ function SettingRow({ item, isLast }: SettingRowProps) {
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 
 export default function SettingsScreen({ navigation }: Props) {
-  const { theme, accentColor, setAccentColor } = useTheme();
+  const { theme, accentColor, setAccentColor, language, setLanguage } = useTheme();
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [isIdVisible, setIsIdVisible] = useState(false);
   const [deletePin, setDeletePin] = useState("");
 
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: "Settings",
+      headerTitle: t("Settings", "Настройки"),
     });
-  }, [navigation]);
+  }, [navigation, language]);
 
   const deleteAccountMutation = useMutation({
     mutationFn: async () => {
@@ -174,110 +177,100 @@ export default function SettingsScreen({ navigation }: Props) {
 
   const sections: SettingSection[] = [
     {
-      title: "ACCOUNT",
+      title: t("ACCOUNT", "АККАУНТ"),
       items: [
         {
           icon: "user",
-          title: "Account Management",
-          subtitle: "Recovery ID and security",
+          title: t("Account Management", "Управление аккаунтом"),
+          subtitle: t("Recovery ID and security", "ID восстановления и безопасность"),
           onPress: () => setShowAccountModal(true),
         },
         {
           icon: "smartphone",
-          title: "Active Sessions",
-          subtitle: "Manage devices",
+          title: t("Active Sessions", "Активные сессии"),
+          subtitle: t("Manage devices", "Управление устройствами"),
           onPress: () => navigation.navigate("Sessions"),
         },
       ],
     },
     {
-      title: "DATA & STORAGE",
+      title: t("DATA & STORAGE", "ДАННЫЕ И ПАМЯТЬ"),
       items: [
         {
           icon: "database",
-          title: "Storage Usage",
-          subtitle: "Clear cache and manage data",
+          title: t("Storage Usage", "Использование хранилища"),
+          subtitle: t("Clear cache and manage data", "Очистка кэша и управление данными"),
           onPress: () => navigation.navigate("CacheSettings"),
         },
       ],
     },
     {
-      title: "LANGUAGE",
+      title: t("LANGUAGE", "ЯЗЫК"),
       items: [
         {
           icon: "globe",
-          title: "App Language",
-          subtitle: "English",
-          onPress: () => {
-            Alert.alert(
-              "Language / Язык",
-              "Choose your preferred language / Выберите предпочтительный язык",
-              [
-                { text: "English", onPress: () => Alert.alert("Settings", "Language set to English") },
-                { text: "Русский", onPress: () => Alert.alert("Настройки", "Выбран русский язык") },
-                { text: "Cancel / Отмена", style: "cancel" }
-              ]
-            );
-          },
+          title: t("App Language", "Язык приложения"),
+          subtitle: language === "ru" ? "Русский" : "English",
+          onPress: () => setShowLanguagePicker(true),
         },
       ],
     },
     {
-      title: "ARCHIVE",
+      title: t("ARCHIVE", "АРХИВ"),
       items: [
         {
           icon: "archive",
-          title: "Archive",
-          subtitle: "View archived memories",
+          title: t("Archive", "Архив"),
+          subtitle: t("View archived memories", "Просмотр архивных воспоминаний"),
           onPress: () => navigation.navigate("Archive"),
         },
         {
           icon: "eye-off",
-          title: "Hidden Users",
-          subtitle: "Manage blocked users",
+          title: t("Hidden Users", "Скрытые пользователи"),
+          subtitle: t("Manage blocked users", "Управление заблокированными пользователями"),
           onPress: () => {
-            Alert.alert("Information", "The blocked users list is empty.");
+            Alert.alert(t("Information", "Информация"), t("The blocked users list is empty.", "Список заблокированных пользователей пуст."));
           },
         },
       ],
     },
     {
-      title: "SOUND & FEEDBACK",
+      title: t("SOUND & FEEDBACK", "ЗВУК И ОТКЛИК"),
       items: [
         {
           icon: "volume-x",
-          title: "Sound Effects",
-          subtitle: "Off",
+          title: t("Sound Effects", "Звуковые эффекты"),
+          subtitle: t("Off", "Выкл"),
           onPress: () => {},
         },
       ],
     },
     {
-      title: "APPEARANCE",
+      title: t("APPEARANCE", "ОФОРМЛЕНИЕ"),
       items: [
         {
           icon: "aperture",
-          title: "App Color",
-          subtitle: ACCENT_COLORS.find(c => c.color === (accentColor || "#5C7A5C"))?.name || "Default",
+          title: t("App Color", "Цвет приложения"),
+          subtitle: ACCENT_COLORS.find(c => c.color === (accentColor || "#5C7A5C"))?.name || t("Default", "По умолчанию"),
           onPress: () => setShowColorPicker(true),
         },
       ],
     },
     {
-      title: "HELP & FEEDBACK",
+      title: t("HELP & FEEDBACK", "ПОМОЩЬ И ОТЗЫВЫ"),
       items: [
         {
           icon: "help-circle",
-          title: "Help Center",
-          subtitle: "FAQs and instructions",
+          title: t("Help Center", "Центр помощи"),
+          subtitle: t("FAQs and instructions", "Часто задаваемые вопросы"),
           onPress: () => {
             Linking.openURL("https://skaisay.github.io/App-Privacy/");
           },
         },
         {
           icon: "alert-octagon",
-          title: "Report a Bug",
-          subtitle: "Help us improve",
+          title: t("Report a Bug", "Сообщить об ошибке"),
+          subtitle: t("Help us improve", "Помогите нам стать лучше"),
           onPress: () => {
             Linking.openURL("mailto:messaconfirmation@gmail.com?subject=Bug Report - Moments");
           },
@@ -285,11 +278,11 @@ export default function SettingsScreen({ navigation }: Props) {
       ],
     },
     {
-      title: "SUPPORT",
+      title: t("SUPPORT", "ПОДДЕРЖКА"),
       items: [
         {
           icon: "mail",
-          title: "Contact Us",
+          title: t("Contact Us", "Связаться с нами"),
           subtitle: "messaconfirmation@gmail.com",
           onPress: () => {
             Linking.openURL("mailto:messaconfirmation@gmail.com");
@@ -297,7 +290,7 @@ export default function SettingsScreen({ navigation }: Props) {
         },
         {
           icon: "message-circle",
-          title: "Our Discord",
+          title: t("Our Discord", "Наш Discord"),
           subtitle: "https://discord.gg/FRAZ6PBcH9",
           onPress: () => {
             Linking.openURL("https://discord.gg/FRAZ6PBcH9");
@@ -305,8 +298,8 @@ export default function SettingsScreen({ navigation }: Props) {
         },
         {
           icon: "file-text",
-          title: "Terms of Use",
-          subtitle: "User Agreement",
+          title: t("Terms of Use", "Условия использования"),
+          subtitle: t("User Agreement", "Пользовательское соглашение"),
           onPress: () => navigation.navigate("PrivacyPolicy"),
         },
       ],
@@ -495,6 +488,54 @@ export default function SettingsScreen({ navigation }: Props) {
                 Delete Account Forever
               </ThemedText>
             </Pressable>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showLanguagePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowLanguagePicker(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <ThemedText type="h3">{t("Language", "Язык")}</ThemedText>
+            <Pressable onPress={() => setShowLanguagePicker(false)} hitSlop={8}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.colorPickerContent}>
+            <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, overflow: "hidden" }]}>
+              <SettingRow 
+                item={{
+                  icon: "globe",
+                  title: "English",
+                  onPress: () => {
+                    setLanguage("en");
+                    setShowLanguagePicker(false);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  }
+                }}
+                isLast={false}
+              />
+              <SettingRow 
+                item={{
+                  icon: "globe",
+                  title: "Русский",
+                  onPress: () => {
+                    setLanguage("ru");
+                    setShowLanguagePicker(false);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  }
+                }}
+                isLast={true}
+              />
+            </View>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: "center" }}>
+              {t("Changing language will update the interface instantly.", "Смена языка обновит интерфейс мгновенно.")}
+            </ThemedText>
           </ScrollView>
         </View>
       </Modal>
