@@ -645,8 +645,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Archived posts routes
   app.get("/api/users/:id/archived", async (req, res) => {
     try {
-      const archivedPostIds = await storage.getArchivedPosts(req.params.id);
-      res.json(archivedPostIds);
+      const archivedIds = await storage.getArchivedPosts(req.params.id);
+      const allUserPosts = await storage.getUserPosts(req.params.id);
+      
+      const archivedPosts = await Promise.all(allUserPosts
+        .filter(post => archivedIds.includes(post.id))
+        .map(async (post) => {
+          const user = await storage.getUser(post.userId);
+          const likesCount = await storage.getPostLikesCount(post.id);
+          const commentsCount = await storage.getPostCommentsCount(post.id);
+          
+          return {
+            ...post,
+            user: user ? { id: user.id, username: user.username, emoji: user.emoji } : undefined,
+            likesCount,
+            commentsCount,
+            isLiked: false,
+            isSaved: false
+          };
+        })
+      );
+      
+      res.json(archivedPosts);
     } catch (error) {
       console.error("Get archived posts error:", error);
       res.status(500).json({ error: "Failed to get archived posts" });

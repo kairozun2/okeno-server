@@ -32,18 +32,11 @@ export default function ArchiveScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
-  const { data: archivedPostIds, isLoading: loadingIds } = useQuery<string[]>({
+  const { data: archivedPosts, isLoading } = useQuery<Post[]>({
     queryKey: ["/api/users", user?.id, "archived"],
     enabled: !!user?.id,
     staleTime: 0,
   });
-
-  const { data: allPosts, isLoading: loadingPosts } = useQuery<Post[]>({
-    queryKey: ["/api/posts"],
-    staleTime: 0,
-  });
-
-  const archivedPosts = allPosts?.filter(p => archivedPostIds?.includes(p.id)) || [];
 
   const unarchiveMutation = useMutation({
     mutationFn: async (postId: string) => {
@@ -51,6 +44,7 @@ export default function ArchiveScreen({ navigation }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "archived"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
@@ -71,7 +65,7 @@ export default function ArchiveScreen({ navigation }: Props) {
     </Pressable>
   );
 
-  if (loadingIds || loadingPosts) {
+  if (isLoading) {
     return (
       <ThemedView style={styles.center}>
         <ThemedText>Загрузка...</ThemedText>
