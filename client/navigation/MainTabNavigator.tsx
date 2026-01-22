@@ -222,9 +222,6 @@ export default function MainTabNavigator() {
           }}
         />
       </Tab.Navigator>
-      <View style={[styles.fabContainer, { bottom: 60 + insets.bottom }]}>
-        <CreatePostButton />
-      </View>
     </View>
   );
 }

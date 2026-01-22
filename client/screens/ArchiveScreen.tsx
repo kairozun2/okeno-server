@@ -69,6 +69,18 @@ export default function ArchiveScreen({ navigation }: Props) {
       style={styles.item}
     >
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      <View style={styles.unarchiveOverlay}>
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            unarchiveMutation.mutate(item.id);
+          }}
+          style={styles.unarchiveIcon}
+        >
+          <Feather name="arrow-up" size={18} color="#FFF" />
+        </Pressable>
+      </View>
     </Pressable>
   );
 
@@ -119,6 +131,19 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
+  },
+  unarchiveOverlay: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+  },
+  unarchiveIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   empty: {
     flex: 1,

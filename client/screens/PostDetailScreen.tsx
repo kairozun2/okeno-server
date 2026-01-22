@@ -99,7 +99,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "archived"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigation.goBack();
+      navigation.navigate("MainTabs", { screen: "Home" });
     },
   });
 
