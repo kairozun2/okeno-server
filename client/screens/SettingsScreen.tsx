@@ -17,8 +17,6 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
-import { useQueryClient } from "@tanstack/react-query";
-
 const ACCENT_COLORS = [
   { name: "Royal Blue", color: "#162660" },
   { name: "Powder Blue", color: "#6EB0F5" }, // Brighter for background
