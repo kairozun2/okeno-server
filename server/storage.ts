@@ -343,8 +343,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Notifications
-  async getUserNotifications(userId: string): Promise<Notification[]> {
-    return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
+  async getUserNotifications(userId: string): Promise<any[]> {
+    const notificationsData = await db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
+    
+    // Get fromUser data for each notification
+    const result = await Promise.all(notificationsData.map(async (notification) => {
+      let fromUser = null;
+      if (notification.fromUserId) {
+        const [user] = await db.select({
+          id: users.id,
+          username: users.username,
+          emoji: users.emoji,
+        }).from(users).where(eq(users.id, notification.fromUserId)).limit(1);
+        fromUser = user || null;
+      }
+      return { ...notification, fromUser };
+    }));
+    
+    return result;
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {

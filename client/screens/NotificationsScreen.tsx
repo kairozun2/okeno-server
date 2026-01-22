@@ -28,6 +28,11 @@ interface Notification {
   chatId: string | null;
   isRead: boolean;
   createdAt: string;
+  fromUser?: {
+    id: string;
+    username: string;
+    emoji: string;
+  };
 }
 
 function NotificationItem({
@@ -87,28 +92,32 @@ function NotificationItem({
           },
         ]}
       >
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: theme.backgroundSecondary },
-          ]}
-        >
-          <Feather
-            name={getNotificationIcon()}
-            size={20}
-            color={
-              notification.type === "like"
-                ? theme.error
-                : notification.type === "comment"
-                ? theme.link
-                : theme.text
-            }
-          />
-        </View>
+        {notification.fromUser ? (
+          <Avatar emoji={notification.fromUser.emoji} size={44} />
+        ) : (
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: theme.backgroundSecondary },
+            ]}
+          >
+            <Feather
+              name={getNotificationIcon()}
+              size={20}
+              color={
+                notification.type === "like"
+                  ? theme.error
+                  : notification.type === "comment"
+                  ? theme.link
+                  : theme.text
+              }
+            />
+          </View>
+        )}
         <View style={styles.notificationContent}>
           <ThemedText type="body">
             <ThemedText type="body" style={{ fontWeight: "600" }} truncate maxLength={12}>
-              {t("Someone", "Кто-то")}
+              {notification.fromUser?.username || t("Someone", "Кто-то")}
             </ThemedText>{" "}
             {getNotificationText()}
           </ThemedText>
@@ -187,7 +196,13 @@ export default function NotificationsScreen({ navigation }: Props) {
     }
 
     if (notification.type === "message" && notification.chatId) {
-      navigation.navigate("Chat", { chatId: notification.chatId });
+      navigation.navigate("Chat", { 
+        chatId: notification.chatId,
+        otherUserId: notification.fromUser?.id,
+        otherUserName: notification.fromUser?.username,
+        otherUserEmoji: notification.fromUser?.emoji,
+        otherUserUsername: notification.fromUser?.username,
+      });
     } else if (notification.postId) {
       navigation.navigate("PostDetail", { postId: notification.postId });
     }
@@ -213,16 +228,17 @@ export default function NotificationsScreen({ navigation }: Props) {
           <Feather name="x" size={24} color={theme.text} />
         </Pressable>
         <ThemedText type="h3">{t("Notifications", "Уведомления")}</ThemedText>
-        <View style={{ width: 24 }} />
+        {unreadCount > 0 ? (
+          <Pressable
+            onPress={() => markAllReadMutation.mutate()}
+            hitSlop={8}
+          >
+            <ThemedText type="link" style={{ fontSize: 14 }}>{t("Read all", "Все")}</ThemedText>
+          </Pressable>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
       </View>
-      {unreadCount > 0 ? (
-        <Pressable
-          onPress={() => markAllReadMutation.mutate()}
-          style={[styles.markAllButton, { backgroundColor: theme.backgroundSecondary }]}
-        >
-          <ThemedText type="link">{t("Mark all as read", "Прочитать все")}</ThemedText>
-        </Pressable>
-      ) : null}
       <FlatList
         data={notifications}
         renderItem={renderItem}
@@ -260,15 +276,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
-  },
-  markAllButton: {
-    position: "absolute",
-    top: 100,
-    right: Spacing.lg,
-    zIndex: 1,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
   },
   notificationItem: {
     flexDirection: "row",
