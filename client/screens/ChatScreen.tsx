@@ -250,6 +250,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     paddingTop: Spacing.sm,
+    backgroundColor: "transparent",
   },
   inputWrapper: {
     flexDirection: "row",
@@ -257,6 +258,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
     gap: Spacing.sm,
+    backgroundColor: "transparent",
   },
   input: {
     flex: 1,

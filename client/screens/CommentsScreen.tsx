@@ -152,10 +152,8 @@ export default function CommentsScreen({ route, navigation }: Props) {
         style={[
           styles.inputContainer,
           {
-            backgroundColor: theme.backgroundRoot,
+            backgroundColor: "transparent",
             paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.xl : Spacing.xl + Spacing.md,
-            borderTopWidth: 1,
-            borderTopColor: theme.border,
           },
         ]}
       >
