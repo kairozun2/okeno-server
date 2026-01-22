@@ -34,11 +34,8 @@ export function useScreenOptions({
     return {
       ...baseOptions,
       headerTransparent: true,
-      headerBlurEffect: Platform.OS === "ios" 
-        ? (isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight")
-        : undefined,
       headerStyle: {
-        backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundRoot,
+        backgroundColor: "transparent",
       },
     };
   }
