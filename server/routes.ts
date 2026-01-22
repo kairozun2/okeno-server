@@ -389,6 +389,49 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
+  // Message Reactions
+  app.get("/api/messages/:messageId/reactions", async (req, res) => {
+    try {
+      const reactions = await storage.getMessageReactions(req.params.messageId);
+      res.json(reactions);
+    } catch (error) {
+      console.error("Get reactions error:", error);
+      res.status(500).json({ error: "Failed to get reactions" });
+    }
+  });
+
+  app.post("/api/messages/:messageId/reactions", async (req, res) => {
+    try {
+      const { userId, emoji } = req.body;
+      if (!userId || !emoji) {
+        return res.status(400).json({ error: "userId and emoji are required" });
+      }
+      const reaction = await storage.addMessageReaction({
+        messageId: req.params.messageId,
+        userId,
+        emoji,
+      });
+      res.json(reaction);
+    } catch (error) {
+      console.error("Add reaction error:", error);
+      res.status(500).json({ error: "Failed to add reaction" });
+    }
+  });
+
+  app.delete("/api/messages/:messageId/reactions", async (req, res) => {
+    try {
+      const { userId, emoji } = req.body;
+      if (!userId || !emoji) {
+        return res.status(400).json({ error: "userId and emoji are required" });
+      }
+      await storage.removeMessageReaction(req.params.messageId, userId, emoji);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Remove reaction error:", error);
+      res.status(500).json({ error: "Failed to remove reaction" });
+    }
+  });
+
   app.post("/api/chats/:id/read", async (req, res) => {
     try {
       const { userId } = req.body;

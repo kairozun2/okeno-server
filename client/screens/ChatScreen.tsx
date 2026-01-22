@@ -438,14 +438,33 @@ export default function ChatScreen({ route, navigation }: Props) {
       const url = new URL(`/api/chats/${chatId}/messages?limit=20&offset=${pageParam}`, getApiUrl());
       const response = await fetch(url.toString(), { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch messages");
-      return response.json() as Promise<Message[]>;
+      const msgs = await response.json() as Message[];
+      
+      // Fetch reactions for each message
+      const messagesWithReactions = await Promise.all(
+        msgs.map(async (msg) => {
+          try {
+            const reactionsUrl = new URL(`/api/messages/${msg.id}/reactions`, getApiUrl());
+            const reactionsRes = await fetch(reactionsUrl.toString(), { credentials: "include" });
+            if (reactionsRes.ok) {
+              const reactions = await reactionsRes.json();
+              return { ...msg, reactions };
+            }
+          } catch {
+            // Ignore reaction fetch errors
+          }
+          return { ...msg, reactions: [] };
+        })
+      );
+      
+      return messagesWithReactions;
     },
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length === 0) return undefined;
       return lastPage.length === 20 ? allPages.length * 20 : undefined;
     },
     initialPageParam: 0,
-    refetchInterval: 1000,
+    refetchInterval: 2000,
   });
 
   const messages = data?.pages.flat() || [];
@@ -792,7 +811,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               }}
             >
               {showEmojiPicker && (
-                <View style={[styles.emojiPickerContainer, emojiPickerStyle]}>
+                <View style={styles.emojiPickerRow}>
                   {REACTION_EMOJIS.map((emoji) => (
                     <Pressable
                       key={emoji}
@@ -993,11 +1012,10 @@ const styles = StyleSheet.create({
     gap: 1,
     zIndex: 10,
   },
-  emojiPickerContainer: {
+  emojiPickerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
     marginBottom: Spacing.sm,
   },
   actionSheetContent: {

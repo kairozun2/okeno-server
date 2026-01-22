@@ -87,6 +87,17 @@ export const messages = pgTable("messages", {
   isRead: boolean("is_read").default(false).notNull(),
 });
 
+// Message reactions table
+export const messageReactions = pgTable("message_reactions", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  messageId: varchar("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  emoji: text("emoji").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Notifications table
 export const notifications = pgTable("notifications", {
   id: varchar("id")
@@ -235,13 +246,25 @@ export const chatsRelations = relations(chats, ({ one, many }) => ({
   messages: many(messages),
 }));
 
-export const messagesRelations = relations(messages, ({ one }) => ({
+export const messagesRelations = relations(messages, ({ one, many }) => ({
   chat: one(chats, {
     fields: [messages.chatId],
     references: [chats.id],
   }),
   sender: one(users, {
     fields: [messages.senderId],
+    references: [users.id],
+  }),
+  reactions: many(messageReactions),
+}));
+
+export const messageReactionsRelations = relations(messageReactions, ({ one }) => ({
+  message: one(messages, {
+    fields: [messageReactions.messageId],
+    references: [messages.id],
+  }),
+  user: one(users, {
+    fields: [messageReactions.userId],
     references: [users.id],
   }),
 }));
@@ -354,6 +377,12 @@ export const insertBlockedUserSchema = createInsertSchema(blockedUsers).pick({
   blockedUserId: true,
 });
 
+export const insertMessageReactionSchema = createInsertSchema(messageReactions).pick({
+  messageId: true,
+  userId: true,
+  emoji: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -379,3 +408,5 @@ export type InsertReport = z.infer<typeof insertReportSchema>;
 export type Report = typeof reports.$inferSelect;
 export type InsertBlockedUser = z.infer<typeof insertBlockedUserSchema>;
 export type BlockedUser = typeof blockedUsers.$inferSelect;
+export type InsertMessageReaction = z.infer<typeof insertMessageReactionSchema>;
+export type MessageReaction = typeof messageReactions.$inferSelect;

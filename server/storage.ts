@@ -6,6 +6,7 @@ import {
   comments,
   chats,
   messages,
+  messageReactions,
   notifications,
   sessions,
   hiddenUsers,
@@ -27,6 +28,8 @@ import {
   type InsertChat,
   type Message,
   type InsertMessage,
+  type MessageReaction,
+  type InsertMessageReaction,
   type Notification,
   type InsertNotification,
   type Session,
@@ -91,6 +94,11 @@ export interface IStorage {
   deleteMessage(id: string): Promise<void>;
   markMessagesAsRead(chatId: string, userId: string): Promise<void>;
   getUnreadMessagesCount(chatId: string, userId: string): Promise<number>;
+  
+  // Message Reactions
+  getMessageReactions(messageId: string): Promise<MessageReaction[]>;
+  addMessageReaction(reaction: InsertMessageReaction): Promise<MessageReaction>;
+  removeMessageReaction(messageId: string, userId: string, emoji: string): Promise<void>;
   
   // Notifications
   getUserNotifications(userId: string): Promise<Notification[]>;
@@ -320,6 +328,37 @@ export class DatabaseStorage implements IStorage {
       and(eq(messages.chatId, chatId), sql`${messages.senderId} != ${userId}`, eq(messages.isRead, false))
     );
     return Number(result[0]?.count || 0);
+  }
+
+  // Message Reactions
+  async getMessageReactions(messageId: string): Promise<MessageReaction[]> {
+    return db.select().from(messageReactions).where(eq(messageReactions.messageId, messageId));
+  }
+
+  async addMessageReaction(reaction: InsertMessageReaction): Promise<MessageReaction> {
+    // Check if already exists
+    const existing = await db.select().from(messageReactions).where(
+      and(
+        eq(messageReactions.messageId, reaction.messageId),
+        eq(messageReactions.userId, reaction.userId),
+        eq(messageReactions.emoji, reaction.emoji)
+      )
+    );
+    if (existing.length > 0) {
+      return existing[0];
+    }
+    const [newReaction] = await db.insert(messageReactions).values(reaction).returning();
+    return newReaction;
+  }
+
+  async removeMessageReaction(messageId: string, userId: string, emoji: string): Promise<void> {
+    await db.delete(messageReactions).where(
+      and(
+        eq(messageReactions.messageId, messageId),
+        eq(messageReactions.userId, userId),
+        eq(messageReactions.emoji, emoji)
+      )
+    );
   }
 
   async getTotalUnreadMessagesCount(userId: string): Promise<number> {
