@@ -137,7 +137,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           left: 0,
           right: 0,
           height: insets.top + 120,
-          zIndex: 99,
+          zIndex: 90, // Нижний zIndex, чтобы кнопки были над градиентом
           pointerEvents: 'none',
         }}
       />
@@ -147,14 +147,14 @@ export default function ChatScreen({ route, navigation }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
       >
-        <View style={[styles.header, { top: insets.top + Spacing.sm }]}>
+        <View style={[styles.header, { top: insets.top + Spacing.xs }]}>
           <Pressable
             onPress={() => navigation.goBack()}
             style={styles.headerButton}
           >
             {Platform.OS === 'ios' && (
               <BlurView
-                intensity={30}
+                intensity={40} // Немного увеличим интенсивность для лучшей видимости
                 tint={isDark ? "dark" : "light"}
                 style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
               />
@@ -168,7 +168,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           >
             {Platform.OS === 'ios' && (
               <BlurView
-                intensity={30}
+                intensity={40} // Немного увеличим интенсивность для лучшей видимости
                 tint={isDark ? "dark" : "light"}
                 style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
               />
