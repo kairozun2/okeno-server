@@ -23,6 +23,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Username and 4-digit PIN required" });
       }
 
+      const forbiddenWords = [
+        "admin", "root", "support", "official", "moderator",
+        "порно", "секс", "педофил", "расизм", "дискриминация",
+        "матерное_слово1", "матерное_слово2", // Example placeholders
+      ];
+
+      const lowerUsername = username.toLowerCase();
+      if (forbiddenWords.some(word => lowerUsername.includes(word))) {
+        return res.status(400).json({ error: "Username contains forbidden words" });
+      }
+
+      if (username.length > 20) {
+        return res.status(400).json({ error: "Username is too long (max 20 characters)" });
+      }
+
       const emoji = generateEmoji();
       const user = await storage.createUser({ username, pin, emoji });
       

@@ -61,7 +61,7 @@ function UserItem({
     >
       <Avatar emoji={user.emoji} size={44} />
       <View style={styles.userInfo}>
-        <ThemedText type="body" style={styles.username}>
+        <ThemedText type="body" style={styles.username} truncate maxLength={12}>
           {user.username}
         </ThemedText>
         {isCurrentUser ? (
@@ -180,7 +180,7 @@ export default function UserSearchScreen({ navigation }: Props) {
     Keyboard.dismiss();
     saveToHistory(user);
     if (user.id === currentUser?.id) {
-      navigation.replace("Main", { screen: "Profile" });
+      navigation.replace("Main");
     } else {
       navigation.push("UserProfile", { userId: user.id });
     }

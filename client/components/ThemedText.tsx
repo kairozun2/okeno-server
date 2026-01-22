@@ -7,6 +7,8 @@ export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
   type?: "h1" | "h2" | "h3" | "h4" | "body" | "small" | "caption" | "link";
+  truncate?: boolean;
+  maxLength?: number;
 };
 
 export function ThemedText({
@@ -14,6 +16,8 @@ export function ThemedText({
   lightColor,
   darkColor,
   type = "body",
+  truncate = false,
+  maxLength = 15,
   ...rest
 }: ThemedTextProps) {
   const { theme, isDark } = useTheme();
@@ -57,7 +61,14 @@ export function ThemedText({
     }
   };
 
+  let content = rest.children;
+  if (truncate && typeof content === "string" && content.length > maxLength) {
+    content = content.substring(0, maxLength) + "...";
+  }
+
   return (
-    <Text style={[{ color: getColor() }, getTypeStyle(), style]} {...rest} />
+    <Text style={[{ color: getColor() }, getTypeStyle(), style]} {...rest}>
+      {content}
+    </Text>
   );
 }
