@@ -311,7 +311,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       return lastPage.length === 20 ? allPages.length * 20 : undefined;
     },
     initialPageParam: 0,
-    refetchInterval: 3000,
+    refetchInterval: 1000,
   });
 
   const messages = data?.pages.flat() || [];
@@ -538,15 +538,15 @@ export default function ChatScreen({ route, navigation }: Props) {
                 style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
               />
             )}
-            <View style={{ marginRight: Spacing.sm }}>
+            <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end', justifyContent: 'center' }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
                 {userData?.isVerified ? <VerifiedBadge size={14} /> : null}
               </View>
-              <View style={{ height: 14, justifyContent: 'center' }}>
+              <View style={{ height: 12, marginTop: -2 }}>
                 {isOtherUserTyping ? (
-                  <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)}>
-                    <ThemedText type="caption" style={{ color: theme.link, fontSize: 10, lineHeight: 12 }}>{t("typing...", "печатает...")}</ThemedText>
+                  <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
+                    <ThemedText type="caption" style={{ color: theme.link, fontSize: 9, lineHeight: 12 }}>{t("typing...", "печатает...")}</ThemedText>
                   </Animated.View>
                 ) : null}
               </View>
