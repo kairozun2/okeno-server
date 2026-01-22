@@ -297,7 +297,6 @@ export default function ChatsListScreen({ navigation }: Props) {
         onRefresh={onRefresh}
         refreshing={refreshing}
         ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
-        showsVerticalScrollIndicator={false}
       />
 
       <Modal
