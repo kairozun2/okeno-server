@@ -164,33 +164,54 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         </Animated.View>
       ),
       headerLeft: () => (
-        <Pressable 
-          onPress={() => navigation.goBack()}
-          hitSlop={20}
-          style={{ 
-            width: 40,
-            height: 40,
-            alignItems: "center",
-            justifyContent: "center",
-            marginLeft: 8,
-          }}
-        >
-          <Feather name="chevron-left" size={28} color={theme.text} />
-        </Pressable>
-      ),
-      headerRight: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", paddingRight: 8 }}>
+        <View style={{ 
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: "rgba(255, 255, 255, 0.1)",
+          borderWidth: 1,
+          borderColor: "rgba(255, 255, 255, 0.2)",
+          alignItems: "center",
+          justifyContent: "center",
+          marginLeft: 16,
+        }}>
           <Pressable 
-            onPress={() => setShowActionSheet(true)} 
+            onPress={() => navigation.goBack()}
             hitSlop={20}
             style={{ 
-              width: 40,
-              height: 40,
+              width: "100%",
+              height: "100%",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Feather name="more-horizontal" size={24} color={theme.text} />
+            <Feather name="chevron-left" size={24} color={theme.text} />
+          </Pressable>
+        </View>
+      ),
+      headerRight: () => (
+        <View style={{ 
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: "rgba(255, 255, 255, 0.1)",
+          borderWidth: 1,
+          borderColor: "rgba(255, 255, 255, 0.2)",
+          alignItems: "center",
+          justifyContent: "center",
+          marginRight: 16,
+        }}>
+          <Pressable 
+            onPress={() => setShowActionSheet(true)} 
+            hitSlop={20}
+            style={{ 
+              width: "100%",
+              height: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Feather name="more-horizontal" size={20} color={theme.text} />
           </Pressable>
         </View>
       ),
