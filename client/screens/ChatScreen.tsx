@@ -163,8 +163,9 @@ export default function ChatScreen({ route, navigation }: Props) {
           ]}
           ListEmptyComponent={EmptyChatState}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onContentSizeChange={() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }}
         />
 
         <View
@@ -181,6 +182,10 @@ export default function ChatScreen({ route, navigation }: Props) {
                 styles.input,
                 {
                   color: theme.text,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  backgroundColor: "rgba(255,255,255,0.05)",
+                  borderRadius: 20,
                 },
               ]}
               placeholder="Сообщение..."

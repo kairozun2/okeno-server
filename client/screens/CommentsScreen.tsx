@@ -163,6 +163,10 @@ export default function CommentsScreen({ route, navigation }: Props) {
             styles.input,
             {
               color: theme.text,
+              borderWidth: 1,
+              borderColor: theme.border,
+              backgroundColor: "rgba(255,255,255,0.05)",
+              borderRadius: 20,
             },
           ]}
           placeholder="Комментарий..."
