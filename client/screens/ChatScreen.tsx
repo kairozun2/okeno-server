@@ -147,7 +147,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
       >
-        <View style={[styles.header, { top: insets.top - 20, paddingTop: 28 }]}>
+        <View style={[styles.header, { top: insets.top + Spacing.sm }]}>
           <Pressable
             onPress={() => navigation.goBack()}
             style={styles.headerButton}
