@@ -11,6 +11,9 @@ export const users = pgTable("users", {
   username: text("username").notNull(),
   pin: text("pin").notNull(),
   emoji: text("emoji").notNull(),
+  isAdmin: boolean("is_admin").default(false).notNull(),
+  isVerified: boolean("is_verified").default(false).notNull(),
+  isBanned: boolean("is_banned").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastSeen: timestamp("last_seen").defaultNow().notNull(),
 });
