@@ -286,34 +286,41 @@ export default function ChatScreen({ route, navigation }: Props) {
     setSelectedMessage(null);
   }, []);
 
-  const handleReaction = useCallback((emoji: string) => {
+  const handleReaction = useCallback(async (emoji: string) => {
     if (!selectedMessage) return;
     
-    // Send to server (placeholder for real API call to persist)
-    // apiRequest("POST", `/api/messages/${selectedMessage.id}/reactions`, { emoji });
+    try {
+      // Send to server to persist
+      await apiRequest("POST", `/api/messages/${selectedMessage.id}/reactions`, { 
+        emoji,
+        userId: user?.id 
+      });
 
-    // Add reaction optimistically and persist in local query cache
-    queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
-      if (!oldData) return oldData;
-      return {
-        ...oldData,
-        pages: oldData.pages.map((page: Message[]) =>
-          page.map((msg: Message) => {
-            if (msg.id === selectedMessage.id) {
-              const currentReactions = (msg as any).reactions || [];
-              const alreadyReacted = currentReactions.some((r: any) => r.emoji === emoji && r.userId === user?.id);
-              if (alreadyReacted) return msg;
+      // Update local query cache
+      queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: Message[]) =>
+            page.map((msg: Message) => {
+              if (msg.id === selectedMessage.id) {
+                const currentReactions = (msg as any).reactions || [];
+                const alreadyReacted = currentReactions.some((r: any) => r.emoji === emoji && r.userId === user?.id);
+                if (alreadyReacted) return msg;
 
-              return {
-                ...msg,
-                reactions: [...currentReactions, { emoji, userId: user?.id }]
-              };
-            }
-            return msg;
-          })
-        ),
-      };
-    });
+                return {
+                  ...msg,
+                  reactions: [...currentReactions, { emoji, userId: user?.id }]
+                };
+              }
+              return msg;
+            })
+          ),
+        };
+      });
+    } catch (error) {
+      console.error("Failed to save reaction:", error);
+    }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     closeEmojiPicker();
@@ -785,13 +792,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               }}
             >
               {showEmojiPicker && (
-                <Animated.View 
-                  style={[
-                    styles.emojiPickerContainer, 
-                    emojiPickerStyle,
-                    { backgroundColor: isDark ? "rgba(28,28,30,0.95)" : "rgba(255,255,255,0.95)" }
-                  ]}
-                >
+                <View style={[styles.emojiPickerContainer, emojiPickerStyle]}>
                   {REACTION_EMOJIS.map((emoji) => (
                     <Pressable
                       key={emoji}
@@ -799,10 +800,10 @@ export default function ChatScreen({ route, navigation }: Props) {
                       style={styles.emojiButton}
                       hitSlop={8}
                     >
-                      <ThemedText style={{ fontSize: 28 }}>{emoji}</ThemedText>
+                      <ThemedText style={{ fontSize: 32 }}>{emoji}</ThemedText>
                     </Pressable>
                   ))}
-                </Animated.View>
+                </View>
               )}
 
               <View 
@@ -995,11 +996,9 @@ const styles = StyleSheet.create({
   emojiPickerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: Spacing.xl * 1.5,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.sm,
-    borderRadius: 20,
     marginBottom: Spacing.sm,
-    overflow: 'visible',
   },
   actionSheetContent: {
     borderRadius: 14,
