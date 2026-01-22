@@ -35,10 +35,12 @@ export default function ArchiveScreen({ navigation }: Props) {
   const { data: archivedPostIds, isLoading: loadingIds } = useQuery<string[]>({
     queryKey: ["/api/users", user?.id, "archived"],
     enabled: !!user?.id,
+    staleTime: 0,
   });
 
   const { data: allPosts, isLoading: loadingPosts } = useQuery<Post[]>({
     queryKey: ["/api/posts"],
+    staleTime: 0,
   });
 
   const archivedPosts = allPosts?.filter(p => archivedPostIds?.includes(p.id)) || [];

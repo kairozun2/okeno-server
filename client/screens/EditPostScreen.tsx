@@ -46,6 +46,7 @@ export default function EditPostScreen({ route, navigation }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", post?.userId, "posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", post?.userId, "archived"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.goBack();

@@ -229,13 +229,41 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   const isArchived = archivedData?.includes(postId);
 
+  const unarchiveMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/users/${currentUser?.id}/archived/${postId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "archived"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+  });
+
   if (!post || isArchived) {
     if (isArchived) {
       return (
         <ThemedView style={[styles.container, styles.loadingContainer]}>
-          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+          <Feather name="archive" size={48} color={theme.textSecondary} style={{ marginBottom: Spacing.md }} />
+          <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
             Публикация в архиве
           </ThemedText>
+          <Pressable
+            onPress={() => unarchiveMutation.mutate()}
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              backgroundColor: theme.cardBackground,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: theme.border,
+            }}
+          >
+            <Feather name="rotate-ccw" size={24} color={theme.link} />
+          </Pressable>
         </ThemedView>
       );
     }
