@@ -1,5 +1,5 @@
-import React from "react";
-import { StyleSheet } from "react-native";
+import React, { useState, useCallback } from "react";
+import { StyleSheet, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -11,7 +11,35 @@ import { queryClient } from "@/lib/query-client";
 
 import RootStackNavigator from "@/navigation/RootStackNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LoadingScreen } from "@/components/LoadingScreen";
+
+function AppContent() {
+  const { user, isLoading } = useAuth();
+  const [showLoading, setShowLoading] = useState(true);
+  
+  const handleLoadingFinish = useCallback(() => {
+    setShowLoading(false);
+  }, []);
+
+  const isReady = !isLoading;
+
+  return (
+    <View style={styles.root}>
+      <NavigationContainer>
+        <RootStackNavigator />
+      </NavigationContainer>
+      <StatusBar style="light" />
+      {showLoading && (
+        <LoadingScreen 
+          emoji={user?.emoji || "🐸"} 
+          isReady={isReady} 
+          onFinish={handleLoadingFinish} 
+        />
+      )}
+    </View>
+  );
+}
 
 export default function App() {
   return (
@@ -21,10 +49,7 @@ export default function App() {
           <SafeAreaProvider>
             <GestureHandlerRootView style={styles.root}>
               <KeyboardProvider>
-                <NavigationContainer>
-                  <RootStackNavigator />
-                </NavigationContainer>
-                <StatusBar style="light" />
+                <AppContent />
               </KeyboardProvider>
             </GestureHandlerRootView>
           </SafeAreaProvider>

@@ -131,14 +131,6 @@ export default function RootStackNavigator() {
                   }}
                 />
               ),
-              headerTransparent: true,
-              headerBackground: () => (
-                <BlurView
-                  intensity={80}
-                  tint={isDark ? "dark" : "light"}
-                  style={StyleSheet.absoluteFill}
-                />
-              ),
               headerRight: () => null,
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               gestureEnabled: false,

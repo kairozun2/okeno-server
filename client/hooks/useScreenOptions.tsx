@@ -56,7 +56,7 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
   const { theme, isDark } = useTheme();
 
   return {
-    presentation: "modal",
+    presentation: "fullScreenModal",
     headerTitleAlign: "center",
     headerTintColor: theme.text,
     headerTitleStyle: {
@@ -65,16 +65,11 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
     },
     headerTransparent: true,
     headerBlurEffect: Platform.OS === "ios"
-      ? (isDark ? "systemThinMaterialDark" : "systemThinMaterialLight")
+      ? (isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight")
       : undefined,
     headerStyle: {
       backgroundColor: "transparent",
     },
-    headerBackground: () => React.createElement(BlurView, {
-      intensity: 80,
-      tint: isDark ? "dark" : "light",
-      style: StyleSheet.absoluteFill
-    }),
     contentStyle: {
       backgroundColor: theme.backgroundRoot,
     },
