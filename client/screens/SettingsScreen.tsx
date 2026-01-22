@@ -173,17 +173,6 @@ export default function SettingsScreen({ navigation }: Props) {
           subtitle: "ID восстановления и настройки аккаунта",
           onPress: handleCopyId,
         },
-      ],
-    },
-    {
-      title: "КОНФИДЕНЦИАЛЬНОСТЬ",
-      items: [
-        {
-          icon: "lock",
-          title: "Конфиденциальность",
-          subtitle: "Политика и использование данных",
-          onPress: () => navigation.navigate("PrivacyPolicy"),
-        },
         {
           icon: "smartphone",
           title: "Активные сеансы",
@@ -263,13 +252,13 @@ export default function SettingsScreen({ navigation }: Props) {
           title: "Связаться с нами",
           subtitle: "messaconfirmation@gmail.com",
           onPress: () => {
-            Alert.alert("Связаться с нами", "Email: messaconfirmation@gmail.com\nDiscord: FRAZ6PBcH9\n\nМы отвечаем в течение 24 часов.");
+            Linking.openURL("mailto:messaconfirmation@gmail.com");
           },
         },
         {
           icon: "message-circle",
           title: "Наш Discord",
-          subtitle: "Присоединиться к сообществу",
+          subtitle: "https://discord.gg/FRAZ6PBcH9",
           onPress: () => {
             Linking.openURL("https://discord.gg/FRAZ6PBcH9");
           },
