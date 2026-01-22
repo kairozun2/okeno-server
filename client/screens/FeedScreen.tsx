@@ -154,8 +154,8 @@ function PostCard({
         <Pressable onPress={onUserPress} style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
           <Avatar emoji={post.user?.emoji || "🐸"} size={32} />
           <View style={styles.postHeaderInfo}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-              <ThemedText type="small" style={styles.username} truncate maxLength={12}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <ThemedText type="small" style={[styles.username, { marginRight: 4 }]} truncate maxLength={12}>
                 {post.user?.username || "..."}
               </ThemedText>
               {post.user?.isVerified ? <VerifiedBadge size={14} /> : null}

@@ -67,8 +67,8 @@ function UserItem({
     >
       <Avatar emoji={user.emoji} size={44} />
       <View style={styles.userInfo}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-          <ThemedText type="body" style={styles.username} truncate maxLength={12}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <ThemedText type="body" style={[styles.username, { marginRight: 4 }]} truncate maxLength={12}>
             {user.username}
           </ThemedText>
           {user.isVerified ? <VerifiedBadge size={14} /> : null}

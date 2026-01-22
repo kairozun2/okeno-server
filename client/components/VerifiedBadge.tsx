@@ -9,16 +9,17 @@ interface VerifiedBadgeProps {
 }
 
 export function VerifiedBadge({ size = 16, style }: VerifiedBadgeProps) {
-  const iconSize = Math.round(size * 0.6);
+  const iconSize = Math.round(size * 0.7);
   
   return (
     <View style={[styles.container, { width: size, height: size, borderRadius: size / 2 }, style]}>
       <LinearGradient
-        colors={["#00C6FB", "#005BEA"]}
+        colors={["#00D2FF", "#3A7BD5"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]}
+        style={[StyleSheet.absoluteFill, { borderRadius: size / 2, opacity: 0.9 }]}
       />
+      <View style={[StyleSheet.absoluteFill, { borderRadius: size / 2, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" }]} />
       <Feather name="check" size={iconSize} color="#FFFFFF" />
     </View>
   );

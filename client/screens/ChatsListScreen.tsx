@@ -87,8 +87,8 @@ function ChatItem({
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <ThemedText type="body" style={[styles.chatName, { marginRight: 4 }]} truncate maxLength={12}>
                   {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
                 </ThemedText>
                 {chat.otherUser?.isVerified ? <VerifiedBadge size={14} /> : null}
