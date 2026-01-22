@@ -200,8 +200,8 @@ function MessageBubble({
               styles.reactionsBadge,
               { 
                 backgroundColor: 'transparent',
-                right: isOwn ? -25 : undefined, // Moved even further left (right -25)
-                left: !isOwn ? -10 : undefined, // Moved further left for others too
+                left: isOwn ? -25 : undefined, // Moved further left for own messages (was right: -25)
+                right: !isOwn ? -25 : undefined, // Moved further right for other user messages
               }
             ]}>
               {(message as any).reactions.map((r: any, idx: number) => (
@@ -1018,13 +1018,13 @@ const styles = StyleSheet.create({
   },
   emojiPickerRow: {
     flexDirection: "row",
-    flexWrap: "wrap", // Allow wrapping to prevent going off screen
     justifyContent: "flex-start",
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 10,
-    marginBottom: Spacing.sm,
+    paddingTop: 10,
+    paddingBottom: 0,
+    marginBottom: 2,
     alignItems: 'center',
-    gap: 4, // Reduced gap
+    gap: 2,
   },
   actionSheetContent: {
     borderRadius: 14,
@@ -1032,8 +1032,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   emojiButton: {
-    width: 36, // Smaller buttons
-    height: 36, // Smaller buttons
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
