@@ -124,24 +124,6 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
-      <LinearGradient
-        colors={[
-          isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
-          isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)',
-          isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
-          'transparent'
-        ]}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top + 120,
-          zIndex: 90, // Нижний zIndex, чтобы кнопки были над градиентом
-          pointerEvents: 'none',
-        }}
-      />
-
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -154,7 +136,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           >
             {Platform.OS === 'ios' && (
               <BlurView
-                intensity={45} // Еще больше интенсивности
+                intensity={45} 
                 tint={isDark ? "dark" : "light"}
                 style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
               />
@@ -180,6 +162,24 @@ export default function ChatScreen({ route, navigation }: Props) {
             <Avatar emoji={otherUserEmoji || "🐸"} size={32} />
           </Pressable>
         </View>
+
+        <LinearGradient
+          colors={[
+            isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
+            isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)',
+            isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
+            'transparent'
+          ]}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top + 120,
+            zIndex: 90, 
+            pointerEvents: 'none',
+          }}
+        />
 
         <FlatList
           ref={flatListRef}
