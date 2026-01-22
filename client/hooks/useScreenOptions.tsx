@@ -63,10 +63,11 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
       fontWeight: "600",
       fontSize: 17,
     },
-    headerTransparent: true,
+    headerTransparent: false,
     headerStyle: {
-      backgroundColor: "transparent",
+      backgroundColor: theme.backgroundRoot,
     },
+    headerShadowVisible: false,
     contentStyle: {
       backgroundColor: theme.backgroundRoot,
     },

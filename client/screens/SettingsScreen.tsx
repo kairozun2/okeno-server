@@ -219,7 +219,7 @@ export default function SettingsScreen({ navigation }: Props) {
     <ScrollView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       contentContainerStyle={{
-        paddingTop: headerHeight + Spacing.lg,
+        paddingTop: Spacing.lg,
         paddingBottom: insets.bottom + Spacing.xl,
       }}
       showsVerticalScrollIndicator={false}

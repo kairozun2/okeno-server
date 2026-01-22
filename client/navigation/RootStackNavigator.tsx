@@ -221,6 +221,7 @@ export default function RootStackNavigator() {
               ...modalOptions,
               headerTitle: "Конфиденциальность",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
             })}
           />
           <Stack.Screen
@@ -230,6 +231,7 @@ export default function RootStackNavigator() {
               ...modalOptions,
               headerTitle: "Данные и память",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
             })}
           />
         </>

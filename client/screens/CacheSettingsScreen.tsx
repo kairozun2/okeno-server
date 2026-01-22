@@ -38,7 +38,7 @@ export default function CacheSettingsScreen() {
     <ThemedView style={styles.container}>
       <ScrollView
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.lg,
+          paddingTop: Spacing.lg,
           paddingHorizontal: Spacing.lg,
           paddingBottom: insets.bottom + Spacing.xl,
         }}
