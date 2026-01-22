@@ -8,6 +8,8 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
+import { Feather } from "@expo/vector-icons";
+
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Input } from "@/components/Input";
@@ -32,13 +34,21 @@ export default function RegisterScreen({ navigation }: Props) {
   const [confirmPin, setConfirmPin] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [step, setStep] = useState<"username" | "pin" | "confirm">("username");
+  const [step, setStep] = useState<"username" | "age" | "pin" | "confirm">("username");
   const [previewEmoji] = useState(getRandomEmoji());
+  const [isAgeConfirmed, setIsAgeConfirmed] = useState(false);
 
   const handleNext = () => {
     if (step === "username") {
       if (!username.trim()) {
         Alert.alert("Ошибка", "Введите имя пользователя");
+        return;
+      }
+      setStep("age");
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else if (step === "age") {
+      if (!isAgeConfirmed) {
+        Alert.alert("Требуется подтверждение", "Вы должны подтвердить, что вам исполнилось 18 лет, чтобы продолжить.");
         return;
       }
       setStep("pin");
@@ -76,8 +86,10 @@ export default function RegisterScreen({ navigation }: Props) {
   };
 
   const handleBack = () => {
-    if (step === "pin") {
+    if (step === "age") {
       setStep("username");
+    } else if (step === "pin") {
+      setStep("age");
     } else if (step === "confirm") {
       setStep("pin");
       setConfirmPin("");
@@ -103,6 +115,8 @@ export default function RegisterScreen({ navigation }: Props) {
           <ThemedText type="h2" style={styles.title}>
             {step === "username"
               ? "Создать аккаунт"
+              : step === "age"
+              ? "Возрастное ограничение"
               : step === "pin"
               ? "Создайте PIN"
               : "Подтвердите PIN"}
@@ -113,6 +127,8 @@ export default function RegisterScreen({ navigation }: Props) {
           >
             {step === "username"
               ? "Выберите имя для вашего профиля"
+              : step === "age"
+              ? "Приложение Moments имеет возрастной рейтинг 18+. Пожалуйста, подтвердите ваш возраст."
               : step === "pin"
               ? "Создайте 4-значный PIN для защиты"
               : "Введите PIN ещё раз для подтверждения"}
@@ -132,6 +148,32 @@ export default function RegisterScreen({ navigation }: Props) {
               autoCorrect={false}
               autoFocus
             />
+          ) : step === "age" ? (
+            <View style={styles.ageSection}>
+              <Pressable 
+                onPress={() => setIsAgeConfirmed(!isAgeConfirmed)}
+                style={[
+                  styles.ageConfirmBox, 
+                  { 
+                    backgroundColor: theme.backgroundSecondary,
+                    borderColor: isAgeConfirmed ? theme.accent : theme.border
+                  }
+                ]}
+              >
+                <View style={[
+                  styles.checkbox, 
+                  { 
+                    backgroundColor: isAgeConfirmed ? theme.accent : 'transparent',
+                    borderColor: isAgeConfirmed ? theme.accent : theme.textSecondary
+                  }
+                ]}>
+                  {isAgeConfirmed && <Feather name="check" size={14} color="white" />}
+                </View>
+                <ThemedText style={{ flex: 1, marginLeft: Spacing.sm }}>
+                  Мне исполнилось 18 лет и я принимаю условия использования.
+                </ThemedText>
+              </Pressable>
+            </View>
           ) : (
             <View style={styles.pinSection}>
               <PinInput
@@ -169,6 +211,7 @@ export default function RegisterScreen({ navigation }: Props) {
                 onPress={handleNext}
                 disabled={
                   (step === "username" && !username.trim()) ||
+                  (step === "age" && !isAgeConfirmed) ||
                   (step === "pin" && pin.length !== 4)
                 }
                 style={styles.button}
@@ -238,6 +281,24 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
+  },
+  ageSection: {
+    marginBottom: Spacing.xl,
+  },
+  ageConfirmBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
   footer: {
     flexDirection: "row",
