@@ -55,7 +55,7 @@ export default function PrivacyPolicyScreen({ navigation }: Props) {
     <ThemedView style={styles.container}>
       <ScrollView
         contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.lg,
+          paddingTop: headerHeight + Spacing.xs,
           paddingBottom: insets.bottom + Spacing["2xl"],
           paddingHorizontal: Spacing.lg,
         }}
