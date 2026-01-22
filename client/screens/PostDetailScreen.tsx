@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -46,7 +46,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "PostDetail">;
 
 export default function PostDetailScreen({ route, navigation }: Props) {
   const { postId } = route.params;
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -81,6 +81,57 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     enabled: !!currentUser?.id,
   });
 
+  const isOwner = currentUser?.id === post?.userId;
+
+  const deletePostMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/posts/${postId}`);
+    },
+    onSuccess: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
+      navigation.goBack();
+    },
+    onError: () => {
+      Alert.alert("Ошибка", "Не удалось удалить публикацию");
+    },
+  });
+
+  const handleDelete = useCallback(() => {
+    Alert.alert(
+      "Удалить публикацию?",
+      "Это действие нельзя отменить.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить",
+          style: "destructive",
+          onPress: () => deletePostMutation.mutate(),
+        },
+      ]
+    );
+  }, [deletePostMutation]);
+
+  useEffect(() => {
+    if (isOwner) {
+      navigation.setOptions({
+        headerRight: () => (
+          <Pressable
+            onPress={handleDelete}
+            style={{ marginRight: Spacing.sm }}
+          >
+            <Feather name="trash-2" size={22} color={theme.error} />
+          </Pressable>
+        ),
+      });
+    } else {
+      navigation.setOptions({
+        headerRight: undefined
+      });
+    }
+  }, [isOwner, navigation, theme.error, handleDelete]);
+
   const likeMutation = useMutation({
     mutationFn: async () => {
       if (likedData?.liked) {
@@ -107,36 +158,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "saves", currentUser?.id] });
     },
   });
-
-  const deletePostMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("DELETE", `/api/posts/${postId}`);
-    },
-    onSuccess: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
-      navigation.goBack();
-    },
-    onError: () => {
-      Alert.alert("Ошибка", "Не удалось удалить публикацию");
-    },
-  });
-
-  const handleDelete = () => {
-    Alert.alert(
-      "Удалить публикацию?",
-      "Это действие нельзя отменить.",
-      [
-        { text: "Отмена", style: "cancel" },
-        {
-          text: "Удалить",
-          style: "destructive",
-          onPress: () => deletePostMutation.mutate(),
-        },
-      ]
-    );
-  };
 
   const likeAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: likeScale.value }],
@@ -182,13 +203,11 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     );
   }
 
-  const isOwner = currentUser?.id === post.userId;
-
   return (
     <ThemedView style={styles.container}>
       <ScrollView
         contentContainerStyle={{
-          paddingTop: insets.top + Spacing.xl,
+          paddingTop: Spacing.lg,
           paddingBottom: insets.bottom + Spacing.xl,
         }}
         showsVerticalScrollIndicator={false}
@@ -216,11 +235,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 </ThemedText>
               </View>
             </Pressable>
-            {isOwner && (
-              <Pressable onPress={handleDelete} style={styles.deleteButton}>
-                <Feather name="trash-2" size={20} color={theme.error} />
-              </Pressable>
-            )}
           </View>
 
           {post.location ? (
@@ -273,17 +287,19 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             </AnimatedPressable>
           </View>
 
-          <Pressable
-            onPress={() => navigation.navigate("Comments", { postId })}
-            style={[styles.viewCommentsButton, { backgroundColor: theme.cardBackground }]}
-          >
-            <Feather name="message-square" size={16} color={theme.textSecondary} />
-            <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>
-              Комментарии
-            </ThemedText>
-            <View style={{ flex: 1 }} />
-            <Feather name="chevron-right" size={18} color={theme.textSecondary} />
-          </Pressable>
+          {!isOwner && (
+            <Pressable
+              onPress={() => navigation.navigate("Comments", { postId })}
+              style={[styles.viewCommentsButton, { backgroundColor: theme.cardBackground }]}
+            >
+              <Feather name="message-square" size={16} color={theme.textSecondary} />
+              <ThemedText type="body" style={{ marginLeft: Spacing.sm }}>
+                Комментарии
+              </ThemedText>
+              <View style={{ flex: 1 }} />
+              <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+            </Pressable>
+          )}
         </Animated.View>
       </ScrollView>
     </ThemedView>
