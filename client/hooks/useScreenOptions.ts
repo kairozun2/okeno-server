@@ -72,5 +72,6 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
       backgroundColor: theme.backgroundRoot,
     },
     gestureEnabled: true,
+    headerLeft: () => null, // Placeholder to be overridden in navigator
   };
 }

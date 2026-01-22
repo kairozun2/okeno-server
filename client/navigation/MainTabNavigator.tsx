@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 import FeedScreen from "@/screens/FeedScreen";
 import ChatsListScreen from "@/screens/ChatsListScreen";
@@ -24,9 +25,23 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-function CreatePostButton() {
+function CreatePostButton({ iconOnly = false }: { iconOnly?: boolean }) {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  if (iconOnly) {
+    return (
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          navigation.navigate("CreatePost");
+        }}
+        style={styles.headerButton}
+      >
+        <Feather name="plus" size={22} color={theme.text} />
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
@@ -53,7 +68,7 @@ function NotificationsButton() {
       }}
       style={styles.headerButton}
     >
-      <Feather name="bell" size={20} color={theme.textSecondary} />
+      <Feather name="bell" size={20} color={theme.text} />
     </Pressable>
   );
 }
@@ -70,7 +85,7 @@ function SettingsButton() {
       }}
       style={styles.headerButton}
     >
-      <Feather name="settings" size={20} color={theme.textSecondary} />
+      <Feather name="settings" size={20} color={theme.text} />
     </Pressable>
   );
 }
@@ -85,7 +100,7 @@ function NewChatButton() {
       }}
       style={styles.headerButton}
     >
-      <Feather name="edit" size={20} color={theme.textSecondary} />
+      <Feather name="edit" size={20} color={theme.text} />
     </Pressable>
   );
 }
@@ -93,6 +108,7 @@ function NewChatButton() {
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const [showPlus, setShowPlus] = useState(false);
 
   const headerBackground = () =>
     Platform.OS === "ios" ? (
@@ -144,8 +160,22 @@ export default function MainTabNavigator() {
           name="FeedTab"
           component={FeedScreen}
           options={{
-            headerTitle: () => <HeaderTitle title="Moments" />,
-            headerRight: () => <NotificationsButton />,
+            headerTitle: () => (
+              <HeaderTitle 
+                title="Moments" 
+                onFadeComplete={() => setShowPlus(true)} 
+              />
+            ),
+            headerRight: () => (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                {showPlus ? (
+                  <Animated.View entering={FadeIn} exiting={FadeOut}>
+                    <CreatePostButton iconOnly />
+                  </Animated.View>
+                ) : null}
+                <NotificationsButton />
+              </View>
+            ),
             tabBarIcon: ({ color }) => (
               <Feather name="home" size={22} color={color} />
             ),
@@ -166,8 +196,7 @@ export default function MainTabNavigator() {
           name="ProfileTab"
           component={ProfileScreen}
           options={{
-            headerTitle: "Профиль",
-            headerRight: () => <SettingsButton />,
+            headerShown: false,
             tabBarIcon: ({ color }) => (
               <Feather name="user" size={22} color={color} />
             ),

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { View, StyleSheet, TextInput, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { BlurView } from "expo-blur";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -83,7 +84,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
 export default function ChatScreen({ route }: Props) {
   const { chatId } = route.params;
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -136,72 +137,74 @@ export default function ChatScreen({ route }: Props) {
   );
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      behavior="padding"
-      keyboardVerticalOffset={headerHeight}
-    >
-      <FlatList
-        ref={flatListRef}
-        data={sortedMessages}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        inverted={messages.length > 0}
-        contentContainerStyle={[
-          styles.messagesList,
-          { paddingTop: Spacing.md },
-          messages.length === 0 && { flex: 1 },
-        ]}
-        ListEmptyComponent={<EmptyChat />}
-        showsVerticalScrollIndicator={false}
-      />
-
-      <View
-        style={[
-          styles.inputContainer,
-          {
-            backgroundColor: theme.backgroundRoot,
-            paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md,
-            borderTopWidth: 1,
-            borderTopColor: theme.border,
-          },
-        ]}
+    <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior="padding"
+        keyboardVerticalOffset={headerHeight}
       >
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.inputBackground,
-              color: theme.text,
-              borderWidth: 1,
-              borderColor: theme.border,
-            },
+        <FlatList
+          ref={flatListRef}
+          data={sortedMessages}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          inverted={messages.length > 0}
+          contentContainerStyle={[
+            styles.messagesList,
+            { paddingTop: headerHeight + Spacing.md },
+            messages.length === 0 && { flex: 1 },
           ]}
-          placeholder="Сообщение..."
-          placeholderTextColor={theme.textSecondary}
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          maxLength={1000}
+          ListEmptyComponent={<EmptyChat />}
+          showsVerticalScrollIndicator={false}
         />
-        <Pressable
-          onPress={handleSend}
-          disabled={!message.trim() || sendMutation.isPending}
+
+        <View
           style={[
-            styles.sendButton,
+            styles.inputContainer,
             {
-              backgroundColor: message.trim() ? theme.link : theme.backgroundSecondary,
+              backgroundColor: theme.backgroundRoot,
+              paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md,
+              borderTopWidth: 1,
+              borderTopColor: theme.border,
             },
           ]}
         >
-          <Feather
-            name="send"
-            size={18}
-            color={message.trim() ? "#fff" : theme.textSecondary}
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.inputBackground,
+                color: theme.text,
+                borderWidth: 1,
+                borderColor: theme.border,
+              },
+            ]}
+            placeholder="Сообщение..."
+            placeholderTextColor={theme.textSecondary}
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            maxLength={1000}
           />
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+          <Pressable
+            onPress={handleSend}
+            disabled={!message.trim() || sendMutation.isPending}
+            style={[
+              styles.sendButton,
+              {
+                backgroundColor: message.trim() ? theme.link : theme.backgroundSecondary,
+              },
+            ]}
+          >
+            <Feather
+              name="send"
+              size={18}
+              color={message.trim() ? "#fff" : theme.textSecondary}
+            />
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 

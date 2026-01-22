@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { View, StyleSheet, RefreshControl, Pressable, FlatList } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -74,7 +74,7 @@ function ChatItem({
               {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: true, locale: ru })}
             </ThemedText>
           </View>
-          <View style={styles.chatPreview}>
+          <div style={styles.chatPreview}>
             <ThemedText
               type="small"
               numberOfLines={1}
@@ -89,7 +89,7 @@ function ChatItem({
                 </ThemedText>
               </View>
             ) : null}
-          </View>
+          </div>
         </View>
       </Pressable>
     </Animated.View>
@@ -123,16 +123,16 @@ type Props = CompositeScreenProps<
 export default function ChatsListScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { user } = useAuth();
-  const headerHeight = useHeaderHeight();
+  const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: chats = [] } = useQuery<Chat[]>({
+  const { data: chatsData = [], isLoading } = useQuery<ChatWithDetails[]>({
     queryKey: ["/api/users", user?.id, "chats"],
     enabled: !!user?.id,
-    refetchInterval: 5000,
+    refetchInterval: 3000,
   });
 
   const onRefresh = useCallback(async () => {
@@ -141,41 +141,32 @@ export default function ChatsListScreen({ navigation }: Props) {
     setRefreshing(false);
   }, [queryClient, user?.id]);
 
-  const getOtherUserId = (chat: Chat) => {
-    return chat.user1Id === user?.id ? chat.user2Id : chat.user1Id;
-  };
+  const sortedChats = useMemo(() => {
+    return [...chatsData].sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }, [chatsData]);
 
   const renderItem = useCallback(
-    ({ item }: { item: Chat }) => {
-      const otherUserId = getOtherUserId(item);
-      
-      const chatWithDetails: ChatWithDetails = {
-        ...item,
-        otherUser: {
-          id: otherUserId,
-          username: "Пользователь",
-          emoji: "🐸",
-        },
-      };
-
+    ({ item }: { item: ChatWithDetails }) => {
       return (
         <ChatItem
-          chat={chatWithDetails}
+          chat={item}
           onPress={() => navigation.navigate("Chat", { 
             chatId: item.id,
-            otherUserName: chatWithDetails.otherUser?.username,
-            otherUserEmoji: chatWithDetails.otherUser?.emoji,
+            otherUserName: item.otherUser?.username,
+            otherUserEmoji: item.otherUser?.emoji,
           })}
         />
       );
     },
-    [user, navigation]
+    [navigation]
   );
 
   return (
     <ThemedView style={styles.container}>
       <FlatList
-        data={chats}
+        data={sortedChats}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
@@ -190,7 +181,7 @@ export default function ChatsListScreen({ navigation }: Props) {
             tintColor={theme.textSecondary}
           />
         }
-        ListEmptyComponent={<EmptyChats />}
+        ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
         showsVerticalScrollIndicator={false}
       />
     </ThemedView>
