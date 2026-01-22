@@ -69,10 +69,15 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
     headerStyle: {
       backgroundColor: Platform.OS === "ios" ? "transparent" : "rgba(255, 255, 255, 0.1)",
     },
-    headerBackground: () => 
-      Platform.OS === "ios" ? null : (
-        <View style={{ flex: 1, backgroundColor: isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)" }} />
-      ),
+    headerBackground: () => {
+      if (Platform.OS === "ios") return null;
+      return React.createElement(View, {
+        style: {
+          flex: 1,
+          backgroundColor: isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)"
+        }
+      });
+    },
     contentStyle: {
       backgroundColor: theme.backgroundRoot,
     },
