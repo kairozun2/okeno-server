@@ -159,14 +159,11 @@ export default function ChatScreen({ route, navigation }: Props) {
           inverted={messages.length > 0}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: Spacing.md },
+            { paddingTop: headerHeight + Spacing.md },
             messages.length === 0 && { flex: 1 },
           ]}
           ListEmptyComponent={EmptyChatState}
           showsVerticalScrollIndicator={false}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-          }}
         />
 
         <View
@@ -250,7 +247,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    transform: [{ scaleY: -1 }],
   },
   inputContainer: {
     paddingTop: Spacing.sm,

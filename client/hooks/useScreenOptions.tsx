@@ -70,16 +70,11 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
     headerStyle: {
       backgroundColor: "transparent",
     },
-    headerBackground: () => React.createElement(View, {
-      style: [
-        StyleSheet.absoluteFill,
-        { backgroundColor: theme.backgroundRoot }
-      ]
-    }, React.createElement(BlurView, {
+    headerBackground: () => React.createElement(BlurView, {
       intensity: 80,
       tint: isDark ? "dark" : "light",
       style: StyleSheet.absoluteFill
-    })),
+    }),
     contentStyle: {
       backgroundColor: theme.backgroundRoot,
     },

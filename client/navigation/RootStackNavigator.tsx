@@ -82,7 +82,7 @@ function ChatHeaderTitle({ name, username, onPress, emoji }: { name?: string; us
           </ThemedText>
         ) : null}
       </View>
-      <View style={{ borderRadius: 20, overflow: "hidden" }}>
+      <View style={{ borderRadius: 20, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.05)" }}>
         <BlurView
           intensity={60}
           tint={isDark ? "dark" : "light"}
