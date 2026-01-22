@@ -144,7 +144,8 @@ function PostCard({
         source={{ uri: post.imageUrl }}
         style={styles.postImage}
         contentFit="cover"
-        transition={150}
+        transition={200}
+        cachePolicy="memory-disk"
       />
 
       <View style={styles.postActions}>

@@ -240,7 +240,8 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             source={{ uri: item.imageUrl }}
             style={{ width: "100%", height: "100%" }}
             contentFit="cover"
-            transition={100}
+            transition={200}
+            cachePolicy="memory-disk"
           />
         </Pressable>
       );
