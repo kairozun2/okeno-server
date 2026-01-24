@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput, Platform, ActivityIndicator } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput, Platform, ActivityIndicator, KeyboardAvoidingView } from "react-native";
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -552,6 +552,30 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               <ThemedText style={{ marginLeft: Spacing.md }}>{t("Edit publication", "Редактировать публикацию")}</ThemedText>
             </Pressable>
 
+            {isArchived ? (
+              <Pressable 
+                style={styles.actionSheetItem}
+                onPress={() => {
+                  setShowActionMenu(false);
+                  unarchiveMutation.mutate();
+                }}
+              >
+                <Feather name="arrow-up" size={20} color={theme.text} />
+                <ThemedText style={{ marginLeft: Spacing.md }}>{t("Restore from archive", "Восстановить из архива")}</ThemedText>
+              </Pressable>
+            ) : (
+              <Pressable 
+                style={styles.actionSheetItem}
+                onPress={() => {
+                  setShowActionMenu(false);
+                  archiveMutation.mutate();
+                }}
+              >
+                <Feather name="archive" size={20} color={theme.text} />
+                <ThemedText style={{ marginLeft: Spacing.md }}>{t("Move to archive", "В архив")}</ThemedText>
+              </Pressable>
+            )}
+
             <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
 
             <Pressable 
@@ -581,9 +605,9 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         animationType="fade"
         onRequestClose={() => setShowEditModal(false)}
       >
-        <Pressable 
-          style={styles.modalOverlay} 
-          onPress={() => setShowEditModal(false)}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
         >
           <ThemedView style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -682,7 +706,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               </Pressable>
             </View>
           </ThemedView>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );
