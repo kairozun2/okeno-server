@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, ActivityIndicator } from "react-native";
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
   withTiming, 
   withDelay,
+  withSequence,
   runOnJS
 } from "react-native-reanimated";
 
@@ -22,8 +23,11 @@ interface HeaderTitleProps {
 export function HeaderTitle({ title, onFadeComplete, refreshing = false }: HeaderTitleProps) {
   const { theme, language } = useTheme();
   const { user } = useAuth();
-  const opacity = useSharedValue(1);
+  const greetingOpacity = useSharedValue(1);
+  const titleOpacity = useSharedValue(0);
+  const subtitleOpacity = useSharedValue(0);
   const refreshOpacity = useSharedValue(0);
+  const [animationPhase, setAnimationPhase] = useState<'greeting' | 'title' | 'subtitle'>('greeting');
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -36,11 +40,37 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
   };
 
   const greeting = `${getGreeting()}, ${user?.username || t("guest", "гость")}`;
+  const subtitle = t("Feed", "Лента");
 
   useEffect(() => {
-    opacity.value = withDelay(
+    greetingOpacity.value = withDelay(
       2000,
-      withTiming(0, { duration: 1000 }, (finished) => {
+      withTiming(0, { duration: 800 }, (finished) => {
+        if (finished) {
+          runOnJS(setAnimationPhase)('title');
+        }
+      })
+    );
+
+    titleOpacity.value = withDelay(
+      2800,
+      withTiming(1, { duration: 600 }, (finished) => {
+        if (finished) {
+          titleOpacity.value = withDelay(
+            1500,
+            withTiming(0, { duration: 600 }, (done) => {
+              if (done) {
+                runOnJS(setAnimationPhase)('subtitle');
+              }
+            })
+          );
+        }
+      })
+    );
+
+    subtitleOpacity.value = withDelay(
+      5500,
+      withTiming(1, { duration: 600 }, (finished) => {
         if (finished && onFadeComplete) {
           runOnJS(onFadeComplete)();
         }
@@ -52,13 +82,16 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
     refreshOpacity.value = withTiming(refreshing ? 1 : 0, { duration: 200 });
   }, [refreshing]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+  const greetingStyle = useAnimatedStyle(() => ({
+    opacity: greetingOpacity.value,
   }));
 
-  const mainTitleStyle = useAnimatedStyle(() => ({
-    opacity: (1 - opacity.value) * (1 - refreshOpacity.value),
-    transform: [{ translateY: (1 - opacity.value) * 0 }],
+  const titleStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value * (1 - refreshOpacity.value),
+  }));
+
+  const subtitleStyle = useAnimatedStyle(() => ({
+    opacity: subtitleOpacity.value * (1 - refreshOpacity.value),
   }));
 
   const spinnerStyle = useAnimatedStyle(() => ({
@@ -68,11 +101,14 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, animatedStyle]}>
+      <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, greetingStyle]}>
         <ThemedText style={styles.greetingText}>{greeting}</ThemedText>
       </Animated.View>
-      <Animated.View style={[styles.greetingContainer, mainTitleStyle]}>
+      <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, titleStyle]}>
         <ThemedText style={styles.titleText}>{title}</ThemedText>
+      </Animated.View>
+      <Animated.View style={[styles.greetingContainer, subtitleStyle]}>
+        <ThemedText style={styles.subtitleText}>{subtitle}</ThemedText>
       </Animated.View>
       <Animated.View style={[styles.greetingContainer, spinnerStyle]}>
         <ActivityIndicator size="small" color={theme.text} />
@@ -99,6 +135,10 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   titleText: {
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  subtitleText: {
     fontSize: 17,
     fontWeight: "600",
   },
