@@ -354,6 +354,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             contentFit="cover"
             transition={200}
             cachePolicy="memory-disk"
+            onError={(e) => console.log(`Profile image load error for ${item.id}:`, e)}
           />
         </Pressable>
       );

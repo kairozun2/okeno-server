@@ -41,7 +41,7 @@ export default function LoginScreen({ navigation }: Props) {
     setError(false);
 
     try {
-      await login(userId.trim(), pin);
+      await login(userId.trim(), pin.trim());
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       setError(true);

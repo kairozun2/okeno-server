@@ -271,6 +271,7 @@ function PostCard({
             contentFit="cover"
             transition={200}
             cachePolicy="memory-disk"
+            onError={(e) => console.log(`Feed image load error for ${post.id}:`, e)}
           />
           <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
             <Feather name="heart" size={80} color="#fff" />

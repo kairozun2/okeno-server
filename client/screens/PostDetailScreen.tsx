@@ -419,6 +419,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 style={styles.image}
                 contentFit="cover"
                 transition={200}
+                onError={(e) => console.log(`Detail image load error for ${post.id}:`, e)}
               />
               <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
                 <Feather name="heart" size={80} color="#fff" />
@@ -470,6 +471,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 style={styles.image}
                 contentFit="cover"
                 transition={200}
+                onError={(e) => console.log(`Detail image load error for ${post.id}:`, e)}
               />
               <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
                 <Feather name="heart" size={80} color="#fff" />

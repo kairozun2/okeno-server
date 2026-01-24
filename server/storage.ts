@@ -154,7 +154,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByIdAndPin(id: string, pin: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(and(eq(users.id, id), eq(users.pin, pin)));
+    console.log(`Checking login for ID: ${id}, PIN: ${pin}`);
+    const [user] = await db.select().from(users).where(and(eq(users.id, id.trim()), eq(users.pin, pin.trim())));
+    if (user) {
+      console.log(`Login successful for user: ${user.username}`);
+    } else {
+      console.log(`Login failed for ID: ${id}`);
+    }
     return user || undefined;
   }
 
