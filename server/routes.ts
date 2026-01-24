@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema } from "@shared/schema";
 import { z } from "zod";
+import { moderateUsername } from "./moderation";
 
 const EMOJIS = ["🐸", "🦊", "🐻", "🐼", "🦁", "🐯", "🐨", "🐮", "🐷", "🐵", "🐔", "🐧", "🐦", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🕷", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊", "🐇", "🦝", "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿", "🦔"];
 
@@ -18,6 +19,14 @@ export async function registerRoutes(app: express.Express) {
 
       if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
         return res.status(400).json({ error: "PIN must be 4 digits" });
+      }
+
+      // Moderate username for offensive content
+      const moderationResult = await moderateUsername(username);
+      if (!moderationResult.isAllowed) {
+        return res.status(400).json({ 
+          error: moderationResult.reason || "This username is not allowed" 
+        });
       }
 
       const existingUser = await storage.getUserByUsername(username);
