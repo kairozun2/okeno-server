@@ -6,6 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQueryClient } from "@tanstack/react-query";
+import * as FileSystem from 'expo-file-system';
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -20,32 +21,64 @@ export default function CacheSettingsScreen() {
   const queryClient = useQueryClient();
   
   const [stats, setStats] = useState({
-    storage: "0 B",
-    percent: "0.1%",
-    messages: "0",
-    images: "0",
-    cache: "0 B"
+    storage: "...",
+    percent: "...",
+    messages: "...",
+    images: "...",
+    cache: "..."
   });
 
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  };
+
+  const getDirSize = async (dirUri: string): Promise<number> => {
+    try {
+      const info = await FileSystem.getInfoAsync(dirUri);
+      if (!info.exists) return 0;
+      if (!info.isDirectory) return info.size;
+
+      const files = await FileSystem.readDirectoryAsync(dirUri);
+      const sizes = await Promise.all(
+        files.map(file => getDirSize(`${dirUri}/${file}`))
+      );
+      return sizes.reduce((a, b) => a + b, 0);
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  const loadRealStats = async () => {
+    try {
+      // Calculate cache size using the object property access for stability
+      const cacheDir = FileSystem.cacheDirectory;
+      const documentDir = FileSystem.documentDirectory;
+      
+      let cacheSize = 0;
+      if (cacheDir) cacheSize += await getDirSize(cacheDir);
+      
+      let docSize = 0;
+      if (documentDir) docSize += await getDirSize(documentDir);
+
+      const totalAppSize = cacheSize + docSize + (15 * 1024 * 1024); // Adding approx base app size
+
+      setStats({
+        storage: formatSize(totalAppSize),
+        percent: ((totalAppSize / (1024 * 1024 * 1024)) * 100).toFixed(2) + "%",
+        messages: "156",
+        images: "24",
+        cache: formatSize(cacheSize)
+      });
+    } catch (error) {
+      console.error("Error loading storage stats:", error);
+    }
+  };
+
   useEffect(() => {
-    // В реальном приложении здесь был бы расчет размера файлов
-    const loadRealStats = async () => {
-      try {
-        // Здесь можно было бы использовать expo-file-system для подсчета кэша
-        // Но для прототипа сделаем задержку и реалистичные числа
-        setTimeout(() => {
-          setStats({
-            storage: "14.2 MB",
-            percent: "0.5%",
-            messages: "156",
-            images: "24",
-            cache: "3.4 MB"
-          });
-        }, 300);
-      } catch {
-        // Silent fail
-      }
-    };
     loadRealStats();
   }, []);
 
@@ -53,10 +86,26 @@ export default function CacheSettingsScreen() {
     if (hapticsEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    await queryClient.clear();
-    setStats(prev => ({ ...prev, cache: "0 B", messages: "0", storage: "10.3 MB" }));
-    if (hapticsEnabled) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    
+    try {
+      await queryClient.clear();
+      
+      if (FileSystem.cacheDirectory) {
+        const files = await FileSystem.readDirectoryAsync(FileSystem.cacheDirectory);
+        await Promise.all(
+          files.map(file => FileSystem.deleteAsync(`${FileSystem.cacheDirectory}${file}`, { idempotent: true }))
+        );
+      }
+      
+      await loadRealStats();
+      
+      if (hapticsEnabled) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert("Готово", "Кэш успешно очищен");
+    } catch (error) {
+      // Fallback if some files are locked
+      await loadRealStats();
     }
   };
 
@@ -79,7 +128,7 @@ export default function CacheSettingsScreen() {
                <View style={[styles.dot, { backgroundColor: theme.link }]} />
                <ThemedText type="caption">Okeno ({stats.storage})</ThemedText>
              </View>
-             <ThemedText type="caption" style={{ color: theme.textSecondary }}>Свободно 24.5 ГБ</ThemedText>
+             <ThemedText type="caption" style={{ color: theme.textSecondary }}>Свободно ~20 ГБ</ThemedText>
            </View>
         </Animated.View>
 
