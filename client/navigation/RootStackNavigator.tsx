@@ -21,6 +21,7 @@ import PrivacyPolicyScreen from "@/screens/PrivacyPolicyScreen";
 import CacheSettingsScreen from "@/screens/CacheSettingsScreen";
 import EditPostScreen from "@/screens/EditPostScreen";
 import ArchiveScreen from "@/screens/ArchiveScreen";
+import SavedPostsScreen from "@/screens/SavedPostsScreen";
 import AdminPanelScreen from "@/screens/AdminPanelScreen";
 import BlockedUsersScreen from "@/screens/BlockedUsersScreen";
 import { Avatar } from "@/components/Avatar";
@@ -48,6 +49,7 @@ export type RootStackParamList = {
   CacheSettings: undefined;
   EditPost: { postId: string };
   Archive: undefined;
+  SavedPosts: undefined;
   AdminPanel: undefined;
   BlockedUsers: undefined;
 };
@@ -265,6 +267,16 @@ export default function RootStackNavigator() {
             options={({ navigation }) => ({
               ...modalOptions,
               headerTitle: "Архив",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
+          />
+          <Stack.Screen
+            name="SavedPosts"
+            component={SavedPostsScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: "Сохранённые",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               headerShadowVisible: false,
             })}

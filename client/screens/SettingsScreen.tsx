@@ -221,6 +221,12 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("ARCHIVE", "АРХИВ"),
       items: [
         {
+          icon: "bookmark",
+          title: t("Saved", "Сохранённые"),
+          subtitle: t("View saved posts", "Просмотр сохранённых публикаций"),
+          onPress: () => navigation.navigate("SavedPosts"),
+        },
+        {
           icon: "archive",
           title: t("Archive", "Архив"),
           subtitle: t("View archived memories", "Просмотр архивных воспоминаний"),
