@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.md,
-    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.sm,
+    paddingTop: Spacing.xs,
   },
   commentsList: {
     paddingHorizontal: Spacing.md,

@@ -534,7 +534,7 @@ export default function FeedScreen({ navigation }: Props) {
           onPress={() => setShowReportModal(false)}
         >
           <ThemedView style={[styles.actionSheetContainer, { borderRadius: BorderRadius.xl, paddingBottom: Spacing.xl }]}>
-            <View style={[styles.modalHeader, { paddingTop: Spacing.sm }]}>
+            <View style={[styles.modalHeader, { paddingTop: Spacing.xs }]}>
               <ThemedText type="h4">{t("Report", "Пожаловаться")}</ThemedText>
               <Pressable onPress={() => setShowReportModal(false)} style={styles.closeButton}>
                 <Feather name="x" size={24} color={theme.text} />

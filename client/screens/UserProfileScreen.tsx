@@ -457,7 +457,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         onRequestClose={() => setShowReportModal(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
             <ThemedText type="h3">Report</ThemedText>
             <Pressable onPress={() => setShowReportModal(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />

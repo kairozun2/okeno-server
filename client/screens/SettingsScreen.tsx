@@ -374,7 +374,7 @@ export default function SettingsScreen({ navigation }: Props) {
         onRequestClose={() => setShowAccountModal(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
             <ThemedText type="h3">Account</ThemedText>
             <Pressable onPress={() => setShowAccountModal(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
@@ -457,7 +457,7 @@ export default function SettingsScreen({ navigation }: Props) {
         onRequestClose={() => setShowDeleteModal(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
             <ThemedText type="h3">Delete Account</ThemedText>
             <Pressable onPress={() => setShowDeleteModal(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
@@ -515,7 +515,7 @@ export default function SettingsScreen({ navigation }: Props) {
         onRequestClose={() => setShowLanguagePicker(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
             <ThemedText type="h3">{t("Language", "Язык")}</ThemedText>
             <Pressable onPress={() => setShowLanguagePicker(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
@@ -563,7 +563,7 @@ export default function SettingsScreen({ navigation }: Props) {
         onRequestClose={() => setShowColorPicker(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
             <ThemedText type="h3">App Color</ThemedText>
             <Pressable onPress={() => setShowColorPicker(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
