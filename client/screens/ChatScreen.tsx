@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
+import { useAudioPlayer, useAudioRecorder, RecordingPresets, AudioModule } from 'expo-audio';
 import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -55,6 +56,90 @@ interface ChatSettings {
 
 function formatMessageTime(date: Date): string {
   return format(date, "HH:mm");
+}
+
+function VoiceMessagePlayer({ 
+  voiceUrl, 
+  voiceDuration, 
+  isOwn,
+  theme,
+}: { 
+  voiceUrl: string; 
+  voiceDuration: number; 
+  isOwn: boolean;
+  theme: any;
+}) {
+  const player = useAudioPlayer(voiceUrl);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const sub = player.addListener('playingChange', (event: { isPlaying: boolean }) => {
+      setIsPlaying(event.isPlaying);
+    });
+    return () => sub.remove();
+  }, [player]);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const interval = setInterval(() => {
+      if (player.duration > 0) {
+        setProgress(player.currentTime / player.duration);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isPlaying, player]);
+
+  const togglePlayback = async () => {
+    if (isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <View style={styles.voiceMessageContainer}>
+      <Pressable 
+        onPress={togglePlayback}
+        style={[
+          styles.voicePlayButton,
+          { backgroundColor: isOwn ? "rgba(255,255,255,0.2)" : theme.backgroundSecondary }
+        ]}
+      >
+        <Feather 
+          name={isPlaying ? "pause" : "play"} 
+          size={18} 
+          color={isOwn ? "#fff" : theme.text} 
+        />
+      </Pressable>
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={[styles.voiceProgress, { backgroundColor: isOwn ? "rgba(255,255,255,0.3)" : theme.border }]}>
+          <View 
+            style={[
+              styles.voiceProgressFill, 
+              { 
+                width: `${progress * 100}%`,
+                backgroundColor: isOwn ? "#fff" : theme.link 
+              }
+            ]} 
+          />
+        </View>
+        <ThemedText 
+          type="caption" 
+          style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontSize: 11 }}
+        >
+          {formatTime(voiceDuration)}
+        </ThemedText>
+      </View>
+    </View>
+  );
 }
 
 function MessageBubble({
@@ -195,7 +280,7 @@ function MessageBubble({
                 {t("Reply", "Ответ")}
               </ThemedText>
               <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
-                {replyMessage.imageUrl ? t("Photo", "Фото") : (typeof replyMessage.content === 'string' ? replyMessage.content : "")}
+                {replyMessage.voiceUrl ? t("Voice message", "Голосовое") : replyMessage.imageUrl ? t("Photo", "Фото") : (typeof replyMessage.content === 'string' ? replyMessage.content : "")}
               </ThemedText>
             </View>
           ) : null}
@@ -209,6 +294,14 @@ function MessageBubble({
                 marginBottom: message.content ? Spacing.xs : 0,
               }}
               contentFit="cover"
+            />
+          ) : null}
+          {message.voiceUrl ? (
+            <VoiceMessagePlayer 
+              voiceUrl={message.voiceUrl} 
+              voiceDuration={message.voiceDuration || 0} 
+              isOwn={isOwn}
+              theme={theme}
             />
           ) : null}
           {message.content ? renderContent(typeof message.content === 'string' ? message.content : "", isOwn) : null}
@@ -290,6 +383,11 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerTranslateY = useSharedValue(0);
   const emojiPickerOpacity = useSharedValue(0);
+  
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const recordingTimer = useRef<NodeJS.Timeout | null>(null);
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const REACTION_EMOJIS = ["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟"];
 
@@ -481,12 +579,14 @@ export default function ChatScreen({ route, navigation }: Props) {
   const messages = data?.pages.flat() || [];
 
   const sendMutation = useMutation({
-    mutationFn: async ({ content, replyToId, imageUrl }: { content: string; replyToId?: string | null; imageUrl?: string | null }) => {
+    mutationFn: async ({ content, replyToId, imageUrl, voiceUrl, voiceDuration }: { content: string; replyToId?: string | null; imageUrl?: string | null; voiceUrl?: string | null; voiceDuration?: number | null }) => {
       const response = await apiRequest("POST", "/api/messages", {
         chatId,
         senderId: user?.id,
         content,
         imageUrl,
+        voiceUrl,
+        voiceDuration,
         replyToId,
       });
       return response.json();
@@ -502,6 +602,8 @@ export default function ChatScreen({ route, navigation }: Props) {
         senderId: user?.id || "",
         content: newMessageData.content,
         imageUrl: newMessageData.imageUrl,
+        voiceUrl: newMessageData.voiceUrl,
+        voiceDuration: newMessageData.voiceDuration,
         replyToId: newMessageData.replyToId,
         createdAt: new Date().toISOString(),
         isRead: false,
@@ -607,6 +709,74 @@ export default function ChatScreen({ route, navigation }: Props) {
     } catch (error) {
       // Silent fail
     }
+  };
+
+  const startRecording = async () => {
+    try {
+      const status = await AudioModule.requestRecordingPermissionsAsync();
+      if (!status.granted) return;
+
+      setIsRecording(true);
+      setRecordingDuration(0);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      recordingTimer.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+
+      audioRecorder.record();
+    } catch (error) {
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+        recordingTimer.current = null;
+      }
+
+      await audioRecorder.stop();
+      const uri = audioRecorder.uri;
+      const duration = recordingDuration;
+      
+      setIsRecording(false);
+      setRecordingDuration(0);
+
+      if (uri && duration > 0) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        sendMutation.mutate({ 
+          content: "", 
+          voiceUrl: uri,
+          voiceDuration: duration,
+          replyToId: replyTo?.id 
+        });
+        setReplyTo(null);
+      }
+    } catch (error) {
+      setIsRecording(false);
+      setRecordingDuration(0);
+    }
+  };
+
+  const cancelRecording = async () => {
+    if (recordingTimer.current) {
+      clearInterval(recordingTimer.current);
+      recordingTimer.current = null;
+    }
+    try {
+      await audioRecorder.stop();
+    } catch {}
+    setIsRecording(false);
+    setRecordingDuration(0);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleCopy = useCallback(async (text: string) => {
@@ -806,49 +976,91 @@ export default function ChatScreen({ route, navigation }: Props) {
             </Animated.View>
           ) : null}
           <View style={[styles.inputWrapper, { paddingBottom: insets.bottom > 0 ? insets.bottom / 2 : Spacing.sm }]}>
-            <Pressable
-              onPress={handlePickImage}
-              disabled={sendMutation.isPending}
-              style={[
-                styles.attachButton,
-                { backgroundColor: theme.backgroundSecondary }
-              ]}
-            >
-              <Feather name="image" size={20} color={theme.textSecondary} />
-            </Pressable>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: theme.text,
-                  borderWidth: 1,
-                  borderColor: theme.border,
-                  backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
-                },
-              ]}
-              placeholder={t("Message...", "Сообщение...")}
-              placeholderTextColor={theme.textSecondary}
-              value={message}
-              onChangeText={handleTextChange}
-              multiline
-              maxLength={1000}
-            />
-            <Pressable
-              onPress={handleSend}
-              disabled={!message.trim() || sendMutation.isPending || editMutation.isPending}
-              style={[
-                styles.sendButton,
-                {
-                  backgroundColor: message.trim() ? theme.link : theme.backgroundSecondary,
-                },
-              ]}
-            >
-              <Feather
-                name={editingMessage ? "check" : "send"}
-                size={18}
-                color={message.trim() ? "#fff" : theme.textSecondary}
-              />
-            </Pressable>
+            {isRecording ? (
+              <>
+                <Pressable
+                  onPress={cancelRecording}
+                  style={[
+                    styles.attachButton,
+                    { backgroundColor: "rgba(255,59,48,0.15)" }
+                  ]}
+                >
+                  <Feather name="x" size={20} color="#ff3b30" />
+                </Pressable>
+                <View style={[styles.recordingIndicator, { backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", borderColor: theme.border }]}>
+                  <View style={styles.recordingDot} />
+                  <ThemedText type="body" style={{ color: "#ff3b30", fontWeight: "600" }}>
+                    {formatDuration(recordingDuration)}
+                  </ThemedText>
+                </View>
+                <Pressable
+                  onPress={stopRecording}
+                  style={[
+                    styles.sendButton,
+                    { backgroundColor: theme.link }
+                  ]}
+                >
+                  <Feather name="send" size={18} color="#fff" />
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Pressable
+                  onPress={handlePickImage}
+                  disabled={sendMutation.isPending}
+                  style={[
+                    styles.attachButton,
+                    { backgroundColor: theme.backgroundSecondary }
+                  ]}
+                >
+                  <Feather name="image" size={20} color={theme.textSecondary} />
+                </Pressable>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      color: theme.text,
+                      borderWidth: 1,
+                      borderColor: theme.border,
+                      backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                    },
+                  ]}
+                  placeholder={t("Message...", "Сообщение...")}
+                  placeholderTextColor={theme.textSecondary}
+                  value={message}
+                  onChangeText={handleTextChange}
+                  multiline
+                  maxLength={1000}
+                />
+                {message.trim() ? (
+                  <Pressable
+                    onPress={handleSend}
+                    disabled={sendMutation.isPending || editMutation.isPending}
+                    style={[
+                      styles.sendButton,
+                      { backgroundColor: theme.link }
+                    ]}
+                  >
+                    <Feather
+                      name={editingMessage ? "check" : "send"}
+                      size={18}
+                      color="#fff"
+                    />
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    onPress={startRecording}
+                    disabled={sendMutation.isPending}
+                    style={[
+                      styles.sendButton,
+                      { backgroundColor: theme.backgroundSecondary }
+                    ]}
+                  >
+                    <Feather name="mic" size={18} color={theme.textSecondary} />
+                  </Pressable>
+                )}
+              </>
+            )}
           </View>
         </View>
 
@@ -1097,6 +1309,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.xs,
+  },
+  recordingIndicator: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    gap: Spacing.sm,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#ff3b30",
+  },
+  voiceMessageContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    minWidth: 150,
+  },
+  voicePlayButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  voiceProgress: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    overflow: "hidden",
+  },
+  voiceProgressFill: {
+    height: "100%",
+    borderRadius: 2,
   },
   modalOverlay: {
     flex: 1,
