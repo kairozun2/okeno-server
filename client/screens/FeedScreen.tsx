@@ -127,13 +127,13 @@ function PostCard({
       }
       heartOpacity.value = withSequence(
         withSpring(1, { damping: 20, stiffness: 100 }),
-        withDelay(500, withSpring(0, { damping: 20, stiffness: 100 }))
+        withDelay(200, withSpring(0, { damping: 20, stiffness: 100 }))
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
 
   const handleSave = () => {
-    saveScale.value = withSpring(1.2, { damping: 10, stiffness: 200 }, () => {
+    saveScale.value = withSpring(1.5, { damping: 10, stiffness: 200 }, () => {
       saveScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -306,7 +306,7 @@ function PostCard({
         <View style={styles.rightActions}>
           <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle, { backgroundColor: post.isSaved ? theme.link + '15' : theme.backgroundSecondary }]}>
             <Feather
-              name="bookmark"
+              name={post.isSaved ? "check" : "bookmark"}
               size={18}
               color={post.isSaved ? theme.link : theme.textSecondary}
             />
@@ -455,13 +455,14 @@ export default function FeedScreen({ navigation }: Props) {
   const saveMutation = useMutation({
     mutationFn: async ({ postId, isSaved }: { postId: string; isSaved: boolean }) => {
       if (isSaved) {
-        await apiRequest("DELETE", "/api/saves", { userId: currentUser?.id, postId });
+        await apiRequest("DELETE", `/api/saves/${postId}`, { userId: currentUser?.id });
       } else {
         await apiRequest("POST", "/api/saves", { userId: currentUser?.id, postId });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "saved"] });
     },
   });
 

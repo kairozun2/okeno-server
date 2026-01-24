@@ -136,7 +136,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       }
       heartOpacity.value = withSequence(
         withSpring(1, { damping: 20, stiffness: 100 }),
-        withDelay(500, withSpring(0, { damping: 20, stiffness: 100 }))
+        withDelay(200, withSpring(0, { damping: 20, stiffness: 100 }))
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
@@ -349,18 +349,19 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (savedData?.saved) {
-        await apiRequest("DELETE", "/api/saves", { userId: currentUser?.id, postId });
+        await apiRequest("DELETE", `/api/saves/${postId}`, { userId: currentUser?.id });
       } else {
         await apiRequest("POST", "/api/saves", { userId: currentUser?.id, postId });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "saves", currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "saved"] });
     },
   });
 
   const handleSave = () => {
-    saveScale.value = withSpring(1.2, { damping: 4 }, () => {
+    saveScale.value = withSpring(1.5, { damping: 4 }, () => {
       saveScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -547,7 +548,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
               <AnimatedPressable onPress={handleSave} style={[styles.actionButton, saveAnimatedStyle]}>
                 <Feather
-                  name="bookmark"
+                  name={savedData?.saved ? "check" : "bookmark"}
                   size={24}
                   color={savedData?.saved ? theme.link : theme.textSecondary}
                 />

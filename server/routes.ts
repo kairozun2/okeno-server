@@ -305,24 +305,36 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
-  app.post("/api/posts/:id/save", async (req, res) => {
+  app.post("/api/saves", async (req, res) => {
     try {
-      const userId = req.body.userId;
-      if (!userId) return res.status(400).json({ error: "User ID required" });
+      const { userId, postId } = req.body;
+      if (!userId || !postId) return res.status(400).json({ error: "User ID and Post ID required" });
       
       const saves = await storage.getUserSaves(userId);
-      const existing = saves.find(s => s.postId === req.params.id);
+      const existing = saves.find(s => s.postId === postId);
       
       if (existing) {
-        await storage.deleteSave(userId, req.params.id);
-        res.json({ saved: false });
+        res.json({ saved: true });
       } else {
-        await storage.createSave({ userId, postId: req.params.id });
+        await storage.createSave({ userId, postId });
         res.json({ saved: true });
       }
     } catch (error) {
-      console.error("Save post error:", error);
+      console.error("Create save error:", error);
       res.status(500).json({ error: "Failed to save post" });
+    }
+  });
+
+  app.delete("/api/saves/:postId", async (req, res) => {
+    try {
+      const userId = req.body.userId || req.query.userId;
+      if (!userId) return res.status(400).json({ error: "User ID required" });
+      
+      await storage.deleteSave(userId, req.params.postId);
+      res.json({ saved: false });
+    } catch (error) {
+      console.error("Delete save error:", error);
+      res.status(500).json({ error: "Failed to delete save" });
     }
   });
 
