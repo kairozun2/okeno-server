@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { KeyboardAvoidingView } from "react-native";
+import { KeyboardAvoidingView, LayoutAnimation, Keyboard } from "react-native";
 import Animated, { 
   FadeIn, 
   FadeOut, 
@@ -531,6 +531,26 @@ export default function ChatScreen({ route, navigation }: Props) {
     enabled: !!otherUserId,
   });
 
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      }
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      }
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   const displayName = chatSettings?.nickname || userData?.username || otherUserName || t("User", "Пользователь");
   const displayEmoji = userData?.emoji || otherUserEmoji || "🐸";
   const backgroundImage = chatSettings?.backgroundImage;
@@ -865,7 +885,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        keyboardVerticalOffset={chatFullscreen ? insets.top + 40 : 20}
       >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
