@@ -775,15 +775,15 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-    paddingTop: 120,
+    justifyContent: "flex-end",
   },
   modalContent: {
     width: "100%",
-    borderRadius: BorderRadius.xl,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? 40 : Spacing.xl,
+    maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: "row",
