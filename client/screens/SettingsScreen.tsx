@@ -69,12 +69,19 @@ function SettingRow({ item, isLast }: SettingRowProps) {
         !isLast && { borderBottomWidth: 1, borderBottomColor: theme.border },
       ]}
     >
-      <Feather
-        name={item.icon}
-        size={20}
-        color={item.danger ? theme.error : theme.textSecondary}
-        style={styles.rowIcon}
-      />
+      {item.customIcon ? (
+        <Image
+          source={item.customIcon}
+          style={[styles.rowIconImage, { borderRadius: 6 }]}
+        />
+      ) : item.icon ? (
+        <Feather
+          name={item.icon}
+          size={20}
+          color={item.danger ? theme.error : theme.textSecondary}
+          style={styles.rowIcon}
+        />
+      ) : null}
       <View style={styles.settingInfo}>
         <ThemedText
           type="body"
@@ -182,7 +189,7 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("ACCOUNT", "АККАУНТ"),
       items: [
         {
-          icon: "user",
+          customIcon: SETTINGS_ICONS.account,
           title: t("Account Management", "Управление аккаунтом"),
           subtitle: t("Recovery ID and security", "ID восстановления и безопасность"),
           onPress: () => setShowAccountModal(true),
@@ -303,7 +310,7 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("SUPPORT", "ПОДДЕРЖКА"),
       items: [
         {
-          icon: "mail",
+          customIcon: SETTINGS_ICONS.support,
           title: t("Contact Us", "Связаться с нами"),
           subtitle: "messaconfirmation@gmail.com",
           onPress: () => {
@@ -388,8 +395,12 @@ export default function SettingsScreen({ navigation }: Props) {
           </View>
 
           <ScrollView contentContainerStyle={styles.colorPickerContent}>
-            <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, padding: Spacing.lg }]}>
-              <ThemedText type="h4" style={{ marginBottom: Spacing.sm }}>Recovery ID</ThemedText>
+          <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, padding: Spacing.lg, alignItems: 'center' }]}>
+            <Image 
+              source={SETTINGS_ICONS.privacy} 
+              style={{ width: 60, height: 60, borderRadius: 14, marginBottom: Spacing.md }} 
+            />
+            <ThemedText type="h4" style={{ marginBottom: Spacing.sm }}>Recovery ID</ThemedText>
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.md }}>
                 This ID is required to restore access to your account. Never share it with anyone.
               </ThemedText>
@@ -437,7 +448,7 @@ export default function SettingsScreen({ navigation }: Props) {
               />
               <SettingRow 
                 item={{
-                  icon: "trash-2",
+                  customIcon: SETTINGS_ICONS.delete,
                   title: "Delete Account",
                   onPress: () => {
                     setShowAccountModal(false);
@@ -638,6 +649,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   rowIcon: {
+    marginRight: Spacing.md,
+  },
+  rowIconImage: {
+    width: 28,
+    height: 28,
     marginRight: Spacing.md,
   },
   settingInfo: {
