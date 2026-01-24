@@ -79,7 +79,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   const heartOverlayStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: heartScale.value },
-      { translateY: -20 }
     ],
     opacity: heartOpacity.value,
   }));
@@ -139,12 +138,12 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         runOnJS(handleLike)();
       }
       heartScale.value = withSequence(
-        withSpring(1.2, { damping: 12, stiffness: 200 }),
-        withDelay(400, withSpring(0))
+        withSpring(1, { damping: 15, stiffness: 150 }),
+        withDelay(400, withSpring(0, { damping: 20 }))
       );
       heartOpacity.value = withSequence(
-        withSpring(1),
-        withDelay(400, withSpring(0))
+        withSpring(1, { damping: 20 }),
+        withDelay(400, withSpring(0, { damping: 20 }))
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
