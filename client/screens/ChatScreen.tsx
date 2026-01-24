@@ -712,7 +712,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         setRecordingDuration(prev => prev + 1);
       }, 1000);
 
-      await audioRecorder.prepareRecordingAsync();
+      await audioRecorder.prepareToRecordAsync();
       audioRecorder.record();
     } catch (error) {
       console.error("Start recording error:", error);
