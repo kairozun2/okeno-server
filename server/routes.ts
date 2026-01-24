@@ -222,7 +222,7 @@ export async function registerRoutes(app: express.Express) {
 
   app.patch("/api/posts/:id", async (req, res) => {
     try {
-      const { caption, userId } = req.body;
+      const { caption, location, latitude, longitude, imageUrl, userId } = req.body;
       const post = await storage.getPost(req.params.id);
       
       if (!post) {
@@ -233,7 +233,13 @@ export async function registerRoutes(app: express.Express) {
         return res.status(403).json({ error: "Unauthorized" });
       }
 
-      const updatedPost = await storage.updatePost(req.params.id, { caption });
+      const updatedPost = await storage.updatePost(req.params.id, { 
+        caption, 
+        location, 
+        latitude: latitude?.toString(), 
+        longitude: longitude?.toString(),
+        imageUrl 
+      });
       res.json(updatedPost);
     } catch (error) {
       console.error("Update post error:", error);

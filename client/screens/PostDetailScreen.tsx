@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput, Platform } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput, Platform, ActivityIndicator } from "react-native";
+import * as Location from 'expo-location';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -89,11 +91,16 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   const [showActionMenu, setShowActionMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editedCaption, setEditedCaption] = useState("");
+  const [editedLocation, setEditedLocation] = useState<string | null>(null);
+  const [editedLat, setEditedLat] = useState<number | null>(null);
+  const [editedLng, setEditedLng] = useState<number | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [isUpdatingImage, setIsUpdatingImage] = useState(false);
 
   const editMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async (data: { caption?: string, location?: string | null, latitude?: number | null, longitude?: number | null, imageUrl?: string }) => {
       const response = await apiRequest("PATCH", `/api/posts/${postId}`, {
-        caption: content,
+        ...data,
         userId: currentUser?.id,
       });
       return response.json();
@@ -115,12 +122,69 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   const startEditing = () => {
     setEditedCaption(post?.caption || "");
+    setEditedLocation(post?.location || null);
+    setEditedLat(post?.latitude ? parseFloat(post.latitude) : null);
+    setEditedLng(post?.longitude ? parseFloat(post.longitude) : null);
     setShowEditModal(true);
     setShowActionMenu(false);
   };
 
+  const handlePickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0].uri) {
+        setIsUpdatingImage(true);
+        // In a real app, you would upload to storage here. 
+        // For simplicity, we'll use the local URI as the source if it were a production app it'd be uploaded.
+        editMutation.mutate({ imageUrl: result.assets[0].uri });
+        setIsUpdatingImage(false);
+      }
+    } catch (error) {
+      Alert.alert(t("Error", "Ошибка"), t("Failed to pick image", "Не удалось выбрать фото"));
+    }
+  };
+
+  const handleGetLocation = async () => {
+    setIsLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(t("Permission denied", "Доступ запрещен"), t("Location permission is required", "Нужен доступ к геолокации"));
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const [address] = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (address) {
+        const locationName = address.city || address.region || address.country || t("Unknown", "Неизвестно");
+        setEditedLocation(locationName);
+        setEditedLat(location.coords.latitude);
+        setEditedLng(location.coords.longitude);
+      }
+    } catch (error) {
+      Alert.alert(t("Error", "Ошибка"), t("Failed to get location", "Не удалось определить местоположение"));
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
   const handleSaveEdit = () => {
-    editMutation.mutate(editedCaption.trim());
+    editMutation.mutate({ 
+      caption: editedCaption.trim(),
+      location: editedLocation,
+      latitude: editedLat,
+      longitude: editedLng
+    });
   };
 
   const { data: archivedData } = useQuery<string[]>({
@@ -510,6 +574,17 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               </Pressable>
             )}
 
+            <Pressable 
+              style={styles.actionSheetItem}
+              onPress={() => {
+                setShowActionMenu(false);
+                handlePickImage();
+              }}
+            >
+              <Feather name="image" size={20} color={theme.text} />
+              <ThemedText style={{ marginLeft: Spacing.md }}>{t("Change photo", "Заменить фото")}</ThemedText>
+            </Pressable>
+
             <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
 
             <Pressable 
@@ -560,6 +635,26 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               maxLength={500}
               autoFocus
             />
+
+            <Pressable 
+              onPress={handleGetLocation}
+              disabled={isLocating}
+              style={[styles.locationPicker, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Feather name="map-pin" size={18} color={isLocating ? theme.textSecondary : theme.accent} />
+                <ThemedText style={{ marginLeft: Spacing.sm, flex: 1, color: editedLocation ? theme.text : theme.textSecondary }}>
+                  {isLocating ? t("Locating...", "Определяем...") : (editedLocation || t("Add location", "Добавить локацию"))}
+                </ThemedText>
+                {editedLocation ? (
+                  <Pressable onPress={() => { setEditedLocation(null); setEditedLat(null); setEditedLng(null); }} hitSlop={10}>
+                    <Feather name="x" size={16} color={theme.textSecondary} />
+                  </Pressable>
+                ) : (
+                  <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+                )}
+              </View>
+            </Pressable>
             <View style={styles.modalFooter}>
               <Pressable 
                 onPress={handleSaveEdit}
@@ -689,6 +784,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 100,
     textAlignVertical: "top",
+    marginBottom: Spacing.md,
+  },
+  locationPicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
     marginBottom: Spacing.lg,
   },
   modalFooter: {
