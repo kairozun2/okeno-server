@@ -443,7 +443,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                     {postUser?.username || t("User", "Пользователь")}
                   </ThemedText>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                    {formattedDate}
+                    {post.feeling ? `${post.feeling}  •  ` : ""}{formattedDate}
                   </ThemedText>
                 </View>
               </View>
@@ -497,7 +497,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                     {postUser?.username || t("User", "Пользователь")}
                   </ThemedText>
                   <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                    {formattedDate}
+                    {post.feeling ? `${post.feeling}  •  ` : ""}{formattedDate}
                   </ThemedText>
                 </View>
               </Pressable>

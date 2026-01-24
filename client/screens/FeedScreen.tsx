@@ -207,6 +207,11 @@ function PostCard({
         </Pressable>
         
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {post.feeling ? (
+            <ThemedText style={{ fontSize: 14, marginRight: 4 }}>
+              {post.feeling}
+            </ThemedText>
+          ) : null}
           <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: Spacing.xs }}>
             {formattedDate}
           </ThemedText>

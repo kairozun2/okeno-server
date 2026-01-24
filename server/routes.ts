@@ -222,7 +222,7 @@ export async function registerRoutes(app: express.Express) {
 
   app.patch("/api/posts/:id", async (req, res) => {
     try {
-      const { caption, location, latitude, longitude, imageUrl, userId } = req.body;
+      const { caption, location, feeling, latitude, longitude, imageUrl, userId } = req.body;
       const post = await storage.getPost(req.params.id);
       
       if (!post) {
@@ -236,6 +236,7 @@ export async function registerRoutes(app: express.Express) {
       const updatedPost = await storage.updatePost(req.params.id, { 
         caption, 
         location, 
+        feeling,
         latitude: latitude?.toString(), 
         longitude: longitude?.toString(),
         imageUrl 

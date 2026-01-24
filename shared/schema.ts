@@ -27,6 +27,7 @@ export const posts = pgTable("posts", {
   imageUrl: text("image_url").notNull(),
   caption: text("caption"),
   location: text("location"),
+  feeling: text("feeling"),
   latitude: text("latitude"),
   longitude: text("longitude"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -315,6 +316,7 @@ export const insertPostSchema = createInsertSchema(posts).pick({
   imageUrl: true,
   caption: true,
   location: true,
+  feeling: true,
   latitude: true,
   longitude: true,
 });

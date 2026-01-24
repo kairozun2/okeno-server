@@ -33,6 +33,7 @@ export default function CreatePostScreen({ navigation }: Props) {
 
   const [image, setImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
+  const [feeling, setFeeling] = useState<string | null>(null);
   const [location, setLocation] = useState<{
     name: string | null;
     latitude: number | null;
@@ -52,6 +53,7 @@ export default function CreatePostScreen({ navigation }: Props) {
         userId: user?.id,
         imageUrl: image,
         caption: caption.trim() || null,
+        feeling: feeling,
         location: location.name,
         latitude: location.latitude?.toString(),
         longitude: location.longitude?.toString(),
@@ -160,20 +162,89 @@ export default function CreatePostScreen({ navigation }: Props) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: t("New Post", "Новый пост"),
+      headerTitle: t("New Memory", "Новое воспоминание"),
+      headerRight: () => (
+        <Pressable 
+          onPress={handlePost} 
+          disabled={!image || createPostMutation.isPending}
+          style={{ padding: Spacing.sm }}
+        >
+          <Feather 
+            name="send" 
+            size={22} 
+            color={!image || createPostMutation.isPending ? theme.textSecondary : theme.link} 
+          />
+        </Pressable>
+      ),
     });
-  }, [navigation, language]);
+  }, [navigation, language, image, createPostMutation.isPending]);
+
+  const FEELINGS = [
+    { id: "peaceful", emoji: "🌿", en: "Peaceful", ru: "Спокойствие" },
+    { id: "grateful", emoji: "✨", en: "Grateful", ru: "Благодарность" },
+    { id: "nostalgic", emoji: "🌅", en: "Nostalgic", ru: "Ностальгия" },
+    { id: "happy", emoji: "🌱", en: "Happy", ru: "Счастье" },
+  ];
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <ThemedView style={[styles.container, { paddingTop: headerHeight + Spacing.lg }]}>
+      <ThemedView style={[styles.container, { paddingTop: headerHeight }]}>
         <ScrollView 
           style={styles.content} 
           contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeIn}>
-            {image ? (
+            <View style={styles.sectionTitleRow}>
+              <ThemedText type="body" style={{ color: theme.textSecondary }}>
+                {t("What's this feeling?", "Какое это чувство?")}
+              </ThemedText>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.feelingsScroll}>
+              <View style={styles.feelingsContainer}>
+                {FEELINGS.map((f) => (
+                  <Pressable
+                    key={f.id}
+                    onPress={() => {
+                      setFeeling(feeling === f.emoji ? null : f.emoji);
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}
+                    style={[
+                      styles.feelingChip,
+                      { 
+                        backgroundColor: feeling === f.emoji ? theme.link + '20' : theme.backgroundSecondary,
+                        borderColor: feeling === f.emoji ? theme.link : 'transparent'
+                      }
+                    ]}
+                  >
+                    <ThemedText style={{ fontSize: 16 }}>{f.emoji}</ThemedText>
+                    <ThemedText type="small" style={{ marginLeft: 6, color: feeling === f.emoji ? theme.link : theme.text }}>
+                      {t(f.en, f.ru)}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+
+            <View style={styles.mediaButtonsRow}>
+              <Pressable onPress={pickImage} style={[styles.mediaActionBtn, { backgroundColor: theme.backgroundSecondary }]}>
+                <Feather name="image" size={18} color={theme.text} />
+                <ThemedText type="small" style={styles.mediaActionText}>{t("Gallery", "Галерея")}</ThemedText>
+              </Pressable>
+              <Pressable onPress={takePhoto} style={[styles.mediaActionBtn, { backgroundColor: theme.backgroundSecondary }]}>
+                <Feather name="camera" size={18} color={theme.text} />
+                <ThemedText type="small" style={styles.mediaActionText}>{t("Camera", "Камера")}</ThemedText>
+              </Pressable>
+              <Pressable onPress={getLocation} disabled={isLoadingLocation} style={[styles.mediaActionBtn, { backgroundColor: theme.backgroundSecondary }]}>
+                <Feather name="map-pin" size={18} color={location.name ? theme.link : theme.text} />
+                <ThemedText type="small" style={[styles.mediaActionText, location.name && { color: theme.link }]}>
+                  {isLoadingLocation ? t("Wait...", "Ждите...") : t("Place", "Место")}
+                </ThemedText>
+              </Pressable>
+            </View>
+
+            {image && (
               <Animated.View entering={FadeInDown} style={styles.imageContainer}>
                 <Image
                   source={{ uri: image }}
@@ -182,89 +253,26 @@ export default function CreatePostScreen({ navigation }: Props) {
                 />
                 <Pressable
                   onPress={() => setImage(null)}
-                  style={[styles.removeButton, { backgroundColor: theme.backgroundRoot }]}
+                  style={[styles.removeButton, { backgroundColor: 'rgba(0,0,0,0.5)' }]}
                 >
-                  <Feather name="x" size={20} color={theme.text} />
+                  <Feather name="x" size={18} color="#fff" />
                 </Pressable>
               </Animated.View>
-            ) : (
-              <View style={styles.imagePickers}>
-                <Pressable
-                  onPress={takePhoto}
-                  style={[styles.pickerButton, { backgroundColor: theme.backgroundSecondary }]}
-                >
-                  <Feather name="camera" size={24} color={theme.text} />
-                  <ThemedText type="caption" style={{ marginTop: Spacing.xs }}>
-                    {t("Photo", "Фото")}
-                  </ThemedText>
-                </Pressable>
-                <Pressable
-                  onPress={pickImage}
-                  style={[styles.pickerButton, { backgroundColor: theme.backgroundSecondary }]}
-                >
-                  <Feather name="image" size={24} color={theme.text} />
-                  <ThemedText type="caption" style={{ marginTop: Spacing.xs }}>
-                    {t("Gallery", "Галерея")}
-                  </ThemedText>
-                </Pressable>
-              </View>
             )}
 
-            <View style={[styles.captionContainer, { backgroundColor: theme.backgroundSecondary }]}>
-              <Feather name="edit-3" size={20} color={caption ? theme.link : theme.textSecondary} style={{ marginRight: Spacing.sm, marginTop: 2 }} />
+            <View style={styles.inputWrapper}>
               <TextInput
                 value={caption}
                 onChangeText={setCaption}
-                placeholder={t("Add a caption...", "Добавить описание...")}
+                placeholder={t("what are you thinking about?", "о чём вы думаете?")}
                 placeholderTextColor={theme.textSecondary}
                 style={[styles.captionInput, { color: theme.text }]}
                 multiline
-                maxLength={500}
-                blurOnSubmit={true}
+                maxLength={1000}
               />
             </View>
-
-            <Pressable
-              onPress={getLocation}
-              disabled={isLoadingLocation}
-              style={[styles.locationButton, { backgroundColor: theme.backgroundSecondary }]}
-            >
-              <Feather
-                name="map-pin"
-                size={20}
-                color={location.name ? theme.link : theme.textSecondary}
-              />
-              <ThemedText
-                type="body"
-                style={{
-                  flex: 1,
-                  marginLeft: Spacing.md,
-                  color: location.name ? theme.text : theme.textSecondary,
-                }}
-              >
-                {isLoadingLocation
-                  ? t("Getting location...", "Получение...")
-                  : location.name || t("Add location", "Добавить место")}
-              </ThemedText>
-              {location.name ? (
-                <Pressable
-                  onPress={() => setLocation({ name: null, latitude: null, longitude: null })}
-                >
-                  <Feather name="x" size={20} color={theme.textSecondary} />
-                </Pressable>
-              ) : null}
-            </Pressable>
           </Animated.View>
         </ScrollView>
-
-        <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
-          <Button
-            onPress={handlePost}
-            disabled={!image || createPostMutation.isPending}
-          >
-            {createPostMutation.isPending ? t("Posting...", "Публикация...") : t("Share", "Поделиться")}
-          </Button>
-        </View>
       </ThemedView>
     </TouchableWithoutFeedback>
   );
@@ -276,64 +284,74 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  sectionTitleRow: {
     paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
   },
-  imagePickers: {
+  feelingsScroll: {
+    marginBottom: Spacing.lg,
+  },
+  feelingsContainer: {
     flexDirection: "row",
-    gap: Spacing.md,
-    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
   },
-  pickerButton: {
+  feelingChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  mediaButtonsRow: {
+    flexDirection: "row",
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  mediaActionBtn: {
     flex: 1,
-    height: 80,
-    borderRadius: BorderRadius.lg,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  mediaActionText: {
+    marginLeft: 6,
+    fontWeight: "500",
   },
   imageContainer: {
-    marginBottom: Spacing.md,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
     borderRadius: BorderRadius.xl,
     overflow: "hidden",
+    aspectRatio: 1,
   },
   previewImage: {
     width: "100%",
-    aspectRatio: 1,
-    borderRadius: BorderRadius.xl,
+    height: "100%",
   },
   removeButton: {
     position: "absolute",
-    top: Spacing.md,
-    right: Spacing.md,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    top: 10,
+    right: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  captionContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+  inputWrapper: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.md,
   },
   captionInput: {
-    flex: 1,
-    fontSize: 16,
-    minHeight: 40,
-    maxHeight: 100,
+    fontSize: 18,
+    minHeight: 120,
+    textAlignVertical: "top",
     paddingTop: 0,
-  },
-  locationButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-  },
-  footer: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
   },
 });
