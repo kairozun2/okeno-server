@@ -175,7 +175,7 @@ function MessageBubble({
           runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
         }
       }
-      translateX.value = withSpring(0);
+      translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
     });
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -464,7 +464,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       return response.json();
     },
     enabled: !!otherUserId,
-    refetchInterval: 1500,
+    refetchInterval: 2500,
   });
 
   const isOtherUserTyping = typingData?.isTyping || false;
@@ -703,6 +703,11 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const startRecording = async () => {
     try {
+      if (Platform.OS === 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      
       const status = await AudioModule.requestRecordingPermissionsAsync();
       if (!status.granted) return;
 
