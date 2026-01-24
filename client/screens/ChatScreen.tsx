@@ -8,7 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { KeyboardAvoidingView, LayoutAnimation, Keyboard } from "react-native";
+import { KeyboardAvoidingView, KeyboardAvoidingViewProps } from "react-native-keyboard-controller";
+import { LayoutAnimation, Keyboard } from "react-native";
 import Animated, { 
   FadeIn, 
   FadeOut, 
@@ -884,8 +885,8 @@ export default function ChatScreen({ route, navigation }: Props) {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot, flex: 1 }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={chatFullscreen ? insets.top + 40 : 20}
+        behavior="padding"
+        keyboardVerticalOffset={chatFullscreen ? insets.top : -insets.bottom}
       >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
