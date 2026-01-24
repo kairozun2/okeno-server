@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useLayoutEffect } from "react";
-import { Share, View, StyleSheet, RefreshControl, Pressable, Dimensions, Alert, FlatList, Modal, TextInput, ScrollView } from "react-native";
+import { Share, View, StyleSheet, RefreshControl, Pressable, Dimensions, Alert, FlatList, Modal, TextInput, ScrollView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";

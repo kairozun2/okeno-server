@@ -108,9 +108,6 @@ function PostCard({
   }));
 
   const heartOverlayStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: heartScale.value },
-    ],
     opacity: heartOpacity.value,
   }));
 
@@ -128,13 +125,9 @@ function PostCard({
       if (!post.isLiked) {
         runOnJS(handleLike)();
       }
-      heartScale.value = withSequence(
-        withSpring(1, { damping: 15, stiffness: 150 }),
-        withDelay(400, withSpring(0, { damping: 20 }))
-      );
       heartOpacity.value = withSequence(
         withSpring(1, { damping: 20 }),
-        withDelay(400, withSpring(0, { damping: 20 }))
+        withDelay(600, withSpring(0, { damping: 20 }))
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
