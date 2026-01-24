@@ -10,7 +10,11 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withSequence,
+  withDelay,
+  runOnJS,
 } from "react-native-reanimated";
+import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -390,12 +394,26 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <Image
-            source={{ uri: post.imageUrl }}
-            style={styles.image}
-            contentFit="cover"
-            transition={200}
-          />
+      <GestureDetector gesture={doubleTapGesture}>
+        <View style={styles.imageContainer}>
+          <GestureDetector gesture={doubleTapGesture}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={{ uri: post.imageUrl }}
+                style={styles.image}
+                contentFit="cover"
+                transition={200}
+              />
+              <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
+                <Feather name="heart" size={80} color="#fff" />
+              </Animated.View>
+            </View>
+          </GestureDetector>
+          <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
+            <Feather name="heart" size={80} color="#fff" />
+          </Animated.View>
+        </View>
+      </GestureDetector>
 
           <Animated.View entering={FadeIn} style={styles.content}>
             <View style={styles.userRow}>
@@ -434,12 +452,26 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <Image
-            source={{ uri: post.imageUrl }}
-            style={styles.image}
-            contentFit="cover"
-            transition={200}
-          />
+      <GestureDetector gesture={doubleTapGesture}>
+        <View style={styles.imageContainer}>
+          <GestureDetector gesture={doubleTapGesture}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={{ uri: post.imageUrl }}
+                style={styles.image}
+                contentFit="cover"
+                transition={200}
+              />
+              <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
+                <Feather name="heart" size={80} color="#fff" />
+              </Animated.View>
+            </View>
+          </GestureDetector>
+          <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
+            <Feather name="heart" size={80} color="#fff" />
+          </Animated.View>
+        </View>
+      </GestureDetector>
 
           <Animated.View entering={FadeIn} style={styles.content}>
             <View style={styles.userRow}>
@@ -724,6 +756,25 @@ const styles = StyleSheet.create({
   image: {
     width: SCREEN_WIDTH,
     aspectRatio: 1,
+  },
+  imageContainer: {
+    position: 'relative',
+    width: SCREEN_WIDTH,
+    aspectRatio: 1,
+    overflow: 'hidden',
+  },
+  heartOverlay: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginLeft: -40,
+    marginTop: -40,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+    zIndex: 10,
   },
   content: {
     padding: Spacing.md,
