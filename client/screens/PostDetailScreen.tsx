@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
