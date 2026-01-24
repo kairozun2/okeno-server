@@ -202,7 +202,7 @@ export default function MainTabNavigator() {
           options={{
             headerTitle: () => (
               <HeaderTitle 
-                title={language === "ru" ? "Моменты" : "Moments"} 
+                title={language === "ru" ? "Okeno" : "Okeno"} 
                 onFadeComplete={() => setShowPlus(true)} 
                 refreshing={feedRefreshing}
               />

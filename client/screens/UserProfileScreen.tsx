@@ -276,7 +276,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const shareUrl = `https://${process.env.EXPO_PUBLIC_DOMAIN}/user/${userId}`;
       await Share.share({
-        message: `Check out ${profileUser?.username}'s profile on Moments: ${shareUrl}`,
+        message: `Check out ${profileUser?.username}'s profile on Okeno: ${shareUrl}`,
         url: shareUrl,
       });
     } catch {

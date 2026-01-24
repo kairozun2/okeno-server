@@ -128,7 +128,7 @@ export default function RegisterScreen({ navigation }: Props) {
             {step === "username"
               ? "Choose a username for your profile"
               : step === "age"
-              ? "The Moments app has an 18+ age rating. Please confirm your age."
+              ? "The Okeno app has an 18+ age rating. Please confirm your age."
               : step === "pin"
               ? "Create a 4-digit PIN for protection"
               : "Enter your PIN again to confirm"}

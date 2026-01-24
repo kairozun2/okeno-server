@@ -88,9 +88,9 @@ export default function QRCodeScreen({ navigation }: Props) {
     setIsProcessing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
-    // Allow both "moments:user:ID" and just "ID"
-    const userId = data.startsWith("moments:user:") 
-      ? data.replace("moments:user:", "") 
+    // Allow both "okeno:user:ID" and just "ID"
+    const userId = data.startsWith("okeno:user:") 
+      ? data.replace("okeno:user:", "") 
       : data;
 
     if (userId.length > 5) { // Basic length check for a UUID-like ID
@@ -109,7 +109,7 @@ export default function QRCodeScreen({ navigation }: Props) {
       // Navigate to profile instead of creating a chat
       navigation.navigate("UserProfile", { userId });
     } else {
-      Alert.alert("Invalid QR code", "This QR code does not belong to a Moments user.");
+      Alert.alert("Invalid QR code", "This QR code does not belong to an Okeno user.");
       setIsProcessing(false);
       setScannedData(null);
     }

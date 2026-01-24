@@ -1,12 +1,13 @@
-# Moments - Social Media App
+# Okeno - Social Media App
 
 ## Overview
 
-Moments is a mobile-first social media application built with React Native (Expo) and a Node.js/Express backend. The app enables users to share photo-based posts with location tagging, engage through likes and comments, and communicate via direct messaging. Authentication uses a simple username + 4-digit PIN system with emoji avatars.
+Okeno is a mobile-first social media application built with React Native (Expo) and a Node.js/Express backend. The app enables users to share photo-based posts with location tagging, engage through likes and comments, and communicate via direct messaging. Authentication uses a simple username + 4-digit PIN system with emoji avatars.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Design priorities: Stability, optimization, smooth performance, minimalist Telegram-style UI.
 
 ## System Architecture
 
@@ -34,7 +35,7 @@ Preferred communication style: Simple, everyday language.
 ### Data Models
 Core entities defined in Drizzle schema:
 - **Users**: username, 4-digit PIN, emoji avatar, isAdmin, isVerified, isBanned
-- **Posts**: image URL, optional location data (name, lat/long)
+- **Posts**: image URL, optional location data (name, lat/long), feeling emoji
 - **Likes/Saves**: user-post relationships
 - **Comments**: text content on posts
 - **Chats/Messages**: direct messaging between users
@@ -89,7 +90,7 @@ UPDATE users SET is_admin = true, is_verified = true WHERE id = 'USER_ID_HERE';
 - **Content Flags**: Unrestricted Web Access, User-Generated Content
 
 ### App Store Connect Metadata
-- **App Name**: Moments
+- **App Name**: Okeno
 - **Bundle ID**: com.moments.app
 - **Primary Category**: Social Networking
 - **Secondary Category**: Photo & Video
@@ -114,23 +115,23 @@ To test features:
 6. Delete account in Settings (bottom of page)
 ```
 
-### Compliance Status ✅
+### Compliance Status
 
 | Requirement | Status | Location |
 |-------------|--------|----------|
-| Report button on posts | ✅ | FeedScreen.tsx, PostDetailScreen.tsx |
-| Report button on profiles | ✅ | UserProfileScreen.tsx |
-| Block button on profiles | ✅ | UserProfileScreen.tsx |
-| Privacy Policy in-app | ✅ | PrivacyPolicyScreen.tsx |
-| Privacy Policy link | ✅ | https://skaisay.github.io/App-Privacy/ |
-| Account deletion flow | ✅ | SettingsScreen.tsx |
-| Age restriction (18+) | ✅ | RegisterScreen.tsx |
-| Support contact info | ✅ | messaconfirmation@gmail.com |
-| Content moderation | ✅ | Reports processed within 24h |
-| No third-party tracking | ✅ | No analytics/ads SDKs |
-| No AI data sharing | ✅ | No AI features |
-| Privacy manifests | ✅ | app.json (privacyManifests) |
-| Encryption compliance | ✅ | ITSAppUsesNonExemptEncryption: false |
+| Report button on posts | Done | FeedScreen.tsx, PostDetailScreen.tsx |
+| Report button on profiles | Done | UserProfileScreen.tsx |
+| Block button on profiles | Done | UserProfileScreen.tsx |
+| Privacy Policy in-app | Done | PrivacyPolicyScreen.tsx |
+| Privacy Policy link | Done | https://skaisay.github.io/App-Privacy/ |
+| Account deletion flow | Done | SettingsScreen.tsx |
+| Age restriction (18+) | Done | RegisterScreen.tsx |
+| Support contact info | Done | messaconfirmation@gmail.com |
+| Content moderation | Done | Reports processed within 24h |
+| No third-party tracking | Done | No analytics/ads SDKs |
+| No AI data sharing | Done | No AI features |
+| Privacy manifests | Done | app.json (privacyManifests) |
+| Encryption compliance | Done | ITSAppUsesNonExemptEncryption: false |
 
 ### iOS Privacy Manifest (app.json)
 - NSPrivacyTracking: false

@@ -77,7 +77,7 @@ export default function CacheSettingsScreen() {
            <View style={styles.chartLegend}>
              <View style={styles.legendItem}>
                <View style={[styles.dot, { backgroundColor: theme.link }]} />
-               <ThemedText type="caption">Moments ({stats.storage})</ThemedText>
+               <ThemedText type="caption">Okeno ({stats.storage})</ThemedText>
              </View>
              <ThemedText type="caption" style={{ color: theme.textSecondary }}>Свободно 24.5 ГБ</ThemedText>
            </View>

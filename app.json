@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Moments",
-    "slug": "moments-app",
+    "name": "Okeno",
+    "slug": "okeno-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "moments",
+    "scheme": "okeno",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -39,11 +39,11 @@
         ]
       },
       "infoPlist": {
-        "NSCameraUsageDescription": "Moments uses your camera to capture photos and videos that you can share with friends.",
-        "NSPhotoLibraryUsageDescription": "Moments accesses your photo library so you can select and share existing photos and videos.",
-        "NSPhotoLibraryAddUsageDescription": "Moments saves photos and videos you create to your photo library.",
-        "NSLocationWhenInUseUsageDescription": "Moments uses your location to tag your posts with beautiful place names. Location is optional and never shared without your permission.",
-        "NSMicrophoneUsageDescription": "Moments uses the microphone to record audio when you capture videos.",
+        "NSCameraUsageDescription": "Okeno uses your camera to capture photos and videos that you can share with friends.",
+        "NSPhotoLibraryUsageDescription": "Okeno accesses your photo library so you can select and share existing photos and videos.",
+        "NSPhotoLibraryAddUsageDescription": "Okeno saves photos and videos you create to your photo library.",
+        "NSLocationWhenInUseUsageDescription": "Okeno uses your location to tag your posts with beautiful place names. Location is optional and never shared without your permission.",
+        "NSMicrophoneUsageDescription": "Okeno uses the microphone to record audio when you capture videos.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },

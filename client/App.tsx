@@ -32,7 +32,7 @@ function BannedScreen() {
         Your account has been banned
       </ThemedText>
       <ThemedText type="body" style={{ marginTop: Spacing.md, color: "#aaa", textAlign: "center", marginBottom: Spacing.xl }}>
-        You no longer have access to the Moments community.
+        You no longer have access to the Okeno community.
       </ThemedText>
       <Button onPress={logout} style={{ width: "100%", backgroundColor: "#fff" }} textStyle={{ color: "#000" }}>
         Return to login

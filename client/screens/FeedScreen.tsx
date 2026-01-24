@@ -145,7 +145,7 @@ function PostCard({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const shareUrl = `https://${process.env.EXPO_PUBLIC_DOMAIN}/post/${post.id}`;
       await Share.share({
-        message: `Check out this moment on Moments: ${shareUrl}`,
+        message: `Check out this moment on Okeno: ${shareUrl}`,
         url: shareUrl,
       });
     } catch {
@@ -626,7 +626,7 @@ export default function FeedScreen({ navigation }: Props) {
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl }}>
              <Feather name="map" size={48} color={theme.textSecondary} />
              <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: 'center' }}>
-               Maps are available in the Moments app via Expo Go on your device.
+               Maps are available in the Okeno app via Expo Go on your device.
              </ThemedText>
              {selectedLocation && (
                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: 'center' }}>

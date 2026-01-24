@@ -288,7 +288,7 @@ export default function SettingsScreen({ navigation }: Props) {
           title: t("Report a Bug", "Сообщить об ошибке"),
           subtitle: t("Help us improve", "Помогите нам стать лучше"),
           onPress: () => {
-            Linking.openURL("mailto:messaconfirmation@gmail.com?subject=Bug Report - Moments");
+            Linking.openURL("mailto:messaconfirmation@gmail.com?subject=Bug Report - Okeno");
           },
         },
       ],
@@ -444,7 +444,7 @@ export default function SettingsScreen({ navigation }: Props) {
             </View>
 
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xl, textAlign: "center" }}>
-              Moments uses an anonymous account system.{"\n"}Your PIN and ID are the only ways to access it.
+              Okeno uses an anonymous account system.{"\n"}Your PIN and ID are the only ways to access it.
             </ThemedText>
           </ScrollView>
         </View>

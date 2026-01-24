@@ -30,7 +30,7 @@ export default function PrivacyPolicyScreen({ navigation }: Props) {
       content: (
         <ThemedText type="body" style={[styles.sectionContent, { color: theme.textSecondary }]}>
           Last updated: January 2026{"\n\n"}
-          By using the Moments app, you agree to the Apple Standard License Agreement (EULA):{" "}
+          By using the Okeno app, you agree to the Apple Standard License Agreement (EULA):{" "}
           <ThemedText 
             type="link" 
             onPress={() => WebBrowser.openBrowserAsync("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")}
