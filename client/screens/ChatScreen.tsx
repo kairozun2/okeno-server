@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import { useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, RecordingPresets, AudioModule } from 'expo-audio';
-import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking, Dimensions, KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking, Dimensions, KeyboardAvoidingView, Keyboard, LayoutAnimation } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -530,6 +530,26 @@ export default function ChatScreen({ route, navigation }: Props) {
     enabled: !!otherUserId,
   });
 
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      }
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      }
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   const displayName = chatSettings?.nickname || userData?.username || otherUserName || t("User", "Пользователь");
   const displayEmoji = userData?.emoji || otherUserEmoji || "🐸";
   const backgroundImage = chatSettings?.backgroundImage;
@@ -954,7 +974,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           inverted
-          keyboardDismissMode="on-drag"
+          keyboardDismissMode="none"
           keyboardShouldPersistTaps="handled"
           onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
           onEndReachedThreshold={0.5}
