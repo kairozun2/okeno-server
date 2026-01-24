@@ -400,23 +400,25 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       <Modal
         visible={showActionSheet}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowActionSheet(false)}
       >
-        <Pressable 
-          style={styles.actionSheetOverlay} 
-          onPress={() => setShowActionSheet(false)}
-        >
+        <View style={styles.actionSheetOverlay}>
+          <Pressable 
+            style={StyleSheet.absoluteFillObject} 
+            onPress={() => setShowActionSheet(false)}
+          />
           <Animated.View 
             entering={FadeIn}
             style={[styles.actionSheetContainer, { backgroundColor: theme.backgroundRoot }]}
           >
             <Pressable
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowActionSheet(false);
-                handleShareProfile();
+                setTimeout(() => handleShareProfile(), 100);
               }}
-              style={styles.actionSheetItem}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
             >
               <Feather name="send" size={20} color={theme.text} />
               <ThemedText style={styles.actionSheetText}>{t("Share Profile", "Поделиться профилем")}</ThemedText>
@@ -426,10 +428,11 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             
             <Pressable
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowActionSheet(false);
-                setShowReportModal(true);
+                setTimeout(() => setShowReportModal(true), 100);
               }}
-              style={styles.actionSheetItem}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
             >
               <Feather name="flag" size={20} color={theme.error} />
               <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>{t("Report", "Пожаловаться")}</ThemedText>
@@ -439,16 +442,29 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             
             <Pressable
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowActionSheet(false);
-                handleBlock();
+                setTimeout(() => handleBlock(), 100);
               }}
-              style={styles.actionSheetItem}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
             >
               <Feather name="slash" size={20} color={theme.error} />
               <ThemedText style={[styles.actionSheetText, { color: theme.error }]}>{t("Block", "Заблокировать")}</ThemedText>
             </Pressable>
+            
+            <View style={[styles.actionSheetDivider, { backgroundColor: theme.border }]} />
+            
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowActionSheet(false);
+              }}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
+            >
+              <ThemedText style={[styles.actionSheetText, { color: theme.textSecondary }]}>{t("Cancel", "Отмена")}</ThemedText>
+            </Pressable>
           </Animated.View>
-        </Pressable>
+        </View>
       </Modal>
 
       <Modal
