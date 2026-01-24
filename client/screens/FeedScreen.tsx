@@ -127,13 +127,13 @@ function PostCard({
       }
       heartOpacity.value = withSequence(
         withSpring(1, { damping: 20, stiffness: 100 }),
-        withDelay(200, withSpring(0, { damping: 20, stiffness: 100 }))
+        withDelay(100, withSpring(0, { damping: 20, stiffness: 100 }))
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
 
   const handleSave = () => {
-    saveScale.value = withSpring(1.5, { damping: 10, stiffness: 200 }, () => {
+    saveScale.value = withSpring(1.2, { damping: 10, stiffness: 200 }, () => {
       saveScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

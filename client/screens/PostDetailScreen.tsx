@@ -136,7 +136,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       }
       heartOpacity.value = withSequence(
         withSpring(1, { damping: 20, stiffness: 100 }),
-        withDelay(200, withSpring(0, { damping: 20, stiffness: 100 }))
+        withDelay(100, withSpring(0, { damping: 20, stiffness: 100 }))
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
@@ -361,7 +361,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   });
 
   const handleSave = () => {
-    saveScale.value = withSpring(1.5, { damping: 4 }, () => {
+    saveScale.value = withSpring(1.2, { damping: 4 }, () => {
       saveScale.value = withSpring(1);
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
