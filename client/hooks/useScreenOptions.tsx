@@ -20,7 +20,7 @@ export function useScreenOptions({
     headerTintColor: theme.text,
     headerTitleStyle: {
       fontWeight: "600",
-      fontSize: 17,
+      fontSize: 16,
     },
     gestureEnabled: true,
     gestureDirection: "horizontal",
@@ -58,7 +58,7 @@ export function useModalScreenOptions(): NativeStackNavigationOptions {
     headerTintColor: theme.text,
     headerTitleStyle: {
       fontWeight: "600",
-      fontSize: 17,
+      fontSize: 16,
     },
     headerTransparent: false,
     headerStyle: {

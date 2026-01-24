@@ -164,6 +164,10 @@ export default function CreatePostScreen({ navigation }: Props) {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: t("New Memory", "Новое воспоминание"),
+      headerTitleStyle: {
+        fontSize: 16,
+        fontWeight: "600",
+      },
       headerRight: () => (
         <Pressable 
           onPress={handlePost} 
@@ -189,10 +193,13 @@ export default function CreatePostScreen({ navigation }: Props) {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <ThemedView style={[styles.container, { paddingTop: headerHeight }]}>
+      <ThemedView style={[styles.container, { paddingTop: 0 }]}>
         <ScrollView 
           style={styles.content} 
-          contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
+          contentContainerStyle={{ 
+            paddingTop: headerHeight + Spacing.sm,
+            paddingBottom: insets.bottom + Spacing.xl 
+          }}
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeIn}>
@@ -354,7 +361,7 @@ const styles = StyleSheet.create({
   },
   sectionTitleRow: {
     paddingHorizontal: Spacing.lg,
-    marginTop: Spacing.xs,
+    marginTop: 0,
     marginBottom: Spacing.xs,
   },
   feelingsScroll: {
