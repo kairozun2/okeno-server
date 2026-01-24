@@ -371,7 +371,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{
-          paddingTop: insets.top + Spacing.xl,
+          paddingTop: Spacing.lg,
           paddingBottom: insets.bottom + Spacing.xl,
         }}
         refreshControl={
