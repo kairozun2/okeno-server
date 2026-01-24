@@ -707,12 +707,15 @@ export default function ChatScreen({ route, navigation }: Props) {
       setRecordingDuration(0);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+      if (recordingTimer.current) clearInterval(recordingTimer.current);
       recordingTimer.current = setInterval(() => {
         setRecordingDuration(prev => prev + 1);
       }, 1000);
 
+      await audioRecorder.prepareRecordingAsync();
       audioRecorder.record();
     } catch (error) {
+      console.error("Start recording error:", error);
       setIsRecording(false);
     }
   };
@@ -934,7 +937,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           inverted
-          keyboardDismissMode="interactive"
+          keyboardDismissMode="on-drag"
           onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
           onEndReachedThreshold={0.5}
           contentContainerStyle={[
@@ -944,7 +947,8 @@ export default function ChatScreen({ route, navigation }: Props) {
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
-          windowSize={21}
+          initialNumToRender={15}
+          windowSize={11}
         />
 
         <View style={[styles.inputContainer, { backgroundColor: theme.backgroundRoot }]}>
@@ -969,7 +973,11 @@ export default function ChatScreen({ route, navigation }: Props) {
           ) : null}
           <View style={[styles.inputWrapper, { paddingBottom: insets.bottom > 0 ? insets.bottom / 2 : Spacing.sm }]}>
             {isRecording ? (
-              <>
+              <Animated.View 
+                entering={FadeIn.duration(200)}
+                exiting={FadeOut.duration(200)}
+                style={styles.recordingRow}
+              >
                 <Pressable
                   onPress={cancelRecording}
                   style={[
@@ -994,7 +1002,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                 >
                   <Feather name="send" size={18} color="#fff" />
                 </Pressable>
-              </>
+              </Animated.View>
             ) : (
               <>
                 <Pressable
@@ -1312,6 +1320,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     paddingHorizontal: Spacing.md,
     gap: Spacing.sm,
+  },
+  recordingRow: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
   },
   input: {
     flex: 1,
