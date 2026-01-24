@@ -8,6 +8,7 @@ import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
+import * as FileSystem from "expo-file-system";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -67,13 +68,37 @@ export default function CreatePostScreen({ navigation }: Props) {
   const [mediaPermission, requestMediaPermission] = ImagePicker.useMediaLibraryPermissions();
   const [locationPermission, requestLocationPermission] = Location.useForegroundPermissions();
 
+  const [isUploading, setIsUploading] = useState(false);
+
+  const uploadImage = async (uri: string): Promise<string> => {
+    // Read the file as base64
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: 'base64',
+    });
+
+    // Determine mime type from URI
+    const extension = uri.split('.').pop()?.toLowerCase() || 'jpg';
+    const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
+    const dataUrl = `data:${mimeType};base64,${base64}`;
+
+    // Upload to server
+    const response = await apiRequest("POST", "/api/upload", { image: dataUrl });
+    const data = await response.json();
+    return data.url;
+  };
+
   const createPostMutation = useMutation({
     mutationFn: async () => {
       if (!image) throw new Error(t("No image selected", "Изображение не выбрано"));
 
+      setIsUploading(true);
+      
+      // Upload image first and get server URL
+      const imageUrl = await uploadImage(image);
+
       const response = await apiRequest("POST", "/api/posts", {
         userId: user?.id,
-        imageUrl: image,
+        imageUrl: imageUrl,
         caption: caption.trim() || null,
         feeling: feeling,
         location: location.name,
@@ -83,12 +108,14 @@ export default function CreatePostScreen({ navigation }: Props) {
       return response.json();
     },
     onSuccess: () => {
+      setIsUploading(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "posts"] });
       navigation.goBack();
     },
     onError: (error) => {
+      setIsUploading(false);
       Alert.alert(t("Error", "Ошибка"), t("Failed to create post", "Не удалось создать пост"));
     },
   });
@@ -209,18 +236,18 @@ export default function CreatePostScreen({ navigation }: Props) {
       headerRight: () => (
         <Pressable 
           onPress={handlePost} 
-          disabled={!image || createPostMutation.isPending}
+          disabled={!image || createPostMutation.isPending || isUploading}
           style={{ padding: Spacing.sm }}
         >
           <Feather 
             name="send" 
             size={22} 
-            color={!image || createPostMutation.isPending ? theme.textSecondary : theme.link} 
+            color={!image || createPostMutation.isPending || isUploading ? theme.textSecondary : theme.link} 
           />
         </Pressable>
       ),
     });
-  }, [navigation, language, image, createPostMutation.isPending, theme]);
+  }, [navigation, language, image, createPostMutation.isPending, isUploading, theme]);
 
   const FEELINGS = [
     { id: "peaceful", emoji: "🌿", en: "Peaceful", ru: "Спокойствие" },

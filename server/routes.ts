@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema } from "@shared/schema";
 import { z } from "zod";
 import { moderateUsername } from "./moderation";
+import * as fs from "fs";
+import * as path from "path";
+import { randomUUID } from "crypto";
 
 const EMOJIS = ["🐸", "🦊", "🐻", "🐼", "🦁", "🐯", "🐨", "🐮", "🐷", "🐵", "🐔", "🐧", "🐦", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🕷", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊", "🐇", "🦝", "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿", "🦔"];
 
@@ -100,6 +103,52 @@ export async function registerRoutes(app: express.Express) {
     } catch (error) {
       console.error("Get sessions error:", error);
       res.status(500).json({ error: "Failed to get sessions" });
+    }
+  });
+
+  // Image upload endpoint
+  app.post("/api/upload", async (req, res) => {
+    try {
+      const { image } = req.body;
+      
+      if (!image) {
+        return res.status(400).json({ error: "No image data provided" });
+      }
+
+      // Extract base64 data (handle both raw base64 and data URL formats)
+      let base64Data = image;
+      let extension = "jpg";
+      
+      if (image.startsWith("data:")) {
+        const matches = image.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (matches) {
+          extension = matches[1] === "jpeg" ? "jpg" : matches[1];
+          base64Data = matches[2];
+        }
+      }
+
+      const fileName = `${randomUUID()}.${extension}`;
+      const uploadsDir = path.resolve(process.cwd(), "uploads");
+      
+      // Ensure uploads directory exists
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      const filePath = path.join(uploadsDir, fileName);
+      
+      // Write file
+      fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
+
+      // Return URL that will work in production
+      const host = req.headers.host || process.env.REPLIT_DEV_DOMAIN || "localhost:5000";
+      const protocol = req.headers["x-forwarded-proto"] || "https";
+      const imageUrl = `${protocol}://${host}/uploads/${fileName}`;
+
+      res.json({ url: imageUrl });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ error: "Failed to upload image" });
     }
   });
 
