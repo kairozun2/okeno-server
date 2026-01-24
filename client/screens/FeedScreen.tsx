@@ -11,7 +11,11 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withSequence,
+  withDelay,
+  runOnJS,
 } from "react-native-reanimated";
+import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -91,6 +95,8 @@ function PostCard({
   const { theme, language } = useTheme();
   const likeScale = useSharedValue(1);
   const saveScale = useSharedValue(1);
+  const heartScale = useSharedValue(0);
+  const heartOpacity = useSharedValue(0);
 
   const likeAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: likeScale.value }],
@@ -100,6 +106,14 @@ function PostCard({
     transform: [{ scale: saveScale.value }],
   }));
 
+  const heartOverlayStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: heartScale.value },
+      { translateY: -20 }
+    ],
+    opacity: heartOpacity.value,
+  }));
+
   const handleLike = () => {
     likeScale.value = withSpring(1.2, { damping: 10, stiffness: 200 }, () => {
       likeScale.value = withSpring(1);
@@ -107,6 +121,23 @@ function PostCard({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onLike();
   };
+
+  const doubleTapGesture = Gesture.Tap()
+    .numberOfTaps(2)
+    .onStart(() => {
+      if (!post.isLiked) {
+        runOnJS(handleLike)();
+      }
+      heartScale.value = withSequence(
+        withSpring(1, { damping: 12, stiffness: 200 }),
+        withDelay(400, withSpring(0))
+      );
+      heartOpacity.value = withSequence(
+        withSpring(1),
+        withDelay(400, withSpring(0))
+      );
+      runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
+    });
 
   const handleSave = () => {
     saveScale.value = withSpring(1.2, { damping: 10, stiffness: 200 }, () => {
@@ -234,13 +265,20 @@ function PostCard({
         </Pressable>
       </Modal>
 
-      <Image
-        source={{ uri: post.imageUrl }}
-        style={styles.postImage}
-        contentFit="cover"
-        transition={200}
-        cachePolicy="memory-disk"
-      />
+      <GestureDetector gesture={doubleTapGesture}>
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: post.imageUrl }}
+            style={styles.postImage}
+            contentFit="cover"
+            transition={200}
+            cachePolicy="memory-disk"
+          />
+          <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
+            <Feather name="heart" size={80} color="#fff" />
+          </Animated.View>
+        </View>
+      </GestureDetector>
 
       <View style={styles.postActions}>
         <View style={styles.leftActions}>
