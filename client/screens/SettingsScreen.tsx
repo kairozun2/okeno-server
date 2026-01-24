@@ -23,6 +23,11 @@ const SETTINGS_ICONS = {
   privacy: require("../assets/icons/settings/privacy.png"),
   support: require("../assets/icons/settings/support.png"),
   delete: require("../assets/icons/settings/delete.png"),
+  storage: require("../assets/icons/settings/storage.png"),
+  language: require("../assets/icons/settings/language.png"),
+  archive: require("../assets/icons/settings/archive.png"),
+  appearance: require("../assets/icons/settings/appearance.png"),
+  sessions: require("../assets/icons/settings/sessions.png"),
 };
 
 const ACCENT_COLORS = [
@@ -77,19 +82,21 @@ function SettingRow({ item, isLast }: SettingRowProps) {
         !isLast && { borderBottomWidth: 1, borderBottomColor: theme.border },
       ]}
     >
-      {item.customIcon ? (
-        <Image
-          source={item.customIcon}
-          style={[styles.rowIconImage, { borderRadius: 6 }]}
-        />
-      ) : item.icon ? (
-        <Feather
-          name={item.icon}
-          size={20}
-          color={item.danger ? theme.error : theme.textSecondary}
-          style={styles.rowIcon}
-        />
-      ) : null}
+      <View style={styles.rowIconContainer}>
+        {item.customIcon ? (
+          <Image
+            source={item.customIcon}
+            style={[styles.rowIconImage, { borderRadius: 6 }]}
+            fadeDuration={0}
+          />
+        ) : item.icon ? (
+          <Feather
+            name={item.icon}
+            size={20}
+            color={item.danger ? theme.error : theme.textSecondary}
+          />
+        ) : null}
+      </View>
       <View style={styles.settingInfo}>
         <ThemedText
           type="body"
@@ -203,7 +210,7 @@ export default function SettingsScreen({ navigation }: Props) {
           onPress: () => setShowAccountModal(true),
         },
         {
-          icon: "smartphone",
+          customIcon: SETTINGS_ICONS.sessions,
           title: t("Active Sessions", "Активные сессии"),
           subtitle: t("Manage devices", "Управление устройствами"),
           onPress: () => navigation.navigate("Sessions"),
@@ -214,7 +221,7 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("DATA & STORAGE", "ДАННЫЕ И ПАМЯТЬ"),
       items: [
         {
-          icon: "database",
+          customIcon: SETTINGS_ICONS.storage,
           title: t("Storage Usage", "Использование хранилища"),
           subtitle: t("Clear cache and manage data", "Очистка кэша и управление данными"),
           onPress: () => navigation.navigate("CacheSettings"),
@@ -225,7 +232,7 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("LANGUAGE", "ЯЗЫК"),
       items: [
         {
-          icon: "globe",
+          customIcon: SETTINGS_ICONS.language,
           title: t("App Language", "Язык приложения"),
           subtitle: language === "ru" ? "Русский" : "English",
           onPress: () => setShowLanguagePicker(true),
@@ -236,7 +243,7 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("ARCHIVE", "АРХИВ"),
       items: [
         {
-          icon: "bookmark",
+          customIcon: SETTINGS_ICONS.archive,
           title: t("Saved", "Сохранённые"),
           subtitle: t("View saved posts", "Просмотр сохранённых публикаций"),
           onPress: () => navigation.navigate("SavedPosts"),
@@ -275,7 +282,7 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("APPEARANCE", "ОФОРМЛЕНИЕ"),
       items: [
         {
-          icon: "aperture",
+          customIcon: SETTINGS_ICONS.appearance,
           title: t("App Color", "Цвет приложения"),
           subtitle: ACCENT_COLORS.find(c => c.color === (accentColor || "#5C7A5C"))?.name || t("Default", "По умолчанию"),
           onPress: () => setShowColorPicker(true),
@@ -334,7 +341,7 @@ export default function SettingsScreen({ navigation }: Props) {
           },
         },
         {
-          icon: "file-text",
+          customIcon: SETTINGS_ICONS.privacy,
           title: t("Terms of Use", "Условия использования"),
           subtitle: t("User Agreement", "Пользовательское соглашение"),
           onPress: () => navigation.navigate("PrivacyPolicy"),
@@ -656,13 +663,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
   },
-  rowIcon: {
+  rowIconContainer: {
+    width: 28,
+    height: 28,
     marginRight: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   rowIconImage: {
     width: 28,
     height: 28,
-    marginRight: Spacing.md,
   },
   settingInfo: {
     flex: 1,
