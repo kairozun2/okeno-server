@@ -34,6 +34,7 @@ export default function CreatePostScreen({ navigation }: Props) {
   const [image, setImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [feeling, setFeeling] = useState<string | null>(null);
+  const [customEmoji, setCustomEmoji] = useState<string | null>(null);
   const [location, setLocation] = useState<{
     name: string | null;
     latitude: number | null;
@@ -224,6 +225,57 @@ export default function CreatePostScreen({ navigation }: Props) {
                     </ThemedText>
                   </Pressable>
                 ))}
+                
+                {customEmoji ? (
+                  <Pressable
+                    onPress={() => {
+                      setFeeling(feeling === customEmoji ? null : customEmoji);
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}
+                    style={[
+                      styles.feelingChip,
+                      { 
+                        backgroundColor: feeling === customEmoji ? theme.link + '20' : theme.backgroundSecondary,
+                        borderColor: feeling === customEmoji ? theme.link : 'transparent'
+                      }
+                    ]}
+                  >
+                    <ThemedText style={{ fontSize: 16 }}>{customEmoji}</ThemedText>
+                    <ThemedText type="small" style={{ marginLeft: 6, color: feeling === customEmoji ? theme.link : theme.text }}>
+                      {t("Custom", "Своё")}
+                    </ThemedText>
+                  </Pressable>
+                ) : null}
+
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    // Simple emoji picker prompt for now
+                    Alert.prompt(
+                      t("Add Custom Emoji", "Добавить свой эмодзи"),
+                      t("Enter one emoji", "Введите один эмодзи"),
+                      [
+                        { text: t("Cancel", "Отмена"), style: "cancel" },
+                        { 
+                          text: t("Add", "Добавить"), 
+                          onPress: (val) => {
+                            if (val && val.trim()) {
+                              setCustomEmoji(val.trim().substring(0, 2)); // Basic limit
+                              setFeeling(val.trim().substring(0, 2));
+                            }
+                          } 
+                        }
+                      ],
+                      'plain-text'
+                    );
+                  }}
+                  style={[
+                    styles.feelingChip,
+                    { backgroundColor: theme.backgroundSecondary, borderColor: 'transparent', width: 44, justifyContent: 'center' }
+                  ]}
+                >
+                  <Feather name="plus" size={20} color={theme.text} />
+                </Pressable>
               </View>
             </ScrollView>
 
