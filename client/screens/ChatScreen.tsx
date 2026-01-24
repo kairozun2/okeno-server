@@ -867,8 +867,8 @@ export default function ChatScreen({ route, navigation }: Props) {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot, flex: 1 }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior="padding"
-        keyboardVerticalOffset={chatFullscreen ? insets.top : 90}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
       >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
@@ -964,15 +964,13 @@ export default function ChatScreen({ route, navigation }: Props) {
           onEndReachedThreshold={0.5}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: 8, paddingBottom: insets.top + 100 },
+            { paddingTop: 8, paddingBottom: insets.top + 80 },
           ]}
           showsVerticalScrollIndicator={false}
-          removeClippedSubviews={Platform.OS === 'android'}
-          maxToRenderPerBatch={8}
-          initialNumToRender={12}
-          windowSize={7}
-          updateCellsBatchingPeriod={50}
-          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          initialNumToRender={15}
+          windowSize={21}
         />
 
         <View style={[styles.inputContainer, { backgroundColor: theme.backgroundRoot }]}>
