@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { KeyboardAvoidingView } from "react-native";
 import Animated, { 
   FadeIn, 
   FadeOut, 
@@ -706,10 +706,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       // Crucial for iOS: set audio mode to allow recording
       await AudioModule.setAudioModeAsync({
         allowsRecording: true,
-        playsInSilentMode: true, // Revert to true as false + recording is impossible on iOS
-        staysActiveInBackground: false,
-        interruptionModeIOS: 1, // DoNotMix
-        shouldRouteThroughEarpieceIOS: false,
+        playsInSilentMode: true,
       });
 
       setIsRecording(true);
@@ -867,8 +864,8 @@ export default function ChatScreen({ route, navigation }: Props) {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot, flex: 1 }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
