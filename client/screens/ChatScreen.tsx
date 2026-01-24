@@ -706,7 +706,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       // Crucial for iOS: set audio mode to allow recording
       await AudioModule.setAudioModeAsync({
         allowsRecording: true,
-        playsInSilentMode: false, // Changed to false to avoid iOS conflict
+        playsInSilentMode: true, // Revert to true as false + recording is impossible on iOS
         staysActiveInBackground: false,
         interruptionModeIOS: 1, // DoNotMix
         shouldRouteThroughEarpieceIOS: false,
@@ -746,7 +746,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       // Reset audio mode after recording
       await AudioModule.setAudioModeAsync({
         allowsRecording: false,
-        playsInSilentMode: false,
+        playsInSilentMode: true,
       });
 
       if (uri && duration > 0) {
@@ -776,7 +776,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       // Reset audio mode
       await AudioModule.setAudioModeAsync({
         allowsRecording: false,
-        playsInSilentMode: false,
+        playsInSilentMode: true,
       });
     } catch {}
     setIsRecording(false);
@@ -867,9 +867,8 @@ export default function ChatScreen({ route, navigation }: Props) {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot, flex: 1 }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={chatFullscreen ? 0 : 64}
-        enabled={true}
+        behavior="padding"
+        keyboardVerticalOffset={chatFullscreen ? insets.top : 90}
       >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
