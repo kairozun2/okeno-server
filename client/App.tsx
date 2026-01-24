@@ -67,11 +67,14 @@ function AppContent() {
   const [iconsPreloaded, setIconsPreloaded] = useState(false);
   
   useEffect(() => {
-    Image.prefetch(SETTINGS_ICON_SOURCES).then(() => {
-      setIconsPreloaded(true);
-    }).catch(() => {
-      setIconsPreloaded(true);
-    });
+    const preload = async () => {
+      try {
+        await Image.prefetch(SETTINGS_ICON_SOURCES);
+      } finally {
+        setIconsPreloaded(true);
+      }
+    };
+    preload();
   }, []);
   
   const handleLoadingFinish = useCallback(() => {
@@ -82,6 +85,19 @@ function AppContent() {
 
   if (user?.isBanned) {
     return <BannedScreen />;
+  }
+
+  // Ensure navigation doesn't start until icons are ready to prevent flicker for new users
+  if (!isReady && showLoading) {
+    return (
+      <View style={styles.root}>
+        <LoadingScreen 
+          emoji={user?.emoji || "🐸"} 
+          isReady={false} 
+          onFinish={handleLoadingFinish} 
+        />
+      </View>
+    );
   }
 
   return (
