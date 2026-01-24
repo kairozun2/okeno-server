@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Image } from "expo-image";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
@@ -21,6 +22,25 @@ import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/Button";
 import { ThemedText } from "@/components/ThemedText";
 import { Spacing } from "@/constants/theme";
+
+const SETTINGS_ICON_SOURCES = [
+  require("./assets/icons/settings/account.png"),
+  require("./assets/icons/settings/privacy.png"),
+  require("./assets/icons/settings/support.png"),
+  require("./assets/icons/settings/delete.png"),
+  require("./assets/icons/settings/storage.png"),
+  require("./assets/icons/settings/language.png"),
+  require("./assets/icons/settings/archive.png"),
+  require("./assets/icons/settings/appearance.png"),
+  require("./assets/icons/settings/sessions.png"),
+  require("./assets/icons/settings/hidden.png"),
+  require("./assets/icons/settings/haptics.png"),
+  require("./assets/icons/settings/chat.png"),
+  require("./assets/icons/settings/help.png"),
+  require("./assets/icons/settings/bug.png"),
+  require("./assets/icons/settings/discord.png"),
+  require("./assets/icons/settings/archive-box.png"),
+];
 
 function BannedScreen() {
   const { logout, user } = useAuth();
@@ -44,12 +64,21 @@ function BannedScreen() {
 function AppContent() {
   const { user, isLoading } = useAuth();
   const [showLoading, setShowLoading] = useState(true);
+  const [iconsPreloaded, setIconsPreloaded] = useState(false);
+  
+  useEffect(() => {
+    Image.prefetch(SETTINGS_ICON_SOURCES).then(() => {
+      setIconsPreloaded(true);
+    }).catch(() => {
+      setIconsPreloaded(true);
+    });
+  }, []);
   
   const handleLoadingFinish = useCallback(() => {
     setShowLoading(false);
   }, []);
 
-  const isReady = !isLoading;
+  const isReady = !isLoading && iconsPreloaded;
 
   if (user?.isBanned) {
     return <BannedScreen />;

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TextInput, Linking, Platform, Image } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TextInput, Linking, Platform } from "react-native";
+import { Image } from "expo-image";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,6 +29,13 @@ const SETTINGS_ICONS = {
   archive: require("../assets/icons/settings/archive.png"),
   appearance: require("../assets/icons/settings/appearance.png"),
   sessions: require("../assets/icons/settings/sessions.png"),
+  hidden: require("../assets/icons/settings/hidden.png"),
+  haptics: require("../assets/icons/settings/haptics.png"),
+  chat: require("../assets/icons/settings/chat.png"),
+  help: require("../assets/icons/settings/help.png"),
+  bug: require("../assets/icons/settings/bug.png"),
+  discord: require("../assets/icons/settings/discord.png"),
+  archiveBox: require("../assets/icons/settings/archive-box.png"),
 };
 
 const ACCENT_COLORS = [
@@ -87,7 +95,9 @@ function SettingRow({ item, isLast }: SettingRowProps) {
           <Image
             source={item.customIcon}
             style={[styles.rowIconImage, { borderRadius: 6 }]}
-            fadeDuration={0}
+            cachePolicy="memory-disk"
+            priority="high"
+            transition={0}
           />
         ) : item.icon ? (
           <Feather
@@ -249,13 +259,13 @@ export default function SettingsScreen({ navigation }: Props) {
           onPress: () => navigation.navigate("SavedPosts"),
         },
         {
-          icon: "archive",
+          customIcon: SETTINGS_ICONS.archiveBox,
           title: t("Archive", "Архив"),
           subtitle: t("View archived memories", "Просмотр архивных воспоминаний"),
           onPress: () => navigation.navigate("Archive"),
         },
         {
-          icon: "eye-off",
+          customIcon: SETTINGS_ICONS.hidden,
           title: t("Hidden Users", "Скрытые пользователи"),
           subtitle: t("Manage blocked users", "Управление заблокированными пользователями"),
           onPress: () => navigation.navigate("BlockedUsers"),
@@ -266,7 +276,7 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("SOUND & FEEDBACK", "ЗВУК И ОТКЛИК"),
       items: [
         {
-          icon: hapticsEnabled ? "volume-2" : "volume-x",
+          customIcon: SETTINGS_ICONS.haptics,
           title: t("Haptic Feedback", "Виброотклик"),
           subtitle: hapticsEnabled ? t("On", "Вкл") : t("Off", "Выкл"),
           onPress: async () => {
@@ -288,7 +298,7 @@ export default function SettingsScreen({ navigation }: Props) {
           onPress: () => setShowColorPicker(true),
         },
         {
-          icon: chatFullscreen ? "maximize-2" : "minimize-2",
+          customIcon: SETTINGS_ICONS.chat,
           title: t("Chat Display", "Вид чата"),
           subtitle: chatFullscreen ? t("Full screen", "Во весь экран") : t("Modal window", "Модальное окно"),
           onPress: async () => {
@@ -304,7 +314,7 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("HELP & FEEDBACK", "ПОМОЩЬ И ОТЗЫВЫ"),
       items: [
         {
-          icon: "help-circle",
+          customIcon: SETTINGS_ICONS.help,
           title: t("Help Center", "Центр помощи"),
           subtitle: t("FAQs and instructions", "Часто задаваемые вопросы"),
           onPress: () => {
@@ -312,7 +322,7 @@ export default function SettingsScreen({ navigation }: Props) {
           },
         },
         {
-          icon: "alert-octagon",
+          customIcon: SETTINGS_ICONS.bug,
           title: t("Report a Bug", "Сообщить об ошибке"),
           subtitle: t("Help us improve", "Помогите нам стать лучше"),
           onPress: () => {
@@ -333,7 +343,7 @@ export default function SettingsScreen({ navigation }: Props) {
           },
         },
         {
-          icon: "message-circle",
+          customIcon: SETTINGS_ICONS.discord,
           title: t("Our Discord", "Наш Discord"),
           subtitle: "https://discord.gg/FRAZ6PBcH9",
           onPress: () => {
