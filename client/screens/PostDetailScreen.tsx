@@ -37,6 +37,7 @@ interface Post {
   userId: string;
   imageUrl: string;
   caption: string | null;
+  feeling: string | null;
   location: string | null;
   latitude: string | null;
   longitude: string | null;
@@ -54,6 +55,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 type Props = NativeStackScreenProps<RootStackParamList, "PostDetail">;
 
 export default function PostDetailScreen({ route, navigation }: Props) {
+  const { postId } = route.params;
   const { theme, language } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();

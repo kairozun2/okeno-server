@@ -43,6 +43,7 @@ interface Post {
   userId: string;
   imageUrl: string;
   caption: string | null;
+  feeling: string | null;
   location: string | null;
   latitude: string | null;
   longitude: string | null;
