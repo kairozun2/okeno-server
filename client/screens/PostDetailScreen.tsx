@@ -86,6 +86,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   const isOwner = currentUser?.id === post?.userId;
 
+  const [showActionMenu, setShowActionMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editedCaption, setEditedCaption] = useState("");
 
@@ -108,9 +109,14 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     },
   });
 
-  const handleEdit = () => {
+  const handleEditPress = () => {
+    setShowActionMenu(true);
+  };
+
+  const startEditing = () => {
     setEditedCaption(post?.caption || "");
     setShowEditModal(true);
+    setShowActionMenu(false);
   };
 
   const handleSaveEdit = () => {
@@ -123,6 +129,19 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   });
 
   const isArchived = archivedData?.includes(postId);
+
+  const archiveMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/users/${currentUser?.id}/archived`, { postId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "archived"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigation.navigate("Main" as any, { screen: "Home" } as any);
+    },
+  });
 
   const unarchiveMutation = useMutation({
     mutationFn: async () => {
@@ -189,52 +208,20 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         if (!isOwner) return null;
         
         return (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginRight: 0 }}>
-            {isArchived ? (
-              <Pressable
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  unarchiveMutation.mutate();
-                }}
-                style={{
-                  width: 32,
-                  height: 32,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Feather name="arrow-up" size={20} color={theme.text} />
-              </Pressable>
-            ) : null}
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                handleEdit();
-              }}
-              style={{
-                width: 32,
-                height: 32,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Feather name="edit-2" size={20} color={theme.text} />
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                handleDelete();
-              }}
-              style={{
-                width: 32,
-                height: 32,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Feather name="trash-2" size={20} color={theme.error} />
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              handleEditPress();
+            }}
+            style={{
+              width: 32,
+              height: 32,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Feather name="more-horizontal" size={24} color={theme.text} />
+          </Pressable>
         );
       },
     });
@@ -481,6 +468,72 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       </ThemedView>
 
       <Modal
+        visible={showActionMenu}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowActionMenu(false)}
+      >
+        <Pressable 
+          style={styles.actionSheetOverlay} 
+          onPress={() => setShowActionMenu(false)}
+        >
+          <ThemedView style={styles.actionSheetContainer}>
+            <Pressable 
+              style={styles.actionSheetItem}
+              onPress={startEditing}
+            >
+              <Feather name="edit-2" size={20} color={theme.text} />
+              <ThemedText style={{ marginLeft: Spacing.md }}>{t("Edit caption", "Изменить описание")}</ThemedText>
+            </Pressable>
+
+            {isArchived ? (
+              <Pressable 
+                style={styles.actionSheetItem}
+                onPress={() => {
+                  setShowActionMenu(false);
+                  unarchiveMutation.mutate();
+                }}
+              >
+                <Feather name="arrow-up" size={20} color={theme.text} />
+                <ThemedText style={{ marginLeft: Spacing.md }}>{t("Restore from archive", "Восстановить из архива")}</ThemedText>
+              </Pressable>
+            ) : (
+              <Pressable 
+                style={styles.actionSheetItem}
+                onPress={() => {
+                  setShowActionMenu(false);
+                  archiveMutation.mutate();
+                }}
+              >
+                <Feather name="archive" size={20} color={theme.text} />
+                <ThemedText style={{ marginLeft: Spacing.md }}>{t("Move to archive", "В архив")}</ThemedText>
+              </Pressable>
+            )}
+
+            <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
+
+            <Pressable 
+              style={styles.actionSheetItem}
+              onPress={() => {
+                setShowActionMenu(false);
+                handleDelete();
+              }}
+            >
+              <Feather name="trash-2" size={20} color={theme.error} />
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>{t("Delete post", "Удалить пост")}</ThemedText>
+            </Pressable>
+
+            <Pressable 
+              style={[styles.actionSheetItem, { marginTop: Spacing.xs }]}
+              onPress={() => setShowActionMenu(false)}
+            >
+              <ThemedText style={{ width: '100%', textAlign: 'center', color: theme.textSecondary }}>{t("Cancel", "Отмена")}</ThemedText>
+            </Pressable>
+          </ThemedView>
+        </Pressable>
+      </Modal>
+
+      <Modal
         visible={showEditModal}
         transparent
         animationType="fade"
@@ -594,6 +647,22 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.03)",
     borderRadius: BorderRadius.lg,
     marginTop: Spacing.md,
+  },
+  actionSheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  actionSheetContainer: {
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? 40 : Spacing.xl,
+  },
+  actionSheetItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.md,
   },
   modalOverlay: {
     flex: 1,
