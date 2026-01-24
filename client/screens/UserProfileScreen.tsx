@@ -571,7 +571,8 @@ const styles = StyleSheet.create({
   },
   messageButton: {
     flex: 1,
-    maxWidth: 160,
+    minWidth: 120,
+    paddingHorizontal: Spacing.md,
   },
   hideButton: {
     width: 44,

@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Moda
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
