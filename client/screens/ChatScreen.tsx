@@ -14,7 +14,7 @@ import Animated, {
   FadeOut, 
   useSharedValue, 
   useAnimatedStyle, 
-  withSpring, 
+  withTiming, 
   runOnJS 
 } from "react-native-reanimated";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
@@ -152,30 +152,22 @@ function MessageBubble({
   const translateX = useSharedValue(0);
 
   const gesture = Gesture.Pan()
-    .activeOffsetX(isOwn ? [-10, 0] : [0, 10]) // Swipe left for own, right for others
-    .failOffsetY([-10, 10]) // Fail gesture if vertical movement is detected to prevent scroll conflict
+    .activeOffsetX(isOwn ? [-8, 0] : [0, 8])
+    .failOffsetY([-8, 8])
     .onUpdate((event) => {
       const translation = event.translationX;
-      if (isOwn) {
-        // Swipe left (negative)
-        if (translation < 0) {
-          translateX.value = Math.max(translation, -60);
-        }
-      } else {
-        // Swipe right (positive)
-        if (translation > 0) {
-          translateX.value = Math.min(translation, 60);
-        }
+      if (isOwn && translation < 0) {
+        translateX.value = Math.max(translation, -40);
+      } else if (!isOwn && translation > 0) {
+        translateX.value = Math.min(translation, 40);
       }
     })
     .onEnd(() => {
-      if (Math.abs(translateX.value) > 40) {
+      if (Math.abs(translateX.value) > 25) {
         runOnJS(onSwipeReply)(message);
-        if (Haptics.impactAsync) {
-          runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
-        }
+        runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
       }
-      translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
+      translateX.value = withTiming(0, { duration: 100 });
     });
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -1049,7 +1041,14 @@ export default function ChatScreen({ route, navigation }: Props) {
                   </Pressable>
                 ) : (
                   <Pressable
-                    onPress={startRecording}
+                    onPressIn={startRecording}
+                    onPressOut={() => {
+                      if (isRecording && recordingDuration > 0) {
+                        stopRecording();
+                      } else if (isRecording) {
+                        cancelRecording();
+                      }
+                    }}
                     disabled={sendMutation.isPending}
                     style={[
                       styles.sendButton,
