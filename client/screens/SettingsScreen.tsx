@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TextInput, Linking, Platform } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, TextInput, Linking, Platform, Image } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/query-client";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,6 +18,13 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
+const SETTINGS_ICONS = {
+  account: require("../assets/icons/settings/account.png"),
+  privacy: require("../assets/icons/settings/privacy.png"),
+  support: require("../assets/icons/settings/support.png"),
+  delete: require("../assets/icons/settings/delete.png"),
+};
+
 const ACCENT_COLORS = [
   { name: "Royal Blue", color: "#162660" },
   { name: "Powder Blue", color: "#6EB0F5" }, // Brighter for background
@@ -31,7 +38,8 @@ const ACCENT_COLORS = [
 ];
 
 interface SettingItem {
-  icon: keyof typeof Feather.glyphMap;
+  icon?: keyof typeof Feather.glyphMap;
+  customIcon?: any;
   title: string;
   subtitle?: string;
   onPress: () => void;
