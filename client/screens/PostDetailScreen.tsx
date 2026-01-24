@@ -602,12 +602,13 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       <Modal
         visible={showEditModal}
         transparent
-        animationType="fade"
+        animationType="slide" // Use native slide for smoothness
         onRequestClose={() => setShowEditModal(false)}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
+          keyboardVerticalOffset={Platform.OS === "ios" ? -40 : 0} // Slight offset to overlap gaps
         >
           <ThemedView style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -806,7 +807,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    paddingBottom: Platform.OS === 'ios' ? 40 : Spacing.xl,
+    paddingBottom: Platform.OS === 'ios' ? 100 : Spacing.xl, // Increased padding to hide gaps below rounded keyboard
     maxHeight: '90%',
   },
   modalHeader: {
