@@ -314,7 +314,8 @@ export async function registerRoutes(app: express.Express) {
       const existing = saves.find(s => s.postId === postId);
       
       if (existing) {
-        res.json({ saved: true });
+        await storage.deleteSave(userId, postId);
+        res.json({ saved: false });
       } else {
         await storage.createSave({ userId, postId });
         res.json({ saved: true });

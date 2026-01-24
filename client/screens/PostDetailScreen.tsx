@@ -136,7 +136,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       }
       heartOpacity.value = withSequence(
         withSpring(1, { damping: 20, stiffness: 100 }),
-        withDelay(100, withSpring(0, { damping: 20, stiffness: 100 }))
+        withDelay(1200, withSpring(0, { damping: 20, stiffness: 100 }))
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
@@ -348,11 +348,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (savedData?.saved) {
-        await apiRequest("DELETE", `/api/saves/${postId}`, { userId: currentUser?.id });
-      } else {
-        await apiRequest("POST", "/api/saves", { userId: currentUser?.id, postId });
-      }
+      await apiRequest("POST", "/api/saves", { userId: currentUser?.id, postId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "saves", currentUser?.id] });

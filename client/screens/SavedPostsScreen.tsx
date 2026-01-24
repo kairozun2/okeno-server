@@ -57,13 +57,17 @@ export default function SavedPostsScreen({ navigation }: Props) {
 
   const { data: savedPosts, isLoading } = useQuery<Post[]>({
     queryKey: ["/api/users", user?.id, "saved"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/users/${user?.id}/saves`);
+      return response.json();
+    },
     enabled: !!user?.id,
     staleTime: 0,
   });
 
   const unsaveMutation = useMutation({
     mutationFn: async (postId: string) => {
-      await apiRequest("DELETE", `/api/saves/${postId}`, { userId: user?.id });
+      await apiRequest("POST", "/api/saves", { userId: user?.id, postId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
