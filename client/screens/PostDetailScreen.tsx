@@ -54,7 +54,6 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 type Props = NativeStackScreenProps<RootStackParamList, "PostDetail">;
 
 export default function PostDetailScreen({ route, navigation }: Props) {
-  const { postId } = route.params;
   const { theme, language } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
@@ -83,6 +82,33 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   }));
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
+  const { data: post } = useQuery<Post>({
+    queryKey: ["/api/posts", postId],
+  });
+
+  const { data: postUser } = useQuery<User>({
+    queryKey: ["/api/users", post?.userId],
+    enabled: !!post?.userId,
+  });
+
+  const { data: likesData } = useQuery<{ count: number }>({
+    queryKey: ["/api/posts", postId, "likes"],
+  });
+
+  const { data: commentsData } = useQuery<{ count: number }>({
+    queryKey: ["/api/posts", postId, "comments", "count"],
+  });
+
+  const { data: likedData } = useQuery<{ liked: boolean }>({
+    queryKey: ["/api/posts", postId, "likes", currentUser?.id],
+    enabled: !!currentUser?.id,
+  });
+
+  const { data: savedData } = useQuery<{ saved: boolean }>({
+    queryKey: ["/api/posts", postId, "saves", currentUser?.id],
+    enabled: !!currentUser?.id,
+  });
 
   const likeMutation = useMutation({
     mutationFn: async () => {
@@ -119,33 +145,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
-
-  const { data: post } = useQuery<Post>({
-    queryKey: ["/api/posts", postId],
-  });
-
-  const { data: postUser } = useQuery<User>({
-    queryKey: ["/api/users", post?.userId],
-    enabled: !!post?.userId,
-  });
-
-  const { data: likesData } = useQuery<{ count: number }>({
-    queryKey: ["/api/posts", postId, "likes"],
-  });
-
-  const { data: commentsData } = useQuery<{ count: number }>({
-    queryKey: ["/api/posts", postId, "comments", "count"],
-  });
-
-  const { data: likedData } = useQuery<{ liked: boolean }>({
-    queryKey: ["/api/posts", postId, "likes", currentUser?.id],
-    enabled: !!currentUser?.id,
-  });
-
-  const { data: savedData } = useQuery<{ saved: boolean }>({
-    queryKey: ["/api/posts", postId, "saves", currentUser?.id],
-    enabled: !!currentUser?.id,
-  });
 
   const isOwner = currentUser?.id === post?.userId;
 
@@ -352,18 +351,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     });
   }, [navigation, isOwner, theme, handleDelete, postId, isArchived, unarchiveMutation, language]);
 
-  const likeMutation = useMutation({
-    mutationFn: async () => {
-      // Use the correct endpoint /api/posts/:id/like
-      await apiRequest("POST", `/api/posts/${postId}/like`, { userId: currentUser?.id });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "likes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "likes", currentUser?.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Also invalidate main feed
-    },
-  });
-
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (savedData?.saved) {
@@ -376,22 +363,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "saves", currentUser?.id] });
     },
   });
-
-  const likeAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: likeScale.value }],
-  }));
-
-  const saveAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: saveScale.value }],
-  }));
-
-  const handleLike = () => {
-    likeScale.value = withSpring(1.2, { damping: 4 }, () => {
-      likeScale.value = withSpring(1);
-    });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    likeMutation.mutate();
-  };
 
   const handleSave = () => {
     saveScale.value = withSpring(1.2, { damping: 4 }, () => {
