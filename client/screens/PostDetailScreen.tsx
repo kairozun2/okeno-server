@@ -55,15 +55,70 @@ type Props = NativeStackScreenProps<RootStackParamList, "PostDetail">;
 
 export default function PostDetailScreen({ route, navigation }: Props) {
   const { postId } = route.params;
-  const { theme, isDark, language } = useTheme();
+  const { theme, language } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-
-  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+  const headerHeight = useHeaderHeight();
 
   const likeScale = useSharedValue(1);
   const saveScale = useSharedValue(1);
+  const heartScale = useSharedValue(0);
+  const heartOpacity = useSharedValue(0);
+
+  const likeAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: likeScale.value }],
+  }));
+
+  const saveAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: saveScale.value }],
+  }));
+
+  const heartOverlayStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: heartScale.value },
+      { translateY: -20 }
+    ],
+    opacity: heartOpacity.value,
+  }));
+
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/posts/${postId}/like`, { userId: currentUser?.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "likes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts", postId, "likes", currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    },
+  });
+
+  const handleLike = () => {
+    likeScale.value = withSpring(1.2, { damping: 4 }, () => {
+      likeScale.value = withSpring(1);
+    });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    likeMutation.mutate();
+  };
+
+  const doubleTapGesture = Gesture.Tap()
+    .numberOfTaps(2)
+    .onStart(() => {
+      if (!likedData?.liked) {
+        runOnJS(handleLike)();
+      }
+      heartScale.value = withSequence(
+        withSpring(1.2, { damping: 12, stiffness: 200 }),
+        withDelay(400, withSpring(0))
+      );
+      heartOpacity.value = withSequence(
+        withSpring(1),
+        withDelay(400, withSpring(0))
+      );
+      runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
+    });
 
   const { data: post } = useQuery<Post>({
     queryKey: ["/api/posts", postId],
@@ -394,8 +449,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           }}
           showsVerticalScrollIndicator={false}
         >
-      <GestureDetector gesture={doubleTapGesture}>
-        <View style={styles.imageContainer}>
           <GestureDetector gesture={doubleTapGesture}>
             <View style={styles.imageContainer}>
               <Image
@@ -409,11 +462,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               </Animated.View>
             </View>
           </GestureDetector>
-          <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
-            <Feather name="heart" size={80} color="#fff" />
-          </Animated.View>
-        </View>
-      </GestureDetector>
 
           <Animated.View entering={FadeIn} style={styles.content}>
             <View style={styles.userRow}>
@@ -452,8 +500,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           }}
           showsVerticalScrollIndicator={false}
         >
-      <GestureDetector gesture={doubleTapGesture}>
-        <View style={styles.imageContainer}>
           <GestureDetector gesture={doubleTapGesture}>
             <View style={styles.imageContainer}>
               <Image
@@ -467,11 +513,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               </Animated.View>
             </View>
           </GestureDetector>
-          <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
-            <Feather name="heart" size={80} color="#fff" />
-          </Animated.View>
-        </View>
-      </GestureDetector>
 
           <Animated.View entering={FadeIn} style={styles.content}>
             <View style={styles.userRow}>
