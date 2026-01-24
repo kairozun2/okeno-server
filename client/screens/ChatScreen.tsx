@@ -846,8 +846,8 @@ export default function ChatScreen({ route, navigation }: Props) {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot, flex: 1 }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? 0 : 45) : 0}
+        behavior="padding"
+        keyboardVerticalOffset={chatFullscreen ? 0 : 45}
       >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
@@ -938,6 +938,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           keyExtractor={(item) => item.id}
           inverted
           keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
           onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
           onEndReachedThreshold={0.5}
           contentContainerStyle={[
@@ -945,10 +946,12 @@ export default function ChatScreen({ route, navigation }: Props) {
             { paddingTop: 8, paddingBottom: insets.top + 100 },
           ]}
           showsVerticalScrollIndicator={false}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          initialNumToRender={15}
-          windowSize={11}
+          removeClippedSubviews={Platform.OS === 'android'}
+          maxToRenderPerBatch={8}
+          initialNumToRender={12}
+          windowSize={7}
+          updateCellsBatchingPeriod={50}
+          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         />
 
         <View style={[styles.inputContainer, { backgroundColor: theme.backgroundRoot }]}>
