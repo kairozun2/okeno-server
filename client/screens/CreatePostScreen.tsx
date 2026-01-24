@@ -168,6 +168,10 @@ export default function CreatePostScreen({ navigation }: Props) {
         fontSize: 16,
         fontWeight: "600",
       },
+      headerStyle: {
+        backgroundColor: theme.backgroundRoot,
+      },
+      headerShadowVisible: false,
       headerRight: () => (
         <Pressable 
           onPress={handlePost} 
@@ -182,7 +186,7 @@ export default function CreatePostScreen({ navigation }: Props) {
         </Pressable>
       ),
     });
-  }, [navigation, language, image, createPostMutation.isPending]);
+  }, [navigation, language, image, createPostMutation.isPending, theme]);
 
   const FEELINGS = [
     { id: "peaceful", emoji: "🌿", en: "Peaceful", ru: "Спокойствие" },
@@ -193,11 +197,11 @@ export default function CreatePostScreen({ navigation }: Props) {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <ThemedView style={[styles.container, { paddingTop: 0 }]}>
+      <ThemedView style={styles.container}>
         <ScrollView 
           style={styles.content} 
           contentContainerStyle={{ 
-            paddingTop: headerHeight + Spacing.sm,
+            paddingTop: Spacing.xs,
             paddingBottom: insets.bottom + Spacing.xl 
           }}
           keyboardShouldPersistTaps="handled"
@@ -362,10 +366,11 @@ const styles = StyleSheet.create({
   sectionTitleRow: {
     paddingHorizontal: Spacing.lg,
     marginTop: 0,
-    marginBottom: Spacing.xs,
+    marginBottom: 0,
   },
   feelingsScroll: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
+    marginTop: 0,
   },
   feelingsContainer: {
     flexDirection: "row",
