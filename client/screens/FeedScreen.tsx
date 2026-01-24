@@ -27,7 +27,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getImageUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -266,7 +266,7 @@ function PostCard({
       <GestureDetector gesture={doubleTapGesture}>
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: post.imageUrl }}
+            source={{ uri: getImageUrl(post.imageUrl) }}
             style={styles.postImage}
             contentFit="cover"
             transition={200}

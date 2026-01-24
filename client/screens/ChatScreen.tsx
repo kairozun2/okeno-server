@@ -26,7 +26,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { apiRequest, getApiUrl, getImageUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -265,7 +265,7 @@ function MessageBubble({
           {message.imageUrl ? (
             <Pressable onPress={() => onImagePress?.(message.imageUrl!)}>
               <Image
-                source={{ uri: message.imageUrl }}
+                source={{ uri: getImageUrl(message.imageUrl) }}
                 style={{ 
                   width: 200, 
                   height: 150, 

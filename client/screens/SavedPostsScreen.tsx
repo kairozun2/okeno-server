@@ -10,7 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getImageUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -83,7 +83,7 @@ export default function SavedPostsScreen({ navigation }: Props) {
       onPress={() => navigation.navigate("PostDetail", { postId: item.id })}
       style={styles.item}
     >
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      <Image source={{ uri: getImageUrl(item.imageUrl) }} style={styles.image} />
       <View style={styles.unsaveOverlay}>
         <Pressable
           onPress={(e) => {

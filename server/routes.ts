@@ -140,12 +140,10 @@ export async function registerRoutes(app: express.Express) {
       // Write file
       fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
 
-      // Return URL that will work in production
-      const host = req.headers.host || process.env.REPLIT_DEV_DOMAIN || "localhost:5000";
-      const protocol = req.headers["x-forwarded-proto"] || "https";
-      const imageUrl = `${protocol}://${host}/uploads/${fileName}`;
+      // Return relative path - client will build full URL using EXPO_PUBLIC_DOMAIN
+      const relativePath = `/uploads/${fileName}`;
 
-      res.json({ url: imageUrl });
+      res.json({ url: relativePath });
     } catch (error) {
       console.error("Upload error:", error);
       res.status(500).json({ error: "Failed to upload image" });

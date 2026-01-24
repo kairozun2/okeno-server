@@ -26,7 +26,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getImageUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -415,7 +415,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           <GestureDetector gesture={doubleTapGesture}>
             <View style={styles.imageContainer}>
               <Image
-                source={{ uri: post.imageUrl }}
+                source={{ uri: getImageUrl(post.imageUrl) }}
                 style={styles.image}
                 contentFit="cover"
                 transition={200}
@@ -467,7 +467,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           <GestureDetector gesture={doubleTapGesture}>
             <View style={styles.imageContainer}>
               <Image
-                source={{ uri: post.imageUrl }}
+                source={{ uri: getImageUrl(post.imageUrl) }}
                 style={styles.image}
                 contentFit="cover"
                 transition={200}

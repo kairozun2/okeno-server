@@ -14,7 +14,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getImageUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -349,7 +349,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
           }}
         >
           <Image
-            source={{ uri: item.imageUrl }}
+            source={{ uri: getImageUrl(item.imageUrl) }}
             style={{ width: "100%", height: "100%" }}
             contentFit="cover"
             transition={200}

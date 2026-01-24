@@ -19,6 +19,40 @@ export function getApiUrl(): string {
   return url.href;
 }
 
+/**
+ * Builds a full image URL from a path (handles both relative and absolute URLs)
+ * @param path The image path (e.g., "/uploads/image.jpg" or "https://domain.com/uploads/image.jpg")
+ * @returns {string} The full image URL
+ */
+export function getImageUrl(path: string | null | undefined): string {
+  if (!path) {
+    return "";
+  }
+  
+  // If it's already an absolute URL, return as-is
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    // Check if it's using an old development domain and needs to be rewritten
+    const host = process.env.EXPO_PUBLIC_DOMAIN;
+    if (host && path.includes("/uploads/")) {
+      // Extract just the /uploads/... part and rebuild with current domain
+      const uploadsIndex = path.indexOf("/uploads/");
+      if (uploadsIndex !== -1) {
+        const relativePath = path.substring(uploadsIndex);
+        return `https://${host}${relativePath}`;
+      }
+    }
+    return path;
+  }
+  
+  // It's a relative path, build full URL
+  const host = process.env.EXPO_PUBLIC_DOMAIN;
+  if (!host) {
+    return path;
+  }
+  
+  return `https://${host}${path}`;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;

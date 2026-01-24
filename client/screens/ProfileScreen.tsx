@@ -25,6 +25,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { getImageUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -50,7 +51,7 @@ function PostGridItem({ post, onPress }: { post: Post; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={styles.gridItem}>
       <Image
-        source={{ uri: post.imageUrl }}
+        source={{ uri: getImageUrl(post.imageUrl) }}
         style={styles.gridImage}
         contentFit="cover"
         transition={100}
