@@ -250,24 +250,39 @@ export default function CreatePostScreen({ navigation }: Props) {
                 <Pressable
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    // Simple emoji picker prompt for now
-                    Alert.prompt(
-                      t("Add Custom Emoji", "Добавить свой эмодзи"),
-                      t("Enter one emoji", "Введите один эмодзи"),
-                      [
-                        { text: t("Cancel", "Отмена"), style: "cancel" },
-                        { 
-                          text: t("Add", "Добавить"), 
-                          onPress: (val) => {
-                            if (val && val.trim()) {
-                              setCustomEmoji(val.trim().substring(0, 2)); // Basic limit
-                              setFeeling(val.trim().substring(0, 2));
-                            }
-                          } 
-                        }
-                      ],
-                      'plain-text'
-                    );
+                    if (Platform.OS === 'ios') {
+                      Alert.prompt(
+                        t("Add Custom Emoji", "Добавить свой эмодзи"),
+                        t("Enter one emoji", "Введите один эмодзи"),
+                        [
+                          { text: t("Cancel", "Отмена"), style: "cancel" },
+                          { 
+                            text: t("Add", "Добавить"), 
+                            onPress: (val: string | undefined) => {
+                              if (val && val.trim()) {
+                                const emoji = [...val.trim()][0] || val.trim().substring(0, 2);
+                                setCustomEmoji(emoji);
+                                setFeeling(emoji);
+                              }
+                            } 
+                          }
+                        ],
+                        'plain-text'
+                      );
+                    } else {
+                      const commonEmojis = ["😊", "😢", "😎", "🔥", "💖", "🌟", "🎉", "😴"];
+                      Alert.alert(
+                        t("Add Custom Emoji", "Добавить свой эмодзи"),
+                        t("Choose an emoji", "Выберите эмодзи"),
+                        commonEmojis.map(em => ({
+                          text: em,
+                          onPress: () => {
+                            setCustomEmoji(em);
+                            setFeeling(em);
+                          }
+                        }))
+                      );
+                    }
                   }}
                   style={[
                     styles.feelingChip,
@@ -339,11 +354,11 @@ const styles = StyleSheet.create({
   },
   sectionTitleRow: {
     paddingHorizontal: Spacing.lg,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
   },
   feelingsScroll: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   feelingsContainer: {
     flexDirection: "row",
@@ -362,7 +377,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: Spacing.lg,
     gap: Spacing.sm,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   mediaActionBtn: {
     flex: 1,
