@@ -147,7 +147,7 @@ export default function CommentsScreen({ route, navigation }: Props) {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
     >
       <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
-        <View style={[styles.header, { paddingTop: Spacing.md }]}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
           <ThemedText type="h3">{t("Comments", "Комментарии")}</ThemedText>
           <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
             <Feather name="x" size={24} color={theme.text} />
