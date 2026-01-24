@@ -135,8 +135,8 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         runOnJS(handleLike)();
       }
       heartOpacity.value = withSequence(
-        withSpring(1, { damping: 20 }),
-        withDelay(600, withSpring(0, { damping: 20 }))
+        withSpring(1, { damping: 20, stiffness: 100 }),
+        withDelay(500, withSpring(0, { damping: 20, stiffness: 100 }))
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
