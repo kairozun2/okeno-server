@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import { View, StyleSheet, Pressable, Alert, Platform, TextInput, ScrollView, Keyboard, TouchableWithoutFeedback } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Image } from "expo-image";
@@ -41,6 +42,26 @@ export default function CreatePostScreen({ navigation }: Props) {
     longitude: number | null;
   }>({ name: null, latitude: null, longitude: null });
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  useEffect(() => {
+    const loadCustomEmoji = async () => {
+      try {
+        const saved = await AsyncStorage.getItem("custom_emoji");
+        if (saved) setCustomEmoji(saved);
+      } catch (error) {
+        console.error("Failed to load custom emoji", error);
+      }
+    };
+    loadCustomEmoji();
+  }, []);
+
+  const saveCustomEmoji = async (emoji: string) => {
+    try {
+      await AsyncStorage.setItem("custom_emoji", emoji);
+    } catch (error) {
+      console.error("Failed to save custom emoji", error);
+    }
+  };
 
   const [cameraPermission, requestCameraPermission] = ImagePicker.useCameraPermissions();
   const [mediaPermission, requestMediaPermission] = ImagePicker.useMediaLibraryPermissions();
@@ -163,7 +184,20 @@ export default function CreatePostScreen({ navigation }: Props) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: t("New Memory", "Новое воспоминание"),
+      headerTitle: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {image && (
+            <Image
+              source={{ uri: image }}
+              style={{ width: 28, height: 28, borderRadius: 6, marginRight: 8 }}
+              contentFit="cover"
+            />
+          )}
+          <ThemedText style={{ fontSize: 16, fontWeight: "600" }}>
+            {t("New Memory", "Новое воспоминание")}
+          </ThemedText>
+        </View>
+      ),
       headerTitleStyle: {
         fontSize: 16,
         fontWeight: "600",
@@ -274,6 +308,7 @@ export default function CreatePostScreen({ navigation }: Props) {
                                 const emoji = [...val.trim()][0] || val.trim().substring(0, 2);
                                 setCustomEmoji(emoji);
                                 setFeeling(emoji);
+                                saveCustomEmoji(emoji);
                               }
                             } 
                           }
@@ -322,21 +357,8 @@ export default function CreatePostScreen({ navigation }: Props) {
               </Pressable>
             </View>
 
-            {image && (
-              <Animated.View entering={FadeInDown} style={styles.imageContainer}>
-                <Image
-                  source={{ uri: image }}
-                  style={styles.previewImage}
-                  contentFit="cover"
-                />
-                <Pressable
-                  onPress={() => setImage(null)}
-                  style={[styles.removeButton, { backgroundColor: 'rgba(0,0,0,0.5)' }]}
-                >
-                  <Feather name="x" size={18} color="#fff" />
-                </Pressable>
-              </Animated.View>
-            )}
+            {/* Image preview removed from here as it is now in the header */}
+
 
             <View style={styles.inputWrapper}>
               <TextInput
