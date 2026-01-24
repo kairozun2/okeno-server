@@ -549,42 +549,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               onPress={startEditing}
             >
               <Feather name="edit-2" size={20} color={theme.text} />
-              <ThemedText style={{ marginLeft: Spacing.md }}>{t("Edit caption", "Изменить описание")}</ThemedText>
-            </Pressable>
-
-            {isArchived ? (
-              <Pressable 
-                style={styles.actionSheetItem}
-                onPress={() => {
-                  setShowActionMenu(false);
-                  unarchiveMutation.mutate();
-                }}
-              >
-                <Feather name="arrow-up" size={20} color={theme.text} />
-                <ThemedText style={{ marginLeft: Spacing.md }}>{t("Restore from archive", "Восстановить из архива")}</ThemedText>
-              </Pressable>
-            ) : (
-              <Pressable 
-                style={styles.actionSheetItem}
-                onPress={() => {
-                  setShowActionMenu(false);
-                  archiveMutation.mutate();
-                }}
-              >
-                <Feather name="archive" size={20} color={theme.text} />
-                <ThemedText style={{ marginLeft: Spacing.md }}>{t("Move to archive", "В архив")}</ThemedText>
-              </Pressable>
-            )}
-
-            <Pressable 
-              style={styles.actionSheetItem}
-              onPress={() => {
-                setShowActionMenu(false);
-                handlePickImage();
-              }}
-            >
-              <Feather name="image" size={20} color={theme.text} />
-              <ThemedText style={{ marginLeft: Spacing.md }}>{t("Change photo", "Заменить фото")}</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md }}>{t("Edit publication", "Редактировать публикацию")}</ThemedText>
             </Pressable>
 
             <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
@@ -622,41 +587,87 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         >
           <ThemedView style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <ThemedText type="h4">{t("Edit caption", "Изменить описание")}</ThemedText>
+              <ThemedText type="h4">{t("Edit publication", "Редактировать публикацию")}</ThemedText>
               <Pressable onPress={() => setShowEditModal(false)}>
                 <Feather name="x" size={24} color={theme.text} />
               </Pressable>
             </View>
-            <TextInput
-              value={editedCaption}
-              onChangeText={setEditedCaption}
-              placeholder={t("Enter new caption...", "Введите новое описание...")}
-              placeholderTextColor={theme.textSecondary}
-              style={[styles.editInput, { color: theme.text, backgroundColor: theme.backgroundSecondary }]}
-              multiline
-              maxLength={500}
-              autoFocus
-            />
 
-            <Pressable 
-              onPress={handleGetLocation}
-              disabled={isLocating}
-              style={[styles.locationPicker, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Feather name="map-pin" size={18} color={isLocating ? theme.textSecondary : theme.accent} />
-                <ThemedText style={{ marginLeft: Spacing.sm, flex: 1, color: editedLocation ? theme.text : theme.textSecondary }}>
-                  {isLocating ? t("Locating...", "Определяем...") : (editedLocation || t("Add location", "Добавить локацию"))}
-                </ThemedText>
-                {editedLocation ? (
-                  <Pressable onPress={() => { setEditedLocation(null); setEditedLat(null); setEditedLng(null); }} hitSlop={10}>
-                    <Feather name="x" size={16} color={theme.textSecondary} />
-                  </Pressable>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Pressable 
+                onPress={handlePickImage}
+                style={[styles.imagePickerButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
+              >
+                {isUpdatingImage ? (
+                  <ActivityIndicator color={theme.accent} />
                 ) : (
-                  <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+                  <>
+                    <Feather name="image" size={20} color={theme.accent} />
+                    <ThemedText style={{ marginLeft: Spacing.sm, color: theme.text }}>
+                      {t("Change photo", "Заменить фотографию")}
+                    </ThemedText>
+                  </>
                 )}
-              </View>
-            </Pressable>
+              </Pressable>
+
+              <Pressable 
+                onPress={handleGetLocation}
+                disabled={isLocating}
+                style={[styles.locationPicker, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Feather name="map-pin" size={18} color={isLocating ? theme.textSecondary : theme.accent} />
+                  <ThemedText style={{ marginLeft: Spacing.sm, flex: 1, color: editedLocation ? theme.text : theme.textSecondary }}>
+                    {isLocating ? t("Locating...", "Определяем...") : (editedLocation || t("Add location", "Добавить локацию"))}
+                  </ThemedText>
+                  {editedLocation && (
+                    <Pressable onPress={() => { setEditedLocation(null); setEditedLat(null); setEditedLng(null); }} hitSlop={10}>
+                      <Feather name="x" size={16} color={theme.textSecondary} />
+                    </Pressable>
+                  )}
+                </View>
+              </Pressable>
+
+              <ThemedText type="small" style={{ color: theme.textSecondary, marginBottom: Spacing.xs, marginLeft: Spacing.xs }}>
+                {t("Description", "Описание")}
+              </ThemedText>
+              <TextInput
+                value={editedCaption}
+                onChangeText={setEditedCaption}
+                placeholder={t("Enter caption...", "Введите описание...")}
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.editInput, { color: theme.text, backgroundColor: theme.backgroundSecondary }]}
+                multiline
+                maxLength={500}
+              />
+
+              <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.md, opacity: 0.5 }} />
+
+              {isArchived ? (
+                <Pressable 
+                  style={styles.actionSheetItem}
+                  onPress={() => {
+                    setShowEditModal(false);
+                    unarchiveMutation.mutate();
+                  }}
+                >
+                  <Feather name="arrow-up" size={20} color={theme.text} />
+                  <ThemedText style={{ marginLeft: Spacing.md }}>{t("Restore from archive", "Восстановить из архива")}</ThemedText>
+                </Pressable>
+              ) : (
+                <Pressable 
+                  style={styles.actionSheetItem}
+                  onPress={() => {
+                    setShowEditModal(false);
+                    archiveMutation.mutate();
+                  }}
+                >
+                  <Feather name="archive" size={20} color={theme.text} />
+                  <ThemedText style={{ marginLeft: Spacing.md }}>{t("Move to archive", "В архив")}</ThemedText>
+                </Pressable>
+              )}
+            </ScrollView>
+
             <View style={styles.modalFooter}>
               <Pressable 
                 onPress={handleSaveEdit}
@@ -664,7 +675,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 style={[styles.saveButton, { backgroundColor: theme.link }]}
               >
                 {editMutation.isPending ? (
-                  <ThemedText style={{ color: '#fff' }}>...</ThemedText>
+                  <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <ThemedText style={{ color: '#fff', fontWeight: '600' }}>{t("Save", "Сохранить")}</ThemedText>
                 )}
@@ -784,9 +795,18 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: 16,
-    minHeight: 100,
+    minHeight: 80,
     textAlignVertical: "top",
     marginBottom: Spacing.md,
+  },
+  imagePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
+    justifyContent: 'center',
   },
   locationPicker: {
     flexDirection: 'row',
