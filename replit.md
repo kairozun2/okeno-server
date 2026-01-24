@@ -158,3 +158,17 @@ To test features:
 - No in-app purchases (free app)
 - No push notifications yet
 - No background location tracking
+- **App Name in TestFlight**: Shows as "Moments" due to bundleIdentifier `com.moments.app`. Per Expo/EAS guidelines, this cannot be changed after the app has been submitted to prevent breaking updates for existing users. The display name in App Store Connect can still be customized.
+
+### Image Upload System
+- Images are uploaded as base64 to the `/api/upload` endpoint
+- Server saves images to the `uploads/` directory and serves them statically
+- This ensures images work in production TestFlight builds (not just local development)
+- Max upload size: 50MB
+- Images stored on server filesystem (consider cloud storage for production scaling)
+
+### Offline Support
+- TanStack React Query with AsyncStorage persistence
+- Data cached for 7 days for offline viewing
+- `networkMode: 'offlineFirst'` prioritizes cached data when offline
+- Images must be online to load (no local image caching yet)

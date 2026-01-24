@@ -73,11 +73,14 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 60 * 24, // 24 hours
-      retry: 1,
+      gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep cached data longer
+      retry: 2,
+      networkMode: 'offlineFirst', // Use cached data when offline
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {
       retry: false,
+      networkMode: 'offlineFirst',
     },
   },
 });
@@ -89,5 +92,6 @@ const asyncStoragePersister = createAsyncStoragePersister({
 persistQueryClient({
   queryClient,
   persister: asyncStoragePersister,
-  maxAge: 1000 * 60 * 60 * 24, // 24 hours
+  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days - keep persisted data longer
+  buster: 'v1', // Cache version - change this to bust the cache if needed
 });
