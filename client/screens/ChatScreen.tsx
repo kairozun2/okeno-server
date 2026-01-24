@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
-import { useAudioPlayer, useAudioRecorder, RecordingPresets, AudioModule } from 'expo-audio';
+import { useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, RecordingPresets, AudioModule } from 'expo-audio';
 import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -70,25 +70,10 @@ function VoiceMessagePlayer({
   theme: any;
 }) {
   const player = useAudioPlayer(voiceUrl);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const sub = player.addListener('playingChange', (event: { isPlaying: boolean }) => {
-      setIsPlaying(event.isPlaying);
-    });
-    return () => sub.remove();
-  }, [player]);
-
-  useEffect(() => {
-    if (!isPlaying) return;
-    const interval = setInterval(() => {
-      if (player.duration > 0) {
-        setProgress(player.currentTime / player.duration);
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [isPlaying, player]);
+  const status = useAudioPlayerStatus(player);
+  
+  const isPlaying = status.playing;
+  const progress = status.duration > 0 ? status.currentTime / status.duration : 0;
 
   const togglePlayback = async () => {
     if (isPlaying) {
@@ -150,6 +135,7 @@ function MessageBubble({
   language,
   isSelected,
   onSwipeReply,
+  onImagePress,
 }: {
   message: Message;
   isOwn: boolean;
@@ -158,6 +144,7 @@ function MessageBubble({
   language: string;
   isSelected: boolean;
   onSwipeReply: (msg: Message) => void;
+  onImagePress?: (imageUrl: string) => void;
 }) {
   const { theme, isDark } = useTheme();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
@@ -285,16 +272,18 @@ function MessageBubble({
             </View>
           ) : null}
           {message.imageUrl ? (
-            <Image
-              source={{ uri: message.imageUrl }}
-              style={{ 
-                width: 200, 
-                height: 150, 
-                borderRadius: BorderRadius.sm,
-                marginBottom: message.content ? Spacing.xs : 0,
-              }}
-              contentFit="cover"
-            />
+            <Pressable onPress={() => onImagePress?.(message.imageUrl!)}>
+              <Image
+                source={{ uri: message.imageUrl }}
+                style={{ 
+                  width: 200, 
+                  height: 150, 
+                  borderRadius: BorderRadius.sm,
+                  marginBottom: message.content ? Spacing.xs : 0,
+                }}
+                contentFit="cover"
+              />
+            </Pressable>
           ) : null}
           {message.voiceUrl ? (
             <VoiceMessagePlayer 
@@ -388,6 +377,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const recordingTimer = useRef<NodeJS.Timeout | null>(null);
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const REACTION_EMOJIS = ["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟"];
 
@@ -832,6 +822,10 @@ export default function ChatScreen({ route, navigation }: Props) {
     return messages.find(m => m.id === replyToId) || null;
   }, [messages]);
 
+  const handleImagePreview = useCallback((imageUrl: string) => {
+    setPreviewImageUrl(imageUrl);
+  }, []);
+
   const renderItem = useCallback(
     ({ item }: { item: Message }) => (
       <MessageBubble
@@ -842,9 +836,10 @@ export default function ChatScreen({ route, navigation }: Props) {
         language={language}
         isSelected={selectedMessage?.id === item.id && showActionModal}
         onSwipeReply={handleReply}
+        onImagePress={handleImagePreview}
       />
     ),
-    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply]
+    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply, handleImagePreview]
   );
 
   const chatContent = (
@@ -1148,6 +1143,34 @@ export default function ChatScreen({ route, navigation }: Props) {
                 </View>
               </Pressable>
             </Animated.View>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          visible={!!previewImageUrl}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPreviewImageUrl(null)}
+        >
+          <Pressable 
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' }}
+            onPress={() => setPreviewImageUrl(null)}
+          >
+            <Pressable 
+              onPress={() => setPreviewImageUrl(null)}
+              style={{ position: 'absolute', top: insets.top + Spacing.md, right: Spacing.md, zIndex: 10 }}
+            >
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                <Feather name="x" size={20} color="#fff" />
+              </View>
+            </Pressable>
+            {previewImageUrl ? (
+              <Image
+                source={{ uri: previewImageUrl }}
+                style={{ width: Dimensions.get('window').width, height: Dimensions.get('window').height * 0.7 }}
+                contentFit="contain"
+              />
+            ) : null}
           </Pressable>
         </Modal>
       </KeyboardAvoidingView>
