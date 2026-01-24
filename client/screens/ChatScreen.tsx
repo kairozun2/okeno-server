@@ -703,6 +703,15 @@ export default function ChatScreen({ route, navigation }: Props) {
       const status = await AudioModule.requestRecordingPermissionsAsync();
       if (!status.granted) return;
 
+      // Crucial for iOS: set audio mode to allow recording
+      await AudioModule.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        interruptionModeIOS: 1, // DoNotMix
+        shouldRouteThroughEarpieceIOS: false,
+      });
+
       setIsRecording(true);
       setRecordingDuration(0);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -734,6 +743,12 @@ export default function ChatScreen({ route, navigation }: Props) {
       setIsRecording(false);
       setRecordingDuration(0);
 
+      // Reset audio mode after recording
+      await AudioModule.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+
       if (uri && duration > 0) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         sendMutation.mutate({ 
@@ -745,6 +760,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         setReplyTo(null);
       }
     } catch (error) {
+      console.error("Stop recording error:", error);
       setIsRecording(false);
       setRecordingDuration(0);
     }
@@ -757,6 +773,11 @@ export default function ChatScreen({ route, navigation }: Props) {
     }
     try {
       await audioRecorder.stop();
+      // Reset audio mode
+      await AudioModule.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
     } catch {}
     setIsRecording(false);
     setRecordingDuration(0);
