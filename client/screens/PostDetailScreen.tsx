@@ -34,6 +34,8 @@ interface Post {
   imageUrl: string;
   caption: string | null;
   location: string | null;
+  latitude: string | null;
+  longitude: string | null;
   createdAt: string;
 }
 
