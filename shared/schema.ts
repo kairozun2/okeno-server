@@ -83,6 +83,9 @@ export const messages = pgTable("messages", {
   chatId: varchar("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
   senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
+  imageUrl: text("image_url"),
+  voiceUrl: text("voice_url"),
+  voiceDuration: integer("voice_duration"),
   replyToId: varchar("reply_to_id"),
   isEdited: boolean("is_edited").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -346,6 +349,9 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   chatId: true,
   senderId: true,
   content: true,
+  imageUrl: true,
+  voiceUrl: true,
+  voiceDuration: true,
   replyToId: true,
 });
 

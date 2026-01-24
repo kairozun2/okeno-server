@@ -295,7 +295,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     }
 
     return (
-      <Animated.View entering={FadeIn} style={styles.header}>
+      <View style={styles.header}>
         <Avatar emoji={profileUser?.emoji || "🐸"} size={72} />
         <View style={{ flexDirection: "row", alignItems: "center", marginTop: Spacing.sm }}>
           <ThemedText type="h3" style={[styles.username, { marginTop: 0 }]} truncate maxLength={15}>
@@ -330,7 +330,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             </Button>
           </View>
         )}
-      </Animated.View>
+      </View>
     );
   };
 

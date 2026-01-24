@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import * as Clipboard from 'expo-clipboard';
-import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking } from "react-native";
+import * as ImagePicker from 'expo-image-picker';
+import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking, Dimensions } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -34,6 +36,9 @@ interface Message {
   chatId: string;
   senderId: string;
   content: string;
+  imageUrl?: string | null;
+  voiceUrl?: string | null;
+  voiceDuration?: number | null;
   replyToId?: string | null;
   isEdited?: boolean;
   createdAt: string;
@@ -190,11 +195,23 @@ function MessageBubble({
                 {t("Reply", "Ответ")}
               </ThemedText>
               <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
-                {typeof replyMessage.content === 'string' ? replyMessage.content : ""}
+                {replyMessage.imageUrl ? t("Photo", "Фото") : (typeof replyMessage.content === 'string' ? replyMessage.content : "")}
               </ThemedText>
             </View>
           ) : null}
-          {renderContent(typeof message.content === 'string' ? message.content : "", isOwn)}
+          {message.imageUrl ? (
+            <Image
+              source={{ uri: message.imageUrl }}
+              style={{ 
+                width: 200, 
+                height: 150, 
+                borderRadius: BorderRadius.sm,
+                marginBottom: message.content ? Spacing.xs : 0,
+              }}
+              contentFit="cover"
+            />
+          ) : null}
+          {message.content ? renderContent(typeof message.content === 'string' ? message.content : "", isOwn) : null}
           
           {(message as any).reactions && (message as any).reactions.length > 0 && (
             <View 
@@ -464,11 +481,12 @@ export default function ChatScreen({ route, navigation }: Props) {
   const messages = data?.pages.flat() || [];
 
   const sendMutation = useMutation({
-    mutationFn: async ({ content, replyToId }: { content: string; replyToId?: string | null }) => {
+    mutationFn: async ({ content, replyToId, imageUrl }: { content: string; replyToId?: string | null; imageUrl?: string | null }) => {
       const response = await apiRequest("POST", "/api/messages", {
         chatId,
         senderId: user?.id,
         content,
+        imageUrl,
         replyToId,
       });
       return response.json();
@@ -483,6 +501,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         chatId,
         senderId: user?.id || "",
         content: newMessageData.content,
+        imageUrl: newMessageData.imageUrl,
         replyToId: newMessageData.replyToId,
         createdAt: new Date().toISOString(),
         isRead: false,
@@ -564,6 +583,29 @@ export default function ChatScreen({ route, navigation }: Props) {
     } else {
       sendMutation.mutate({ content, replyToId: replyTo?.id });
       setReplyTo(null);
+    }
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]?.uri) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        sendMutation.mutate({ 
+          content: "", 
+          imageUrl: result.assets[0].uri,
+          replyToId: replyTo?.id 
+        });
+        setReplyTo(null);
+      }
+    } catch (error) {
+      // Silent fail
     }
   };
 
@@ -764,6 +806,16 @@ export default function ChatScreen({ route, navigation }: Props) {
             </Animated.View>
           ) : null}
           <View style={[styles.inputWrapper, { paddingBottom: insets.bottom > 0 ? insets.bottom / 2 : Spacing.sm }]}>
+            <Pressable
+              onPress={handlePickImage}
+              disabled={sendMutation.isPending}
+              style={[
+                styles.attachButton,
+                { backgroundColor: theme.backgroundSecondary }
+              ]}
+            >
+              <Feather name="image" size={20} color={theme.textSecondary} />
+            </Pressable>
             <TextInput
               style={[
                 styles.input,
@@ -1037,6 +1089,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+  },
+  attachButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.xs,
   },
   modalOverlay: {
     flex: 1,
