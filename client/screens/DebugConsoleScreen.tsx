@@ -1,37 +1,61 @@
-import React, { useState, useRef } from "react";
-import { View, StyleSheet, TextInput, ScrollView, Platform, Keyboard } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { 
+  View, 
+  StyleSheet, 
+  TextInput, 
+  ScrollView, 
+  Platform, 
+  Keyboard,
+  InputAccessoryView,
+  Pressable
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getApiUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
+
+const INPUT_ACCESSORY_ID = "debug-console-input";
 
 export default function DebugConsoleScreen() {
   const { theme, language } = useTheme();
   const { user, refreshUser } = useAuth();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
   const [command, setCommand] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [logs, setLogs] = useState<string[]>([
-    "--- Debug Console Initialized ---",
-    "Commands: diag, system_info, clear",
-    "Secret: okeno_admin_elevate_2026",
+    "=== Debug Console ===",
+    "Commands: diag, system_info, help, clear",
+    "",
   ]);
-  const inputRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);
 
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => setKeyboardHeight(e.endCoordinates.height)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardHeight(0)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const addLog = (msg: string) => {
-    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    setLogs(prev => [...prev, `${msg}`]);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
   };
 
   const adminMutation = useMutation({
@@ -39,111 +63,159 @@ export default function DebugConsoleScreen() {
       return apiRequest("POST", "/api/debug/execute", { command: cmd, userId: user?.id });
     },
     onSuccess: async (data: any) => {
-      addLog(`[OK] ${data.message || "Command executed"}`);
+      addLog(`[OK] ${data.message}`);
+      
       if (data.data) {
         Object.entries(data.data).forEach(([key, value]) => {
-          addLog(`  ${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`);
+          if (typeof value === 'object') {
+            addLog(`  ${key}:`);
+            Object.entries(value as object).forEach(([k, v]) => {
+              addLog(`    ${k}: ${v}`);
+            });
+          } else {
+            addLog(`  ${key}: ${value}`);
+          }
         });
       }
       
-      // If we elevated to admin, refresh user data immediately
+      // If admin elevated, force refresh user
       if (command.includes("admin_elevate")) {
-        addLog("Refreshing user profile...");
-        await refreshUser();
-        queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}`] });
-        addLog("[OK] Profile refreshed. Close console and check profile.");
+        addLog("");
+        addLog("Refreshing your profile...");
+        try {
+          await refreshUser();
+          addLog("[OK] Profile updated!");
+          addLog("");
+          addLog(">>> CLOSE THIS SCREEN <<<");
+          addLog(">>> GO TO PROFILE TAB <<<");
+          addLog(">>> PULL DOWN TO REFRESH <<<");
+          addLog("");
+        } catch (e) {
+          addLog("[WARN] Manual refresh needed");
+        }
       }
-      
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     onError: (error: any) => {
-      addLog(`[ERROR] ${error.message || "Execution failed"}`);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      addLog(`[ERROR] ${error.message || "Failed"}`);
     }
   });
 
-  const handleExecute = () => {
-    const trimmedCmd = command.trim();
-    if (!trimmedCmd) return;
+  const handleExecute = async () => {
+    const cmd = command.trim();
+    if (!cmd) return;
     
-    addLog(`> ${trimmedCmd}`);
-    
-    if (trimmedCmd.toLowerCase() === "diag") {
-      addLog("=== LOCAL DIAGNOSTICS ===");
-      addLog(`User ID: ${user?.id || 'N/A'}`);
-      addLog(`Username: ${user?.username || 'N/A'}`);
-      addLog(`Emoji: ${user?.emoji || 'N/A'}`);
-      addLog(`Is Admin: ${user?.isAdmin ? 'YES' : 'NO'}`);
-      addLog(`Is Verified: ${user?.isVerified ? 'YES' : 'NO'}`);
-      addLog(`Is Banned: ${user?.isBanned ? 'YES' : 'NO'}`);
-      addLog(`Platform: ${Platform.OS} v${Platform.Version}`);
-      addLog(`Environment: ${process.env.NODE_ENV || 'unknown'}`);
-      addLog(`Language: ${language}`);
-      addLog(`Screen: ${insets.top}t ${insets.bottom}b safe`);
-      addLog("=========================");
-      setCommand("");
-      return;
-    }
-
-    if (trimmedCmd.toLowerCase() === "clear") {
-      setLogs(["--- Console Cleared ---"]);
-      setCommand("");
-      return;
-    }
-
-    if (trimmedCmd.toLowerCase() === "help") {
-      addLog("=== AVAILABLE COMMANDS ===");
-      addLog("diag - Show local diagnostics");
-      addLog("system_info - Show server stats");
-      addLog("clear - Clear console");
-      addLog("okeno_admin_elevate_2026 - Grant admin");
-      addLog("==========================");
-      setCommand("");
-      return;
-    }
-
-    adminMutation.mutate(trimmedCmd);
+    addLog(`> ${cmd}`);
     setCommand("");
+    
+    if (cmd.toLowerCase() === "help") {
+      addLog("=== COMMANDS ===");
+      addLog("diag        - Local device info");
+      addLog("system_info - Server status");
+      addLog("clear       - Clear console");
+      addLog("okeno_admin_elevate_2026 - Admin access");
+      addLog("================");
+      return;
+    }
+
+    if (cmd.toLowerCase() === "diag") {
+      addLog("=== DEVICE INFO ===");
+      addLog(`User: ${user?.username || 'N/A'} (${user?.emoji || '?'})`);
+      addLog(`ID: ${user?.id || 'N/A'}`);
+      addLog(`Admin: ${user?.isAdmin ? 'YES' : 'NO'}`);
+      addLog(`Verified: ${user?.isVerified ? 'YES' : 'NO'}`);
+      addLog(`Banned: ${user?.isBanned ? 'YES' : 'NO'}`);
+      addLog(`OS: ${Platform.OS} ${Platform.Version}`);
+      addLog(`Lang: ${language}`);
+      addLog(`Env: ${process.env.NODE_ENV || 'dev'}`);
+      addLog("===================");
+      return;
+    }
+
+    if (cmd.toLowerCase() === "clear") {
+      setLogs(["Console cleared.", ""]);
+      return;
+    }
+
+    adminMutation.mutate(cmd);
   };
+
+  const inputBottomOffset = keyboardHeight > 0 ? keyboardHeight : insets.bottom + 20;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <ThemedText type="h3">Debug Console</ThemedText>
       </View>
 
-      <KeyboardAwareScrollView
+      <ScrollView
         ref={scrollRef}
-        style={styles.logContainer}
-        contentContainerStyle={[styles.logContent, { paddingBottom: 120 }]}
-        showsVerticalScrollIndicator={true}
+        style={styles.logArea}
+        contentContainerStyle={{ paddingBottom: 150 }}
         keyboardShouldPersistTaps="handled"
-        bottomOffset={80}
+        showsVerticalScrollIndicator={true}
       >
         {logs.map((log, i) => (
-          <ThemedText key={i} style={[styles.logText, log.includes('[ERROR]') && { color: '#ff6b6b' }, log.includes('[OK]') && { color: '#51cf66' }]}>{log}</ThemedText>
+          <ThemedText 
+            key={i} 
+            style={[
+              styles.logLine,
+              log.startsWith('[OK]') && { color: '#4ade80' },
+              log.startsWith('[ERROR]') && { color: '#f87171' },
+              log.startsWith('[WARN]') && { color: '#fbbf24' },
+              log.startsWith('>>>') && { color: '#60a5fa', fontWeight: '700' },
+            ]}
+          >
+            {log}
+          </ThemedText>
         ))}
-      </KeyboardAwareScrollView>
+      </ScrollView>
 
-      <View style={[styles.inputArea, { paddingBottom: insets.bottom + Spacing.lg, backgroundColor: theme.backgroundRoot }]}>
-        <View style={styles.inputContainer}>
-          <TextInput
-            ref={inputRef}
-            value={command}
-            onChangeText={setCommand}
-            placeholder="Enter command..."
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.input, { backgroundColor: theme.backgroundSecondary, color: theme.text, borderColor: theme.border }]}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="send"
-            onSubmitEditing={handleExecute}
-          />
-          <Button onPress={handleExecute} style={styles.button}>
-            <Feather name="play" size={20} color="#fff" />
-          </Button>
-        </View>
+      <View 
+        style={[
+          styles.inputWrapper,
+          { 
+            bottom: inputBottomOffset,
+            backgroundColor: theme.backgroundRoot,
+            borderTopColor: theme.border,
+          }
+        ]}
+      >
+        <TextInput
+          value={command}
+          onChangeText={setCommand}
+          placeholder="Enter command..."
+          placeholderTextColor={theme.textSecondary}
+          style={[
+            styles.input, 
+            { 
+              backgroundColor: theme.backgroundSecondary, 
+              color: theme.text, 
+              borderColor: theme.border 
+            }
+          ]}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="send"
+          onSubmitEditing={handleExecute}
+          inputAccessoryViewID={INPUT_ACCESSORY_ID}
+        />
+        <Pressable 
+          onPress={handleExecute} 
+          style={[styles.sendBtn, { backgroundColor: theme.accent }]}
+        >
+          <Feather name="send" size={18} color="#fff" />
+        </Pressable>
       </View>
+
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID={INPUT_ACCESSORY_ID}>
+          <View style={[styles.accessoryBar, { backgroundColor: theme.cardBackground }]}>
+            <Pressable onPress={() => Keyboard.dismiss()} style={styles.accessoryBtn}>
+              <ThemedText style={{ color: theme.accent }}>Done</ThemedText>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      )}
     </View>
   );
 }
@@ -155,48 +227,54 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.1)",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
-  logContainer: {
+  logArea: {
     flex: 1,
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
   },
-  logContent: {
-    paddingBottom: Spacing.xl,
-  },
-  logText: {
-    fontFamily: Platform.OS === 'ios' ? "Courier" : "monospace",
+  logLine: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontSize: 13,
-    marginBottom: 6,
-    lineHeight: 18,
+    lineHeight: 20,
   },
-  inputArea: {
+  inputWrapper: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
-    padding: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.1)",
-  },
-  inputContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
     gap: Spacing.sm,
   },
   input: {
     flex: 1,
-    height: 48,
+    height: 44,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
     borderWidth: 1,
-    fontSize: 16,
+    fontSize: 15,
   },
-  button: {
-    width: 48,
-    height: 48,
-    padding: 0,
-    justifyContent: "center",
-    alignItems: "center",
-  }
+  sendBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  accessoryBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  accessoryBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
 });
