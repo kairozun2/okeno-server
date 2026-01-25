@@ -315,9 +315,13 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
   },
   previewEmoji: {
     fontSize: 48,
+    textAlign: "center",
+    includeFontPadding: false,
+    lineHeight: Platform.OS === "ios" ? 60 : undefined,
   },
   usernameInputContainer: {
     flex: 1,
@@ -346,17 +350,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.xs,
+    justifyContent: "flex-start",
   },
   emojiButton: {
-    width: (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.xs * 7) / 8,
+    width: (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.xs * 7) / 8 - 1,
     aspectRatio: 1,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: BorderRadius.sm,
     borderWidth: 2,
+    overflow: "hidden",
   },
   emojiText: {
-    fontSize: 24,
+    fontSize: 22,
+    textAlign: "center",
+    includeFontPadding: false,
+    lineHeight: Platform.OS === "ios" ? 30 : undefined,
   },
   saveButton: {
     paddingVertical: Spacing.md,
