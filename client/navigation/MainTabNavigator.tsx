@@ -154,7 +154,7 @@ export default function MainTabNavigator() {
     <BlurView
       intensity={Platform.OS === "ios" ? 80 : 100}
       tint={isDark ? "dark" : "light"}
-      style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot + '40' }]}
+      style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot + 'A0' }]}
     />
   );
 
@@ -179,9 +179,9 @@ export default function MainTabNavigator() {
           tabBarBackground: () =>
             Platform.OS === "ios" ? (
               <BlurView
-                intensity={60}
+                intensity={Platform.OS === "ios" ? 80 : 100}
                 tint={isDark ? "dark" : "light"}
-                style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot + '40' }]}
+                style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot + 'A0' }]}
               />
             ) : null,
           headerTransparent: true,

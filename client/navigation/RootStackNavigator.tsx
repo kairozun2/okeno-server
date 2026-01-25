@@ -72,9 +72,9 @@ function CloseButton({ onPress }: { onPress: () => void }) {
       style={{ borderRadius: 16, overflow: "hidden" }}
     >
       <BlurView
-        intensity={60}
+        intensity={Platform.OS === "ios" ? 80 : 100}
         tint={isDark ? "dark" : "light"}
-        style={{ padding: Spacing.sm, borderRadius: 16 }}
+        style={{ padding: Spacing.sm, borderRadius: 16, backgroundColor: theme.backgroundRoot + 'A0' }}
       >
         <Feather name="x" size={22} color={theme.text} />
       </BlurView>
@@ -83,7 +83,7 @@ function CloseButton({ onPress }: { onPress: () => void }) {
 }
 
 function ChatHeaderTitle({ name, username, onPress, emoji, isVerified }: { name?: string; username?: string; emoji?: string; onPress: () => void; isVerified?: boolean }) {
-  const { isDark } = useTheme();
+  const { theme, isDark } = useTheme();
   return (
     <Pressable 
       onPress={onPress} 
@@ -105,9 +105,9 @@ function ChatHeaderTitle({ name, username, onPress, emoji, isVerified }: { name?
       </View>
       <View style={{ borderRadius: 20, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.05)" }}>
         <BlurView
-          intensity={60}
+          intensity={Platform.OS === "ios" ? 80 : 100}
           tint={isDark ? "dark" : "light"}
-          style={{ padding: 4, borderRadius: 20 }}
+          style={{ padding: 4, borderRadius: 20, backgroundColor: theme.backgroundRoot + 'A0' }}
         >
           <Avatar emoji={emoji || "🐸"} size={32} />
         </BlurView>
