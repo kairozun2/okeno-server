@@ -96,7 +96,7 @@ UPDATE users SET is_admin = true, is_verified = true WHERE id = 'USER_ID_HERE';
 - **Secondary Category**: Photo & Video
 
 ### Required App Store Connect Info
-1. **Privacy Policy URL**: https://skaisay.github.io/App-Privacy/
+1. **Privacy Policy URL**: https://skaisay.github.io/Okeno-App-Privacy/
 2. **Support URL**: https://discord.gg/FRAZ6PBcH9
 3. **Marketing URL**: (optional)
 
@@ -123,7 +123,7 @@ To test features:
 | Report button on profiles | Done | UserProfileScreen.tsx |
 | Block button on profiles | Done | UserProfileScreen.tsx |
 | Privacy Policy in-app | Done | PrivacyPolicyScreen.tsx |
-| Privacy Policy link | Done | https://skaisay.github.io/App-Privacy/ |
+| Privacy Policy link | Done | https://skaisay.github.io/Okeno-App-Privacy/ |
 | Account deletion flow | Done | SettingsScreen.tsx |
 | Age restriction (18+) | Done | RegisterScreen.tsx |
 | Support contact info | Done | messaconfirmation@gmail.com |

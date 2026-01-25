@@ -21,7 +21,7 @@ export default function PrivacyPolicyScreen({ navigation }: Props) {
   const headerHeight = useHeaderHeight();
 
   const handleOpenFull = () => {
-    WebBrowser.openBrowserAsync("https://skaisay.github.io/App-Privacy/");
+    WebBrowser.openBrowserAsync("https://skaisay.github.io/Okeno-App-Privacy/");
   };
 
   const sections = [
