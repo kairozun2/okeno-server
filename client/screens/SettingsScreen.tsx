@@ -49,10 +49,6 @@ const ACCENT_COLORS = [
   { name: "Old Burgundy", color: "#8E443D" }, // Brighter for background
   { name: "Dark Moss", color: "#7A7B4D" }, // Brighter for background
   { name: "Persian Orange", color: "#CF8852" },
-  { name: "Caramel", color: "#BF7E46" },
-  { name: "Baby Blue", color: "#97C6E0" },
-  { name: "Glaucous", color: "#5D77A0" },
-  { name: "Sky Blue", color: "#88CBE8" },
   { name: "Sage Green", color: "#5C7A5C" }, // Default
 ];
 
