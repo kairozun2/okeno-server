@@ -460,8 +460,8 @@ export default function FeedScreen({ navigation }: Props) {
       if (!res.ok) throw new Error("Failed to fetch posts");
       return res.json();
     },
-    getNextPageParam: (lastPage, allPages) => {
-      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+    getNextPageParam: (lastPage: PostWithUser[] | undefined, allPages) => {
+      if (!lastPage || !Array.isArray(lastPage) || lastPage.length < PAGE_SIZE) return undefined;
       return allPages.length * PAGE_SIZE;
     },
     initialPageParam: 0,
