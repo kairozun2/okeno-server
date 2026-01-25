@@ -112,10 +112,14 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
         <ThemedText style={styles.titleText}>{title}</ThemedText>
       </Animated.View>
       <Animated.View style={[styles.titleRow]}>
-        <Animated.View style={subtitleStyle}>
+        <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, subtitleStyle]}>
           <ThemedText style={styles.subtitleText}>{subtitle}</ThemedText>
         </Animated.View>
-        <OfflineIndicator />
+        {!isOnline && (
+          <Animated.View entering={FadeIn} exiting={FadeOut}>
+            <OfflineIndicator />
+          </Animated.View>
+        )}
       </Animated.View>
       <Animated.View style={[styles.greetingContainer, spinnerStyle]}>
         <ActivityIndicator size="small" color={theme.text} />
