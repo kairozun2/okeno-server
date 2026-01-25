@@ -215,10 +215,77 @@ export async function registerRoutes(app: express.Express) {
     try {
       const user = await storage.getUser(req.params.id);
       if (!user) return res.status(404).json({ error: "User not found" });
-      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned });
+      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, lastUsernameChange: user.lastUsernameChange });
     } catch (error) {
       console.error("Get user error:", error);
       res.status(500).json({ error: "Failed to get user" });
+    }
+  });
+
+  app.patch("/api/users/:id/profile", async (req, res) => {
+    try {
+      const { emoji, username } = req.body;
+      const userId = req.params.id;
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (!emoji) {
+        return res.status(400).json({ error: "Emoji is required" });
+      }
+
+      let usernameToUpdate: string | undefined;
+      
+      if (username && username !== user.username) {
+        if (!user.isAdmin) {
+          if (user.lastUsernameChange) {
+            const lastChange = new Date(user.lastUsernameChange);
+            const now = new Date();
+            const daysSinceChange = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24));
+            if (daysSinceChange < 20) {
+              const daysLeft = 20 - daysSinceChange;
+              return res.status(400).json({ 
+                error: `You can change your username in ${daysLeft} days` 
+              });
+            }
+          }
+        }
+
+        if (username.length < 2 || username.length > 20) {
+          return res.status(400).json({ error: "Username must be 2-20 characters" });
+        }
+
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ error: "Username already taken" });
+        }
+
+        const moderationResult = await moderateUsername(username);
+        if (!moderationResult.isAllowed) {
+          return res.status(400).json({ 
+            error: moderationResult.reason || "This username is not allowed" 
+          });
+        }
+
+        usernameToUpdate = username;
+      }
+
+      const updated = await storage.updateUserProfile(userId, emoji, usernameToUpdate);
+      
+      res.json({ 
+        id: updated.id, 
+        username: updated.username, 
+        emoji: updated.emoji, 
+        isVerified: updated.isVerified, 
+        isAdmin: updated.isAdmin, 
+        isBanned: updated.isBanned,
+        lastUsernameChange: updated.lastUsernameChange
+      });
+    } catch (error) {
+      console.error("Update profile error:", error);
+      res.status(500).json({ error: "Failed to update profile" });
     }
   });
 

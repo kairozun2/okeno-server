@@ -51,6 +51,7 @@ export interface IStorage {
   getUserByIdAndPin(id: string, pin: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserLastSeen(id: string): Promise<void>;
+  updateUserProfile(id: string, emoji: string, username?: string): Promise<User>;
   searchUsers(query: string): Promise<User[]>;
   
   // Posts
@@ -171,6 +172,16 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserLastSeen(id: string): Promise<void> {
     await db.update(users).set({ lastSeen: new Date() }).where(eq(users.id, id));
+  }
+
+  async updateUserProfile(id: string, emoji: string, username?: string): Promise<User> {
+    const updateData: any = { emoji };
+    if (username) {
+      updateData.username = username;
+      updateData.lastUsernameChange = new Date();
+    }
+    const [updated] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
+    return updated;
   }
 
   async searchUsers(query: string): Promise<User[]> {
