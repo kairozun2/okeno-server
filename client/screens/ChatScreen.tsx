@@ -1241,10 +1241,12 @@ export default function ChatScreen({ route, navigation }: Props) {
       {backgroundImage ? (
         <ImageBackground
           source={{ uri: getImageUrl(backgroundImage) }}
-          style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff' }}
+          style={StyleSheet.absoluteFill}
           resizeMode="cover"
         >
-          {chatContent}
+          <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.3)' }}>
+            {chatContent}
+          </View>
         </ImageBackground>
       ) : (
         chatContent

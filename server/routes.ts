@@ -824,8 +824,6 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
-  // Chat settings post route below...
-
   app.post("/api/users/:id/chat-settings", async (req, res) => {
     try {
       const { otherUserId, nickname, backgroundImage, isGlobal } = req.body;
