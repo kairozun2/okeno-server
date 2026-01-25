@@ -274,6 +274,8 @@ function MessageBubble({
                   marginBottom: message.content ? Spacing.xs : 0,
                 }}
                 contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
               />
             </Pressable>
           ) : null}
@@ -356,6 +358,13 @@ export default function ChatScreen({ route, navigation }: Props) {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+
+  // Optimized state management for user identity to prevent flicker
+  const [identity, setIdentity] = useState({
+    name: otherUserName || "",
+    emoji: otherUserEmoji || "🐸"
+  });
+
   const [message, setMessage] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
@@ -538,33 +547,20 @@ export default function ChatScreen({ route, navigation }: Props) {
     queryKey: ["/api/users", otherUserId],
     queryFn: async () => {
       const response = await apiRequest("GET", `/api/users/${otherUserId}`, null);
-      return response.json();
+      const data = await response.json();
+      // Update local state immediately when data arrives
+      setIdentity({
+        name: data.username,
+        emoji: data.emoji
+      });
+      return data;
     },
     enabled: !!otherUserId,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      }
-    );
-    const hideSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      }
-    );
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
-
-  const displayName = chatSettings?.nickname || userData?.username || otherUserName || t("User", "Пользователь");
-  const displayEmoji = userData?.emoji || otherUserEmoji || "🐸";
+  const displayName = chatSettings?.nickname || userData?.username || identity.name || t("User", "Пользователь");
+  const displayEmoji = userData?.emoji || identity.emoji || "🐸";
   const backgroundImage = chatSettings?.backgroundImage;
 
   const {
