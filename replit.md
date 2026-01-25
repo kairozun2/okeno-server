@@ -70,6 +70,15 @@ UPDATE users SET is_admin = true, is_verified = true WHERE id = 'USER_ID_HERE';
 - Location services for geotagging posts
 - Haptic feedback for interactions
 - Clipboard for sharing user IDs
+- Push notifications via Expo's push service
+
+### Push Notifications System
+- **Database**: `push_tokens` table stores device tokens per user
+- **Backend**: Notifications sent via Expo Push API (`https://exp.host/--/api/v2/push/send`)
+- **Client**: Automatic permission request and token registration on login
+- **Triggers**: New messages, likes, and comments send push notifications
+- **Important**: Push notifications only work on physical devices (not simulators)
+- **Project ID**: `7e94d6f4-d3cd-4ed4-8ecb-84b20d1e7dd4`
 
 ### Environment Variables
 - `DATABASE_URL`: PostgreSQL connection string (required)
