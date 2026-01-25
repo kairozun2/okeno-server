@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type ThemeKey = 'forest' | 'feldgrau' | 'wheat' | 'midnight' | 'mint' | 'merlot' | 'apricot';
+export type ThemeKey = 'forest' | 'feldgrau' | 'midnight' | 'merlot';
 
 export interface SettingsState {
   theme: ThemeKey;
