@@ -615,7 +615,28 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
-  // Alias for client compatibility
+  app.delete("/api/messages/:id", async (req, res) => {
+    try {
+      const { senderId } = req.body;
+      const message = await storage.getMessage(req.params.id);
+      
+      if (!message) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+
+      // Allow deletion if it's the sender OR an admin
+      const user = senderId ? await storage.getUser(senderId) : null;
+      if (message.senderId !== senderId && !user?.isAdmin) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      await storage.deleteMessage(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete message error:", error);
+      res.status(500).json({ error: "Failed to delete message" });
+    }
+  });
   app.get("/api/users/:id/unread-messages", async (req, res) => {
     try {
       const count = await storage.getTotalUnreadMessagesCount(req.params.id);

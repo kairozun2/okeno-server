@@ -657,21 +657,29 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const deleteMutation = useMutation({
     mutationFn: async (messageId: string) => {
-      await apiRequest("DELETE", `/api/messages/${messageId}`, {
-        senderId: user?.id,
-      });
-      return messageId;
+      await apiRequest("DELETE", `/api/messages/${messageId}`, { senderId: user?.id });
     },
-    onSuccess: (deletedId) => {
+    onMutate: async (messageId) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/chats", chatId, "messages"] });
+      const previousMessages = queryClient.getQueryData(["/api/chats", chatId, "messages"]);
+      
       queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
           pages: oldData.pages.map((page: Message[]) =>
-            page.filter((msg: Message) => msg.id !== deletedId)
+            page.filter((msg: Message) => msg.id !== messageId)
           ),
         };
       });
+      
+      return { previousMessages };
+    },
+    onError: (err, messageId, context) => {
+      queryClient.setQueryData(["/api/chats", chatId, "messages"], context?.previousMessages);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chats", chatId, "messages"] });
     },
   });
 
