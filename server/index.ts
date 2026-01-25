@@ -131,7 +131,94 @@ function serveExpoManifest(platform: string, res: Response) {
   res.send(manifest);
 }
 
-function serveLandingPage({
+interface OGData {
+  title: string;
+  description: string;
+  image: string;
+  url: string;
+}
+
+async function getOGDataForPath(reqPath: string, baseUrl: string): Promise<OGData> {
+  const defaultOG: OGData = {
+    title: "Okeno",
+    description: "A social media app to share moments with friends",
+    image: `${baseUrl}/assets/images/icon.png`,
+    url: baseUrl,
+  };
+
+  try {
+    // User profile page: /u/username
+    if (reqPath.startsWith("/u/")) {
+      const username = reqPath.split("/u/")[1]?.split("/")[0];
+      if (username) {
+        // Import db dynamically to avoid circular dependencies
+        const { db } = await import("./db");
+        const { users } = await import("@shared/schema");
+        const { eq } = await import("drizzle-orm");
+        
+        const user = await db.query.users.findFirst({
+          where: eq(users.username, username),
+        });
+        
+        if (user) {
+          return {
+            title: `${user.emoji} ${user.username} on Okeno`,
+            description: `Check out ${user.username}'s profile on Okeno`,
+            image: `${baseUrl}/assets/images/icon.png`,
+            url: `${baseUrl}/u/${username}`,
+          };
+        }
+      }
+    }
+    
+    // Post page: /post/:id
+    if (reqPath.startsWith("/post/")) {
+      const postId = reqPath.split("/post/")[1]?.split("/")[0];
+      if (postId) {
+        const { db } = await import("./db");
+        const { posts, users } = await import("@shared/schema");
+        const { eq } = await import("drizzle-orm");
+        
+        const post = await db.query.posts.findFirst({
+          where: eq(posts.id, postId),
+        });
+        
+        if (post) {
+          const postUser = await db.query.users.findFirst({
+            where: eq(users.id, post.userId),
+          });
+          
+          // Use post image if available and valid
+          let ogImage = `${baseUrl}/assets/images/icon.png`;
+          if (post.imageUrl && !post.imageUrl.startsWith("file://") && !post.imageUrl.startsWith("blob:")) {
+            if (post.imageUrl.startsWith("/")) {
+              ogImage = `${baseUrl}${post.imageUrl}`;
+            } else if (post.imageUrl.startsWith("http")) {
+              ogImage = post.imageUrl;
+            }
+          }
+          
+          const userName = postUser?.username || "someone";
+          const locationText = post.locationName ? ` at ${post.locationName}` : "";
+          const feelingText = post.feeling ? ` ${post.feeling}` : "";
+          
+          return {
+            title: `${postUser?.emoji || "📸"} Post by ${userName}${feelingText}`,
+            description: `View this post${locationText} on Okeno`,
+            image: ogImage,
+            url: `${baseUrl}/post/${postId}`,
+          };
+        }
+      }
+    }
+  } catch (error) {
+    log(`[OG] Error fetching data for path ${reqPath}:`, error);
+  }
+  
+  return defaultOG;
+}
+
+async function serveLandingPage({
   req,
   res,
   landingPageTemplate,
@@ -152,10 +239,17 @@ function serveLandingPage({
   log(`baseUrl`, baseUrl);
   log(`expsUrl`, expsUrl);
 
+  // Get dynamic OG data based on path
+  const ogData = await getOGDataForPath(req.path, baseUrl);
+
   const html = landingPageTemplate
     .replace(/BASE_URL_PLACEHOLDER/g, baseUrl)
     .replace(/EXPS_URL_PLACEHOLDER/g, expsUrl)
-    .replace(/APP_NAME_PLACEHOLDER/g, appName);
+    .replace(/APP_NAME_PLACEHOLDER/g, appName)
+    .replace(/OG_TITLE_PLACEHOLDER/g, ogData.title)
+    .replace(/OG_DESCRIPTION_PLACEHOLDER/g, ogData.description)
+    .replace(/OG_IMAGE_PLACEHOLDER/g, ogData.image)
+    .replace(/OG_URL_PLACEHOLDER/g, ogData.url);
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.status(200).send(html);
@@ -193,6 +287,9 @@ function configureExpoAndLanding(app: express.Application) {
         res,
         landingPageTemplate,
         appName,
+      }).catch((error) => {
+        log(`[Landing] Error serving landing page:`, error);
+        res.status(500).send("Error loading page");
       });
     }
 
