@@ -29,92 +29,51 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
   const { user } = useAuth();
   const isOnline = useIsOnline();
   
-  const greetingOpacity = useSharedValue(1);
-  const titleOpacity = useSharedValue(0);
-  const subtitleOpacity = useSharedValue(0);
+  const [phase, setPhase] = useState<'greeting' | 'title' | 'subtitle'>('greeting');
+  const opacity = useSharedValue(1);
   const refreshOpacity = useSharedValue(0);
-  
-  const [animationPhase, setAnimationPhase] = useState<'greeting' | 'title' | 'subtitle'>('greeting');
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 6) return t("Welcome", "Добро пожаловать");
-    if (hour < 12) return t("Welcome", "Добро пожаловать");
-    if (hour < 18) return t("Welcome", "Добро пожаловать");
-    return t("Welcome", "Добро пожаловать");
-  };
-
+  const getGreeting = () => t("Welcome", "Добро пожаловать");
   const greeting = `${getGreeting()}, ${user?.username || t("guest", "гость")}`;
   const subtitle = t("Feed", "Лента");
 
   useEffect(() => {
-    // Reset state to ensure clean start
-    greetingOpacity.value = 1;
-    titleOpacity.value = 0;
-    subtitleOpacity.value = 0;
-    setAnimationPhase('greeting');
-
     // Phase 1: Greeting
-    greetingOpacity.value = withDelay(
-      1500, // Show greeting for 1.5s
-      withTiming(0, { duration: 600 }, (finished) => {
+    opacity.value = 1;
+    const timeout1 = setTimeout(() => {
+      opacity.value = withTiming(0, { duration: 500 }, (finished) => {
         if (finished) {
-          runOnJS(setAnimationPhase)('title');
+          runOnJS(setPhase)('title');
+          opacity.value = withTiming(1, { duration: 500 });
         }
-      })
-    );
+      });
+    }, 2000);
 
-    // Phase 2: Title (Okeno)
-    titleOpacity.value = withDelay(
-      2100, // Wait for greeting to fade
-      withTiming(1, { duration: 600 }, (finished) => {
+    // Phase 2: Title
+    const timeout2 = setTimeout(() => {
+      opacity.value = withTiming(0, { duration: 500 }, (finished) => {
         if (finished) {
-          titleOpacity.value = withDelay(
-            1000, // Show Okeno for 1s
-            withTiming(0, { duration: 600 }, (done) => {
-              if (done) {
-                runOnJS(setAnimationPhase)('subtitle');
-              }
-            })
-          );
+          runOnJS(setPhase)('subtitle');
+          opacity.value = withTiming(1, { duration: 500 }, (done) => {
+            if (done && onFadeComplete) runOnJS(onFadeComplete)();
+          });
         }
-      })
-    );
+      });
+    }, 4000);
 
-    // Phase 3: Subtitle (Feed) - Force completion
-    subtitleOpacity.value = withDelay(
-      4300, // Total delay until this should start
-      withTiming(1, { duration: 800 }, (finished) => {
-        if (finished) {
-          if (onFadeComplete) {
-            runOnJS(onFadeComplete)();
-          }
-        }
-      })
-    );
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+    };
   }, []);
 
   useEffect(() => {
     refreshOpacity.value = withTiming(refreshing ? 1 : 0, { duration: 200 });
   }, [refreshing]);
 
-  const greetingStyle = useAnimatedStyle(() => ({
-    opacity: greetingOpacity.value,
-  }));
-
-  const titleStyle = useAnimatedStyle(() => ({
-    opacity: titleOpacity.value * (1 - refreshOpacity.value),
-  }));
-
-  const subtitleStyle = useAnimatedStyle(() => ({
-    opacity: subtitleOpacity.value * (1 - refreshOpacity.value) * (isOnline ? 1 : 0),
-  }));
-
-  const offlineIndicatorStyle = useAnimatedStyle(() => ({
-    opacity: subtitleOpacity.value * (1 - refreshOpacity.value) * (isOnline ? 0 : 1),
-    position: 'absolute' as const,
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value * (1 - refreshOpacity.value),
   }));
 
   const spinnerStyle = useAnimatedStyle(() => ({
@@ -124,19 +83,22 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, greetingStyle]}>
-        <ThemedText style={styles.greetingText}>{greeting}</ThemedText>
-      </Animated.View>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, titleStyle]}>
-        <ThemedText style={styles.titleText}>{title}</ThemedText>
-      </Animated.View>
-      <Animated.View style={[styles.titleRow]}>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, subtitleStyle]}>
-          <ThemedText style={styles.subtitleText}>{subtitle}</ThemedText>
-        </Animated.View>
-        <Animated.View style={[styles.greetingContainer, offlineIndicatorStyle]}>
-          <OfflineIndicator />
-        </Animated.View>
+      <Animated.View style={[styles.greetingContainer, animatedStyle]}>
+        {phase === 'greeting' && (
+          <ThemedText style={styles.greetingText}>{greeting}</ThemedText>
+        )}
+        {phase === 'title' && (
+          <ThemedText style={styles.titleText}>{title}</ThemedText>
+        )}
+        {phase === 'subtitle' && (
+          <View style={styles.titleRow}>
+            {isOnline ? (
+              <ThemedText style={styles.subtitleText}>{subtitle}</ThemedText>
+            ) : (
+              <OfflineIndicator />
+            )}
+          </View>
+        )}
       </Animated.View>
       <Animated.View style={[styles.greetingContainer, spinnerStyle]}>
         <ActivityIndicator size="small" color={theme.text} />
