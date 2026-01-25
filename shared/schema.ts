@@ -172,6 +172,18 @@ export const blockedUsers = pgTable("blocked_users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Push tokens table - for push notifications
+export const pushTokens = pgTable("push_tokens", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull(),
+  platform: text("platform"), // 'ios', 'android', 'web'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Chat settings table - per-user customizations for each chat
 export const chatSettings = pgTable("chat_settings", {
   id: varchar("id")
@@ -308,6 +320,13 @@ export const chatSettingsRelations = relations(chatSettings, ({ one }) => ({
   }),
 }));
 
+export const pushTokensRelations = relations(pushTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [pushTokens.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -394,6 +413,12 @@ export const insertMessageReactionSchema = createInsertSchema(messageReactions).
   emoji: true,
 });
 
+export const insertPushTokenSchema = createInsertSchema(pushTokens).pick({
+  userId: true,
+  token: true,
+  platform: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -421,3 +446,5 @@ export type InsertBlockedUser = z.infer<typeof insertBlockedUserSchema>;
 export type BlockedUser = typeof blockedUsers.$inferSelect;
 export type InsertMessageReaction = z.infer<typeof insertMessageReactionSchema>;
 export type MessageReaction = typeof messageReactions.$inferSelect;
+export type InsertPushToken = z.infer<typeof insertPushTokenSchema>;
+export type PushToken = typeof pushTokens.$inferSelect;

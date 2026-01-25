@@ -14,6 +14,7 @@ import {
   chatSettings,
   reports,
   blockedUsers,
+  pushTokens,
   type User,
   type InsertUser,
   type Post,
@@ -40,6 +41,8 @@ import {
   type InsertReport,
   type BlockedUser,
   type InsertBlockedUser,
+  type PushToken,
+  type InsertPushToken,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
@@ -593,6 +596,40 @@ export class DatabaseStorage implements IStorage {
   async isUserAdmin(userId: string): Promise<boolean> {
     const user = await this.getUser(userId);
     return user?.isAdmin ?? false;
+  }
+  
+  // Push tokens
+  async savePushToken(data: InsertPushToken): Promise<PushToken> {
+    // First, try to find existing token for this user
+    const existing = await db.select().from(pushTokens)
+      .where(eq(pushTokens.userId, data.userId));
+    
+    if (existing.length > 0) {
+      // Update existing token
+      const [updated] = await db.update(pushTokens)
+        .set({ 
+          token: data.token, 
+          platform: data.platform,
+          updatedAt: new Date() 
+        })
+        .where(eq(pushTokens.userId, data.userId))
+        .returning();
+      return updated;
+    }
+    
+    // Create new token
+    const [created] = await db.insert(pushTokens).values(data).returning();
+    return created;
+  }
+  
+  async getUserPushTokens(userId: string): Promise<PushToken[]> {
+    return db.select().from(pushTokens).where(eq(pushTokens.userId, userId));
+  }
+  
+  async deletePushToken(userId: string, token: string): Promise<void> {
+    await db.delete(pushTokens).where(
+      and(eq(pushTokens.userId, userId), eq(pushTokens.token, token))
+    );
   }
 }
 
