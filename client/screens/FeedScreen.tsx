@@ -264,14 +264,20 @@ function PostCard({
 
       <GestureDetector gesture={doubleTapGesture}>
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: getImageUrl(post.imageUrl) }}
-            style={styles.postImage}
-            contentFit="cover"
-            transition={200}
-            cachePolicy="memory-disk"
-            onError={(e) => console.log(`Feed image load error for ${post.id}:`, e)}
-          />
+          {getImageUrl(post.imageUrl) ? (
+            <Image
+              source={{ uri: getImageUrl(post.imageUrl) }}
+              style={styles.postImage}
+              contentFit="cover"
+              transition={200}
+              cachePolicy="memory-disk"
+              onError={(e) => console.log(`Feed image load error for ${post.id}:`, e)}
+            />
+          ) : (
+            <View style={[styles.postImage, { backgroundColor: theme.backgroundSecondary, justifyContent: 'center', alignItems: 'center' }]}>
+              <Feather name="image" size={48} color={theme.textSecondary} />
+            </View>
+          )}
           <Animated.View style={[styles.heartOverlay, heartOverlayStyle]}>
             <Feather name="heart" size={80} color="#fff" />
           </Animated.View>

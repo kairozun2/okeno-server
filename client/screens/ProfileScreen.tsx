@@ -48,14 +48,23 @@ interface Post {
 }
 
 function PostGridItem({ post, onPress }: { post: Post; onPress: () => void }) {
+  const { theme } = useTheme();
+  const imageUrl = getImageUrl(post.imageUrl);
+  
   return (
     <Pressable onPress={onPress} style={styles.gridItem}>
-      <Image
-        source={{ uri: getImageUrl(post.imageUrl) }}
-        style={styles.gridImage}
-        contentFit="cover"
-        transition={100}
-      />
+      {imageUrl ? (
+        <Image
+          source={{ uri: imageUrl }}
+          style={styles.gridImage}
+          contentFit="cover"
+          transition={100}
+        />
+      ) : (
+        <View style={[styles.gridImage, { backgroundColor: theme.backgroundSecondary, justifyContent: 'center', alignItems: 'center' }]}>
+          <Feather name="image" size={24} color={theme.textSecondary} />
+        </View>
+      )}
     </Pressable>
   );
 }

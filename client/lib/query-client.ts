@@ -22,7 +22,7 @@ export function getApiUrl(): string {
 /**
  * Builds a full image URL from a path (handles both relative and absolute URLs)
  * @param path The image path (e.g., "/uploads/image.jpg" or "https://domain.com/uploads/image.jpg")
- * @returns {string} The full image URL
+ * @returns {string} The full image URL, or empty string for invalid/unsupported URLs
  */
 export function getImageUrl(path: string | null | undefined): string {
   if (!path) {
@@ -30,6 +30,11 @@ export function getImageUrl(path: string | null | undefined): string {
   }
   
   const host = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
+  
+  // Invalid URL types that can't be loaded from server
+  if (path.startsWith("file://") || path.startsWith("blob:")) {
+    return "";
+  }
   
   // If it's already an absolute URL, return as-is
   if (path.startsWith("http://") || path.startsWith("https://")) {
