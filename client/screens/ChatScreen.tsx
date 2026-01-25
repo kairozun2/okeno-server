@@ -508,11 +508,12 @@ export default function ChatScreen({ route, navigation }: Props) {
     return unsubscribe;
   }, [navigation, user?.id, otherUserId]);
 
-  const getDirectLink = (url: string) => {
-    if (url.includes("imgbly.com") && !url.includes("i.imgbly.com")) {
-      return url.replace("www.imgbly.com", "i.imgbly.com");
-    }
-    return url;
+  const getDirectLink = (url: string | null | undefined) => {
+    if (!url) return "";
+    if (url.startsWith("http")) return url;
+    const fullUrl = getImageUrl(url);
+    console.log('getDirectLink mapping:', url, '->', fullUrl);
+    return fullUrl;
   };
 
   useEffect(() => {
@@ -1256,9 +1257,6 @@ export default function ChatScreen({ route, navigation }: Props) {
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             cachePolicy="memory-disk"
-            onLoadStart={() => console.log('Background loading started:', getDirectLink(backgroundImage))}
-            onLoad={() => console.log('Background loaded successfully')}
-            onError={(e) => console.error('Background load error:', e.nativeEvent.error, 'URL:', getDirectLink(backgroundImage))}
           />
           <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.4)' }}>
             {chatContent}

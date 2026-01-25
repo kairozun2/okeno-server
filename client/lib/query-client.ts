@@ -13,9 +13,12 @@ export function getApiUrl(): string {
     throw new Error("EXPO_PUBLIC_DOMAIN is not set");
   }
 
-  let url = new URL(`https://${host}`);
-
-  return url.href;
+  // Ensure host doesn't already have a protocol
+  const cleanHost = host.replace(/^https?:\/\//, '');
+  
+  // Construct URL and force https (except for localhost/127.0.0.1 if needed, 
+  // but Replit domains should use https)
+  return `https://${cleanHost}`;
 }
 
 /**
@@ -43,14 +46,16 @@ export function getImageUrl(path: string | null | undefined): string {
       const uploadsIndex = path.indexOf("/uploads/");
       if (uploadsIndex !== -1) {
         const relativePath = path.substring(uploadsIndex);
-        return `https://${host}${relativePath}`;
+        return getApiUrl().replace(/\/$/, '') + relativePath;
       }
     }
     return path;
   }
   
   // It's a relative path, build full URL
-  return `https://${host}${path}`;
+  const baseUrl = getApiUrl().replace(/\/$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${cleanPath}`;
 }
 
 async function throwIfResNotOk(res: Response) {
