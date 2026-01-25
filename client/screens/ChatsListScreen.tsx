@@ -30,6 +30,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
+import { fetchAndCacheChats } from "@/lib/sync";
+import * as Database from "@/lib/database";
 import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -205,6 +207,16 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   const { data: chatsData = [], isLoading } = useQuery<ChatWithDetails[]>({
     queryKey: ["/api/users", user?.id, "chats"],
+    queryFn: async () => {
+      try {
+        const chats = await fetchAndCacheChats(user?.id || "");
+        return Array.isArray(chats) ? chats : [];
+      } catch (error) {
+        console.log("Chats fetch error, trying local database:", error);
+        const localChats = await Database.getChats(user?.id || "");
+        return localChats as ChatWithDetails[];
+      }
+    },
     enabled: !!user?.id,
     staleTime: 5000,
     refetchInterval: 10000,

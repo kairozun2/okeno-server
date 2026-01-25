@@ -10,6 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing } from "@/constants/theme";
@@ -107,8 +108,9 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
       <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, titleStyle]}>
         <ThemedText style={styles.titleText}>{title}</ThemedText>
       </Animated.View>
-      <Animated.View style={[styles.greetingContainer, subtitleStyle]}>
+      <Animated.View style={[styles.titleRow, subtitleStyle]}>
         <ThemedText style={styles.subtitleText}>{subtitle}</ThemedText>
+        <OfflineIndicator />
       </Animated.View>
       <Animated.View style={[styles.greetingContainer, spinnerStyle]}>
         <ActivityIndicator size="small" color={theme.text} />
@@ -129,6 +131,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: '100%',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
   },
   greetingText: {
     fontSize: 14,

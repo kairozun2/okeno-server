@@ -28,6 +28,9 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, getImageUrl, getApiUrl } from "@/lib/query-client";
+import { fetchAndCacheFeed } from "@/lib/sync";
+import * as Database from "@/lib/database";
+import { useIsOnline } from "@/hooks/useNetworkStatus";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -457,17 +460,21 @@ export default function FeedScreen({ navigation }: Props) {
   } = useQuery<PostWithUser[]>({
     queryKey: ["/api/posts", "initial"],
     queryFn: async () => {
-      const baseUrl = getApiUrl().replace(/\/$/, "");
-      const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=0`, {
-        headers: { "x-user-id": currentUser?.id || "" },
-      });
-      if (!res.ok) throw new Error("Failed to fetch posts");
-      const data = await res.json();
-      const posts = Array.isArray(data) ? data : [];
-      setAllPosts(posts);
-      setCurrentOffset(posts.length);
-      setHasMore(posts.length >= PAGE_SIZE);
-      return posts;
+      try {
+        const posts = await fetchAndCacheFeed(currentUser?.id || "", PAGE_SIZE, 0);
+        const postsArray = Array.isArray(posts) ? posts : [];
+        setAllPosts(postsArray);
+        setCurrentOffset(postsArray.length);
+        setHasMore(postsArray.length >= PAGE_SIZE);
+        return postsArray;
+      } catch (error) {
+        console.log("Feed fetch error, trying local database:", error);
+        const localPosts = await Database.getPosts(PAGE_SIZE, 0);
+        setAllPosts(localPosts as PostWithUser[]);
+        setCurrentOffset(localPosts.length);
+        setHasMore(localPosts.length >= PAGE_SIZE);
+        return localPosts as PostWithUser[];
+      }
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -479,22 +486,23 @@ export default function FeedScreen({ navigation }: Props) {
     
     setIsFetchingMore(true);
     try {
-      const baseUrl = getApiUrl().replace(/\/$/, "");
-      const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=${currentOffset}`, {
-        headers: { "x-user-id": currentUser?.id || "" },
-      });
-      if (!res.ok) throw new Error("Failed to fetch posts");
-      const data = await res.json();
-      const newPosts = Array.isArray(data) ? data : [];
+      const newPosts = await fetchAndCacheFeed(currentUser?.id || "", PAGE_SIZE, currentOffset);
+      const postsArray = Array.isArray(newPosts) ? newPosts : [];
       
-      if (newPosts.length < PAGE_SIZE) {
+      if (postsArray.length < PAGE_SIZE) {
         setHasMore(false);
       }
       
-      setAllPosts(prev => [...prev, ...newPosts]);
-      setCurrentOffset(prev => prev + newPosts.length);
+      setAllPosts(prev => [...prev, ...postsArray]);
+      setCurrentOffset(prev => prev + postsArray.length);
     } catch (error) {
       console.error("Failed to load more posts:", error);
+      const localPosts = await Database.getPosts(PAGE_SIZE, currentOffset);
+      if (localPosts.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+      setAllPosts(prev => [...prev, ...(localPosts as PostWithUser[])]);
+      setCurrentOffset(prev => prev + localPosts.length);
     } finally {
       setIsFetchingMore(false);
     }
