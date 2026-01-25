@@ -47,8 +47,9 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
   const subtitle = t("Feed", "Лента");
 
   useEffect(() => {
+    // Phase 1: Greeting
     greetingOpacity.value = withDelay(
-      2000,
+      500,
       withTiming(0, { duration: 800 }, (finished) => {
         if (finished) {
           runOnJS(setAnimationPhase)('title');
@@ -56,8 +57,9 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
       })
     );
 
+    // Phase 2: Title (Okeno)
     titleOpacity.value = withDelay(
-      2800,
+      1300,
       withTiming(1, { duration: 600 }, (finished) => {
         if (finished) {
           titleOpacity.value = withDelay(
@@ -72,8 +74,9 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
       })
     );
 
+    // Phase 3: Subtitle (Feed)
     subtitleOpacity.value = withDelay(
-      5500,
+      4000,
       withTiming(1, { duration: 600 }, (finished) => {
         if (finished && onFadeComplete) {
           runOnJS(onFadeComplete)();
