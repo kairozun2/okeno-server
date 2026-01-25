@@ -37,6 +37,7 @@ import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { MainTabParamList } from "@/navigation/MainTabNavigator";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const PAGE_SIZE = 10;
 
 interface Post {
   id: string;
@@ -441,8 +442,6 @@ export default function FeedScreen({ navigation }: Props) {
     }
     reportMutation.mutate();
   };
-
-  const PAGE_SIZE = 10;
 
   const {
     data: postsPages,
