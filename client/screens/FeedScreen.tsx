@@ -37,7 +37,6 @@ import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { MainTabParamList } from "@/navigation/MainTabNavigator";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const PAGE_SIZE = 10;
 
 interface Post {
   id: string;
@@ -443,31 +442,26 @@ export default function FeedScreen({ navigation }: Props) {
     reportMutation.mutate();
   };
 
+  const PAGE_SIZE = 10;
+
   const {
     data: postsPages,
     isLoading,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    refetch,
   } = useInfiniteQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
     queryFn: async ({ pageParam = 0 }) => {
-      try {
-        const baseUrl = getApiUrl().replace(/\/$/, "");
-        const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=${pageParam}`, {
-          headers: { "x-user-id": currentUser?.id || "" },
-        });
-        if (!res.ok) throw new Error("Failed to fetch posts");
-        const data = await res.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error("Feed fetch error:", error);
-        return [];
-      }
+      const baseUrl = getApiUrl().replace(/\/$/, "");
+      const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=${pageParam}`, {
+        headers: { "x-user-id": currentUser?.id || "" },
+      });
+      if (!res.ok) throw new Error("Failed to fetch posts");
+      return res.json();
     },
     getNextPageParam: (lastPage, allPages) => {
-      if (!lastPage || !Array.isArray(lastPage) || lastPage.length < PAGE_SIZE) return undefined;
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
       return allPages.length * PAGE_SIZE;
     },
     initialPageParam: 0,
