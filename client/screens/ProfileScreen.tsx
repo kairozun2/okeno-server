@@ -165,17 +165,19 @@ export default function ProfileScreen({ navigation }: Props) {
     }
 
     const updatedUser = await response.json();
-    setUser(updatedUser);
+    
+    // 1. Update local storage first to be safe
     if (sessionId) {
       await storeAuth(updatedUser, sessionId);
     }
     
-    // Force a small delay to ensure state has propagated
-    setTimeout(() => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users", user.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "posts"] });
-    }, 100);
+    // 2. Update context state
+    setUser(updatedUser);
+    
+    // 3. Force query invalidation and refetching
+    await queryClient.refetchQueries({ queryKey: ["/api/users", user.id] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "posts"] });
   };
 
   const scrollHandler = useAnimatedScrollHandler({

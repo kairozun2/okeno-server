@@ -83,13 +83,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user?.id) return;
     try {
       const url = new URL(`/api/users/${user.id}`, getApiUrl());
-      const response = await fetch(url.toString(), { credentials: "include" });
+      const response = await fetch(url.toString(), { 
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+        credentials: "include" 
+      });
       if (response.ok) {
         const freshUserData = await response.json();
-        const updatedUser = { ...user, ...freshUserData };
-        setUser(updatedUser);
+        // Force state update by creating a new object reference
+        setUser({ ...user, ...freshUserData });
         if (sessionId) {
-          await storeAuth(updatedUser, sessionId);
+          await storeAuth({ ...user, ...freshUserData }, sessionId);
         }
       }
     } catch {
