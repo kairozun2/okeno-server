@@ -172,3 +172,26 @@ To test features:
 - Data cached for 7 days for offline viewing
 - `networkMode: 'offlineFirst'` prioritizes cached data when offline
 - Images must be online to load (no local image caching yet)
+
+### Feed Pagination
+- Feed uses infinite scroll with 10 posts per page
+- `useInfiniteQuery` from TanStack Query for efficient pagination
+- Posts load more at 50% scroll threshold
+- Server API accepts `limit` and `offset` query parameters
+
+### Debug Console
+- Accessible via long-press on profile header (3s press)
+- Available commands: `diag`, `system_info`, `clear`, `help`
+- Color-coded output (green for success, red for errors, yellow for warnings)
+- Secret admin elevation command not shown in help menu
+
+### Image Handling
+- Invalid URL types (`file://`, `blob:`) are filtered and show placeholder
+- Old posts with local device paths display image placeholder icon
+- Images from old development domains are rewritten to current domain
+- All image components handle empty URLs gracefully with fallback UI
+
+### URL Routes
+- `/u/username` - User profile landing pages (requires deployment)
+- `/post/:id` - Post detail landing pages (requires deployment)
+- Landing pages work in development but require publishing for custom domain
