@@ -96,14 +96,25 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
     opacity: titleOpacity.value * (1 - refreshOpacity.value),
   }));
 
-  const subtitleStyle = useAnimatedStyle(() => ({
-    opacity: subtitleOpacity.value * (1 - refreshOpacity.value),
-  }));
+  const subtitleStyle = useAnimatedStyle(() => {
+    // Determine the visible phase
+    const isVisiblePhase = animationPhase === 'subtitle';
+    const baseOpacity = isVisiblePhase ? 1 : 0;
+    
+    return {
+      opacity: baseOpacity * (1 - refreshOpacity.value) * (isOnline ? 1 : 0),
+    };
+  });
 
-  const offlineIndicatorStyle = useAnimatedStyle(() => ({
-    opacity: isOnline ? 0 : 1,
-    position: 'absolute' as const,
-  }));
+  const offlineIndicatorStyle = useAnimatedStyle(() => {
+    const isVisiblePhase = animationPhase === 'subtitle';
+    const baseOpacity = isVisiblePhase ? 1 : 0;
+    
+    return {
+      opacity: baseOpacity * (1 - refreshOpacity.value) * (isOnline ? 0 : 1),
+      position: 'absolute' as const,
+    };
+  });
 
   const spinnerStyle = useAnimatedStyle(() => ({
     opacity: refreshOpacity.value,
