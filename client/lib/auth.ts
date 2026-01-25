@@ -64,15 +64,17 @@ export async function clearAuth(): Promise<void> {
 export async function register(username: string, pin: string): Promise<{ user: User; sessionId: string }> {
   const response = await apiRequest("POST", "/api/auth/register", { username, pin });
   const data = await response.json();
-  await storeAuth(data.user, data.sessionId);
-  return data;
+  const sessionId = data.sessionId || data.session?.id || data.session;
+  await storeAuth(data.user, sessionId);
+  return { user: data.user, sessionId };
 }
 
 export async function login(userId: string, pin: string): Promise<{ user: User; sessionId: string }> {
   const response = await apiRequest("POST", "/api/auth/login", { userId, pin });
   const data = await response.json();
-  await storeAuth(data.user, data.sessionId);
-  return data;
+  const sessionId = data.sessionId || data.session?.id || data.session;
+  await storeAuth(data.user, sessionId);
+  return { user: data.user, sessionId };
 }
 
 export async function logout(sessionId: string | null): Promise<void> {

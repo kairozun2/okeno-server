@@ -30,12 +30,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { user: storedUser, sessionId: storedSessionId } = await getStoredAuth();
       
       if (storedUser && storedSessionId) {
-        // Refresh user data from server to get latest fields (isAdmin, isVerified, etc.)
+        // Refresh user data from server to get latest fields (isAdmin, isVerified, emoji, username, etc.)
         try {
           const url = new URL(`/api/users/${storedUser.id}`, getApiUrl());
-          const response = await fetch(url.toString(), { credentials: "include" });
+          const response = await fetch(url.toString(), { 
+            method: 'GET',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: "include" 
+          });
           if (response.ok) {
             const freshUserData = await response.json();
+            // Merge fresh data with stored user, fresh data takes priority
             const updatedUser = { ...storedUser, ...freshUserData };
             setUser(updatedUser);
             setSessionId(storedSessionId);
@@ -63,14 +71,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await authRegister(username, pin);
     setUser(result.user);
     setSessionId(result.sessionId);
-    await storeAuth(result.user, result.sessionId);
+    // storeAuth is already called in authRegister
   }, []);
 
   const login = useCallback(async (userId: string, pin: string) => {
     const result = await authLogin(userId, pin);
     setUser(result.user);
     setSessionId(result.sessionId);
-    await storeAuth(result.user, result.sessionId);
+    // storeAuth is already called in authLogin
   }, []);
 
   const logout = useCallback(async () => {

@@ -107,9 +107,8 @@ export default function CommentsScreen({ route, navigation }: Props) {
 
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      const response = await apiRequest("POST", "/api/comments", {
+      const response = await apiRequest("POST", `/api/posts/${postId}/comments`, {
         userId: user?.id,
-        postId,
         content,
       });
       return response.json();
