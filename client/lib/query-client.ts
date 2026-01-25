@@ -29,11 +29,12 @@ export function getImageUrl(path: string | null | undefined): string {
     return "";
   }
   
+  const host = process.env.EXPO_PUBLIC_DOMAIN || "okeno.replit.app";
+  
   // If it's already an absolute URL, return as-is
   if (path.startsWith("http://") || path.startsWith("https://")) {
     // Check if it's using an old development domain and needs to be rewritten
-    const host = process.env.EXPO_PUBLIC_DOMAIN;
-    if (host && path.includes("/uploads/")) {
+    if (path.includes("/uploads/")) {
       // Extract just the /uploads/... part and rebuild with current domain
       const uploadsIndex = path.indexOf("/uploads/");
       if (uploadsIndex !== -1) {
@@ -45,11 +46,6 @@ export function getImageUrl(path: string | null | undefined): string {
   }
   
   // It's a relative path, build full URL
-  const host = process.env.EXPO_PUBLIC_DOMAIN;
-  if (!host) {
-    return path;
-  }
-  
   return `https://${host}${path}`;
 }
 

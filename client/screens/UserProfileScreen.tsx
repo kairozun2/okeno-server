@@ -272,11 +272,15 @@ export default function UserProfileScreen({ route, navigation }: Props) {
   };
 
   const handleShareProfile = async () => {
+    if (!profileUser?.username) return;
+    
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const shareUrl = `https://${process.env.EXPO_PUBLIC_DOMAIN}/user/${userId}`;
+      const domain = process.env.EXPO_PUBLIC_DOMAIN || "okeno.replit.app";
+      const shareUrl = `https://${domain}/u/${profileUser.username}`;
+      
       await Share.share({
-        message: `Check out ${profileUser?.username}'s profile on Okeno: ${shareUrl}`,
+        message: `Check out ${profileUser.username}'s profile on Okeno: ${shareUrl}`,
         url: shareUrl,
       });
     } catch {

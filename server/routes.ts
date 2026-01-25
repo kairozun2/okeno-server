@@ -188,6 +188,17 @@ export async function registerRoutes(app: express.Express) {
   });
 
   // Users routes
+  app.get("/api/users/by-username/:username", async (req, res) => {
+    try {
+      const user = await storage.getUserByUsername(req.params.username);
+      if (!user) return res.status(404).json({ error: "User not found" });
+      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned });
+    } catch (error) {
+      console.error("Get user by username error:", error);
+      res.status(500).json({ error: "Failed to get user" });
+    }
+  });
+
   app.get("/api/users/search", async (req, res) => {
     try {
       const query = req.query.q as string;
