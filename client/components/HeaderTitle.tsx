@@ -6,7 +6,9 @@ import Animated, {
   withTiming, 
   withDelay,
   withSequence,
-  runOnJS
+  runOnJS,
+  FadeIn,
+  FadeOut
 } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
