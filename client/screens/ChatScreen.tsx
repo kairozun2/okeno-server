@@ -1240,7 +1240,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff', overflow: 'hidden' }}>
       {backgroundImage ? (
         <ImageBackground
-          source={{ uri: getDirectLink(backgroundImage) }}
+          source={{ uri: getImageUrl(backgroundImage) }}
           style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff' }}
           resizeMode="cover"
         >
