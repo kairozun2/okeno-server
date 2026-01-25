@@ -1239,15 +1239,16 @@ export default function ChatScreen({ route, navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: isDark ? '#000' : '#fff', overflow: 'hidden' }}>
       {backgroundImage ? (
-        <ImageBackground
-          source={{ uri: getImageUrl(backgroundImage) }}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        >
-          <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.3)' }}>
+        <View style={StyleSheet.absoluteFill}>
+          <Image
+            source={{ uri: getImageUrl(backgroundImage) }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+          />
+          <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.4)' }}>
             {chatContent}
           </View>
-        </ImageBackground>
+        </View>
       ) : (
         chatContent
       )}
