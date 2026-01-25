@@ -281,7 +281,6 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       
       await Share.share({
         message: `Check out ${profileUser.username}'s profile on Okeno: ${shareUrl}`,
-        url: shareUrl,
       });
     } catch {
       // Silent fail
