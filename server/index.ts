@@ -188,16 +188,13 @@ function configureExpoAndLanding(app: express.Application) {
       return serveExpoManifest(platform, res);
     }
 
-    if (req.path === "/") {
-      return serveLandingPage({
-        req,
-        res,
-        landingPageTemplate,
-        appName,
-      });
-    }
-
-    next();
+    // Serve landing page for root, /u/:username, and /post/:id paths
+    return serveLandingPage({
+      req,
+      res,
+      landingPageTemplate,
+      appName,
+    });
   });
 
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));

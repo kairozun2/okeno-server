@@ -453,18 +453,19 @@
         if (isAndroid || isIOS) {
           loadingEl.style.display = "block";
           contentEl.style.display = "none";
-        const path = window.location.pathname;
-        let deepLink = `exps://${expsUrl}`;
-        
-        if (path.startsWith('/u/')) {
+          
+          const path = window.location.pathname;
+          let deepLinkUrl = `exps://${expsUrl}`;
+          
+          if (path.startsWith('/u/')) {
             const username = path.split('/u/')[1];
-            deepLink += `--/u/${username}`;
-        } else if (path.startsWith('/post/')) {
+            deepLinkUrl += `--/u/${username}`;
+          } else if (path.startsWith('/post/')) {
             const postId = path.split('/post/')[1];
-            deepLink += `--/u/post/${postId}`;
-        }
+            deepLinkUrl += `--/post/${postId}`;
+          }
 
-        window.location.href = deepLink;
+          window.location.href = deepLinkUrl;
           setTimeout(function () {
             loadingEl.style.display = "none";
             contentEl.style.display = "block";
