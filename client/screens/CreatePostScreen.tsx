@@ -8,7 +8,7 @@ import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import * as Haptics from "expo-haptics";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
