@@ -7,8 +7,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Image } from "expo-image";
 
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/query-client";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryClient, persistOptions } from "@/lib/query-client";
 
 import RootStackNavigator from "@/navigation/RootStackNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -121,7 +121,10 @@ export default function App() {
   return (
     <ThemeProvider>
       <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider 
+          client={queryClient} 
+          persistOptions={persistOptions}
+        >
           <AuthProvider>
             <RefreshProvider>
               <SafeAreaProvider>
@@ -133,7 +136,7 @@ export default function App() {
               </SafeAreaProvider>
             </RefreshProvider>
           </AuthProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </ErrorBoundary>
     </ThemeProvider>
   );

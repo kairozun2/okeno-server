@@ -1,7 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { persistQueryClient } from "@tanstack/react-query-persist-client";
 
 /**
  * Gets the base URL for the Express API server (e.g., "http://localhost:3000")
@@ -120,13 +119,13 @@ export const queryClient = new QueryClient({
   },
 });
 
-const asyncStoragePersister = createAsyncStoragePersister({
+export const asyncStoragePersister = createAsyncStoragePersister({
   storage: AsyncStorage,
+  key: 'okeno-cache',
 });
 
-persistQueryClient({
-  queryClient,
+export const persistOptions = {
   persister: asyncStoragePersister,
   maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days - keep persisted data longer
   buster: 'v1', // Cache version - change this to bust the cache if needed
-});
+};
