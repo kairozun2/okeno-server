@@ -150,13 +150,9 @@ export default function SettingsScreen({ navigation }: Props) {
     const newCount = debugTapCount + 1;
     if (newCount >= 6) {
       setDebugTapCount(0);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.navigate("DebugConsole");
     } else {
       setDebugTapCount(newCount);
-      if (newCount > 2) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
     }
   };
 

