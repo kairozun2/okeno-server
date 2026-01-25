@@ -19,10 +19,11 @@ interface LoadingScreenProps {
   isReady: boolean;
 }
 
-export function LoadingScreen({ emoji = "🐸", onFinish, isReady }: LoadingScreenProps) {
+export function LoadingScreen({ emoji, onFinish, isReady }: LoadingScreenProps) {
   const { theme } = useTheme();
   const opacity = useSharedValue(1);
   const scale = useSharedValue(1);
+  const displayEmoji = emoji || "🐸";
 
   useEffect(() => {
     if (isReady) {
@@ -57,7 +58,7 @@ export function LoadingScreen({ emoji = "🐸", onFinish, isReady }: LoadingScre
       pointerEvents={isReady ? "none" : "auto"}
     >
       <Animated.View style={animatedStyle}>
-        <Avatar emoji={emoji} size={80} />
+        <Avatar emoji={displayEmoji} size={80} />
       </Animated.View>
     </Animated.View>
   );

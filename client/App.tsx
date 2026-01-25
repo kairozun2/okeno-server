@@ -88,7 +88,7 @@ function AppContent() {
   }
 
   // Ensure navigation doesn't start until icons are ready to prevent flicker for new users
-  if (!isReady && showLoading) {
+  if (!iconsPreloaded && showLoading) {
     return (
       <View style={styles.root}>
         <LoadingScreen 

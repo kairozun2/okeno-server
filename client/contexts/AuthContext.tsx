@@ -30,7 +30,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { user: storedUser, sessionId: storedSessionId } = await getStoredAuth();
       
       if (storedUser && storedSessionId) {
-        // Refresh user data from server to get latest fields (isAdmin, isVerified, emoji, username, etc.)
+        // Set stored data immediately to prevent random emoji flicker
+        setUser(storedUser);
+        setSessionId(storedSessionId);
+
+        // Refresh user data from server to get latest fields
         try {
           const url = new URL(`/api/users/${storedUser.id}`, getApiUrl());
           const response = await fetch(url.toString(), { 
@@ -43,25 +47,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           if (response.ok) {
             const freshUserData = await response.json();
-            // Merge fresh data with stored user, fresh data takes priority
             const updatedUser = { ...storedUser, ...freshUserData };
             setUser(updatedUser);
-            setSessionId(storedSessionId);
             await storeAuth(updatedUser, storedSessionId);
-          } else {
-            setUser(storedUser);
-            setSessionId(storedSessionId);
           }
         } catch {
-          setUser(storedUser);
-          setSessionId(storedSessionId);
+          // Keep using stored data if refresh fails
         }
-      } else {
-        setUser(storedUser);
-        setSessionId(storedSessionId);
       }
     } catch {
-      // Silent fail - stay logged out
+      // Silent fail
     } finally {
       setIsLoading(false);
     }
