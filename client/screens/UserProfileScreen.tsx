@@ -223,12 +223,17 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       return response.json();
     },
     onSuccess: (chat) => {
-      navigation.navigate("Chat", { 
-        chatId: chat.id,
-        otherUserId: profileUser?.id,
-        otherUserName: profileUser?.username,
-        otherUserEmoji: profileUser?.emoji,
-      });
+      // Close the modal before navigating
+      navigation.goBack();
+      // Small delay to ensure modal close animation starts/finishes before navigation
+      setTimeout(() => {
+        navigation.navigate("Chat", { 
+          chatId: chat.id,
+          otherUserId: profileUser?.id,
+          otherUserName: profileUser?.username,
+          otherUserEmoji: profileUser?.emoji,
+        });
+      }, 100);
     },
   });
 
