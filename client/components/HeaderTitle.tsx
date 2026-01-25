@@ -13,6 +13,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsOnline } from "@/hooks/useNetworkStatus";
 import { Spacing } from "@/constants/theme";
 
 interface HeaderTitleProps {
@@ -83,6 +84,8 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
     refreshOpacity.value = withTiming(refreshing ? 1 : 0, { duration: 200 });
   }, [refreshing]);
 
+  const { isOnline } = useIsOnline();
+
   const greetingStyle = useAnimatedStyle(() => ({
     opacity: greetingOpacity.value,
   }));
@@ -92,7 +95,7 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
   }));
 
   const subtitleStyle = useAnimatedStyle(() => ({
-    opacity: subtitleOpacity.value * (1 - refreshOpacity.value),
+    opacity: subtitleOpacity.value * (1 - refreshOpacity.value) * (isOnline ? 1 : 0),
   }));
 
   const spinnerStyle = useAnimatedStyle(() => ({

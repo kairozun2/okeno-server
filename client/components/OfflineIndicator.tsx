@@ -7,6 +7,7 @@ import Animated, {
   withRepeat,
   withTiming,
   withSpring,
+  withSequence,
   FadeIn,
   FadeOut,
   Easing,
@@ -24,24 +25,27 @@ interface OfflineIndicatorProps {
 export function OfflineIndicator({ compact = false }: OfflineIndicatorProps) {
   const isOnline = useIsOnline();
   const { theme, language } = useTheme();
-  const rotation = useSharedValue(0);
+  const opacity = useSharedValue(1);
 
   const t = (en: string, ru: string) => (language === 'ru' ? ru : en);
 
   useEffect(() => {
     if (!isOnline) {
-      rotation.value = withRepeat(
-        withTiming(360, { duration: 2000, easing: Easing.linear }),
+      opacity.value = withRepeat(
+        withSequence(
+          withTiming(0.4, { duration: 800 }),
+          withTiming(1, { duration: 800 })
+        ),
         -1,
-        false
+        true
       );
     } else {
-      rotation.value = withSpring(0);
+      opacity.value = withTiming(1);
     }
-  }, [isOnline, rotation]);
+  }, [isOnline, opacity]);
 
-  const spinnerStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
   }));
 
   if (isOnline) {
@@ -53,11 +57,9 @@ export function OfflineIndicator({ compact = false }: OfflineIndicatorProps) {
       <Animated.View
         entering={FadeIn.duration(200)}
         exiting={FadeOut.duration(200)}
-        style={[styles.compactContainer, { backgroundColor: 'rgba(255, 149, 0, 0.15)' }]}
+        style={[styles.compactContainer, { backgroundColor: 'rgba(255, 149, 0, 0.15)' }, pulseStyle]}
       >
-        <Animated.View style={spinnerStyle}>
-          <Feather name="loader" size={12} color="#FF9500" />
-        </Animated.View>
+        <Feather name="wifi-off" size={12} color="#FF9500" />
       </Animated.View>
     );
   }
@@ -66,11 +68,9 @@ export function OfflineIndicator({ compact = false }: OfflineIndicatorProps) {
     <Animated.View
       entering={FadeIn.duration(200)}
       exiting={FadeOut.duration(200)}
-      style={[styles.container, { backgroundColor: 'rgba(255, 149, 0, 0.1)' }]}
+      style={[styles.container, { backgroundColor: 'rgba(255, 149, 0, 0.1)' }, pulseStyle]}
     >
-      <Animated.View style={spinnerStyle}>
-        <Feather name="wifi-off" size={14} color="#FF9500" />
-      </Animated.View>
+      <Feather name="wifi-off" size={14} color="#FF9500" />
       <ThemedText type="caption" style={[styles.text, { color: '#FF9500' }]}>
         {t('Connecting...', 'Подключение...')}
       </ThemedText>
