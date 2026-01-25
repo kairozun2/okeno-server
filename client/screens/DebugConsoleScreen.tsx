@@ -5,6 +5,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useMutation } from "@tanstack/react-query";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
@@ -57,7 +58,11 @@ export default function DebugConsoleScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
+      behavior="padding"
+      keyboardVerticalOffset={0}
+    >
       <View style={[styles.header, { height: headerHeight, paddingTop: insets.top }]}>
         <ThemedText type="h3">Debug Console</ThemedText>
       </View>
@@ -85,7 +90,7 @@ export default function DebugConsoleScreen() {
           <Feather name="play" size={20} color="#fff" />
         </Button>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
