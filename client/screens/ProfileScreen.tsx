@@ -60,6 +60,23 @@ function PostGridItem({ post, onPress }: { post: Post; onPress: () => void }) {
   );
 }
 
+function SkeletonItem() {
+  const { theme } = useTheme();
+  return (
+    <View style={[styles.gridItem, { backgroundColor: theme.backgroundSecondary }]} />
+  );
+}
+
+function PostsSkeleton() {
+  return (
+    <View style={styles.skeletonGrid}>
+      {[...Array(6)].map((_, i) => (
+        <SkeletonItem key={i} />
+      ))}
+    </View>
+  );
+}
+
 function EmptyPosts() {
   const { theme } = useTheme();
 
@@ -96,7 +113,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
-  const { data: posts = [] } = useQuery<Post[]>({
+  const { data: posts = [], isLoading: postsLoading } = useQuery<Post[]>({
     queryKey: ["/api/users", user?.id, "posts"],
     enabled: !!user?.id,
     staleTime: 1000 * 60 * 10, // 10 minutes
@@ -281,12 +298,16 @@ export default function ProfileScreen({ navigation }: Props) {
         }
         ListHeaderComponent={headerComponent}
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Feather name="image" size={36} color={theme.textSecondary} />
-            <ThemedText type="body" style={[styles.emptyText, { color: theme.textSecondary }]}>
-              {t("No posts yet", "Постов пока нет")}
-            </ThemedText>
-          </View>
+          postsLoading ? (
+            <PostsSkeleton />
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Feather name="image" size={36} color={theme.textSecondary} />
+              <ThemedText type="body" style={[styles.emptyText, { color: theme.textSecondary }]}>
+                {t("No posts yet", "Постов пока нет")}
+              </ThemedText>
+            </View>
+          )
         }
         showsVerticalScrollIndicator={false}
       />
@@ -397,5 +418,10 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     marginTop: Spacing.sm,
+  },
+  skeletonGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: GRID_GAP,
   },
 });
