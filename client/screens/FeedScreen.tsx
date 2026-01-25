@@ -291,6 +291,7 @@ function PostCard({
               name="heart"
               size={18}
               color={post.isLiked ? theme.error : theme.textSecondary}
+              style={{ includeFontPadding: false }}
             />
             {post.likesCount > 0 && (
               <ThemedText type="small" style={[styles.actionText, { color: post.isLiked ? theme.error : theme.textSecondary }]}>
@@ -300,7 +301,7 @@ function PostCard({
           </AnimatedPressable>
 
           <Pressable onPress={onComment} style={[styles.actionButton, { backgroundColor: theme.backgroundSecondary }]}>
-            <Feather name="message-circle" size={18} color={theme.textSecondary} />
+            <Feather name="message-circle" size={18} color={theme.textSecondary} style={{ includeFontPadding: false }} />
             {post.commentsCount > 0 && (
               <ThemedText type="small" style={styles.actionText}>
                 {post.commentsCount}
@@ -315,6 +316,7 @@ function PostCard({
               name={post.isSaved ? "check" : "bookmark"}
               size={18}
               color={post.isSaved ? theme.link : theme.textSecondary}
+              style={{ includeFontPadding: false }}
             />
           </AnimatedPressable>
         </View>
