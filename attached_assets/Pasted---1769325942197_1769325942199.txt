@@ -1,0 +1,288 @@
+ ПОЛНАЯ СИСТЕМА ТЕМ - ТЕХНИЧЕСКАЯ ДОКУМЕНТАЦИЯ
+🎯 Как это работает
+Ваше приложение использует глобальную систему тем с автоматическим переключением всех цветов во всём приложении. Вот ключевые компоненты:
+
+1️⃣ ХРАНИЛИЩЕ ТЕМ (src/lib/settings-store.ts)
+Zustand Store с персистентностью в AsyncStorage:
+
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export type ThemeKey = 'forest' | 'feldgrau' | 'wheat' | 'midnight' | 'mint' | 'merlot' | 'apricot';
+
+export interface SettingsState {
+  theme: ThemeKey;
+  setTheme: (theme: ThemeKey) => void;
+  _hasHydrated: boolean;
+}
+
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set, get) => ({
+      theme: 'forest', // Тема по умолчанию
+      setTheme: (theme) => set({ theme }),
+      _hasHydrated: false,
+    }),
+    {
+      name: 'app-settings-storage', // Ключ в AsyncStorage
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        theme: state.theme, // Сохраняем только тему
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state._hasHydrated = true;
+        }
+      },
+    }
+  )
+);
+Ключевые моменты:
+
+•
+✅ Zustand с middleware persist сохраняет выбор темы в AsyncStorage
+•
+✅ При перезапуске приложения тема автоматически восстанавливается
+•
+✅ Селектор используется для подписки на конкретный срез: useSettingsStore(s => s.theme)
+2️⃣ ОПРЕДЕЛЕНИЕ ТЕМ (src/lib/themes.ts)
+Все темы в одном месте:
+
+export type ThemeKey = 'forest' | 'feldgrau' | 'wheat' | 'midnight' | 'mint' | 'merlot' | 'apricot';
+
+export interface Theme {
+  key: ThemeKey;
+  name: string;
+  colors: {
+    primary: string;        // Основной цвет
+    primaryLight: string;   // Светлый вариант
+    primaryDark: string;    // Тёмный вариант
+    accent: string;         // Акцентный цвет (кнопки, иконки)
+    accentDark: string;     // Тёмный акцент
+    text: string;           // Цвет текста
+    textSecondary: string;  // Вторичный текст
+    background: string;     // Фон приложения
+  };
+}
+
+export const themes: Record<ThemeKey, Theme> = {
+  forest: {
+    key: 'forest',
+    name: 'Forest',
+    colors: {
+      primary: '#064734',
+      primaryLight: '#0A5C45',
+      primaryDark: '#043325',
+      accent: '#E8D5B7',
+      accentDark: '#D4C5A8',
+      text: '#F5F2ED',
+      textSecondary: 'rgba(245, 242, 237, 0.6)',
+      background: '#064734',
+    },
+  },
+  midnight: {
+    key: 'midnight',
+    name: 'Midnight Fjord',
+    colors: {
+      primary: '#053264',
+      primaryLight: '#0A4A8A',
+      primaryDark: '#031E3D',
+      accent: '#FFD482',
+      accentDark: '#E6BD6E',
+      text: '#F5F2ED',
+      textSecondary: 'rgba(245, 242, 237, 0.6)',
+      background: '#053264',
+    },
+  },
+  wheat: {
+    key: 'wheat',
+    name: 'Wheat',
+    colors: {
+      primary: '#E6CFA7',
+      primaryLight: '#F0DFC0',
+      primaryDark: '#D4BD8F',
+      accent: '#8B7355',
+      accentDark: '#7A6348',
+      text: '#2A2520',
+      textSecondary: 'rgba(42, 37, 32, 0.6)',
+      background: '#E6CFA7',
+    },
+  },
+  // ... остальные темы
+};
+
+export function getTheme(key: ThemeKey): Theme {
+  return themes[key];
+}
+
+export const themeList: Theme[] = Object.values(themes);
+Ключевые моменты:
+
+•
+✅ Все цвета централизованы в одном объекте
+•
+✅ Функция getTheme() возвращает объект темы
+•
+✅ Легко добавлять новые темы - просто добавить в объект themes
+3️⃣ ПРИМЕНЕНИЕ ТЕМЫ В КОРНЕ ПРИЛОЖЕНИЯ (src/app/_layout.tsx)
+Тема применяется глобально через React Navigation ThemeProvider:
+
+import { DarkTheme, ThemeProvider } from '@react-navigation/native';
+import { useSettingsStore } from '@/lib/settings-store';
+import { getTheme } from '@/lib/themes';
+
+function RootLayoutNav() {
+  // Подписываемся только на theme через селектор
+  const themeKey = useSettingsStore(s => s.theme);
+  const theme = getTheme(themeKey);
+
+  // Создаём объект темы для React Navigation
+  const navigationTheme = {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      background: theme.colors.background,
+      card: theme.colors.primaryLight,
+      text: theme.colors.text,
+      border: `${theme.colors.text}1A`,
+      primary: theme.colors.accent,
+    },
+  };
+
+  return (
+    <ThemeProvider value={navigationTheme}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: theme.colors.background },
+        }}
+      >
+        {/* Все экраны */}
+      </Stack>
+    </ThemeProvider>
+  );
+}
+Ключевые моменты:
+
+•
+✅ useSettingsStore(s => s.theme) - подписка через селектор (избегаем лишних ре-рендеров)
+•
+✅ При изменении темы автоматически перерисовывается всё приложение
+•
+✅ ThemeProvider от React Navigation применяет тему ко всем экранам
+4️⃣ ИСПОЛЬЗОВАНИЕ ТЕМЫ В КОМПОНЕНТАХ
+В каждом компоненте:
+
+import { useSettingsStore } from '@/lib/settings-store';
+import { getTheme } from '@/lib/themes';
+
+export default function MyScreen() {
+  const themeKey = useSettingsStore(s => s.theme);
+  const theme = getTheme(themeKey);
+
+  return (
+    <View style={{ backgroundColor: theme.colors.background }}>
+      <Text style={{ color: theme.colors.text }}>Привет!</Text>
+      
+      <LinearGradient
+        colors={[
+          theme.colors.primaryLight,
+          theme.colors.primaryDark
+        ]}
+      >
+        <Text style={{ color: theme.colors.accent }}>Кнопка</Text>
+      </LinearGradient>
+    </View>
+  );
+}
+Ключевые моменты:
+
+•
+✅ Каждый компонент получает текущую тему через useSettingsStore(s => s.theme)
+•
+✅ Используем theme.colors.XXX вместо hardcoded цветов
+•
+✅ При смене темы компонент автоматически перерисовывается
+5️⃣ ЭКРАН ВЫБОРА ТЕМЫ (src/app/select-theme.tsx)
+Список всех доступных тем с превью:
+
+import { useSettingsStore } from '@/lib/settings-store';
+import { getTheme, themeList, ThemeKey } from '@/lib/themes';
+
+export default function SelectThemeScreen() {
+  const currentTheme = useSettingsStore(s => s.theme);
+  const setTheme = useSettingsStore(s => s.setTheme);
+  const theme = getTheme(currentTheme);
+
+  const handleSelectTheme = (themeKey: ThemeKey) => {
+    setTheme(themeKey); // Меняем тему глобально
+    router.back();
+  };
+
+  return (
+    <ScrollView>
+      {themeList.map((themeItem) => {
+        const isSelected = currentTheme === themeItem.key;
+
+        return (
+          <Pressable
+            key={themeItem.key}
+            onPress={() => handleSelectTheme(themeItem.key)}
+            style={{
+              borderWidth: isSelected ? 2 : 0,
+              borderColor: isSelected ? theme.colors.accent : 'transparent',
+            }}
+          >
+            <LinearGradient
+              colors={[
+                themeItem.colors.primary,
+                themeItem.colors.primaryLight,
+                themeItem.colors.primaryDark,
+              ]}
+            >
+              <Text style={{ color: themeItem.colors.text }}>
+                {themeItem.name}
+              </Text>
+              
+              {/* Превью цветов */}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ backgroundColor: themeItem.colors.primary }} />
+                <View style={{ backgroundColor: themeItem.colors.accent }} />
+                <View style={{ backgroundColor: themeItem.colors.accentDark }} />
+              </View>
+            </LinearGradient>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+🚀 КАК ВОСПРОИЗВЕСТИ В ДРУГОМ ПРИЛОЖЕНИИ
+Шаг 1: Установить зависимости
+bun add zustand @react-native-async-storage/async-storage
+Шаг 2: Создать файл тем (lib/themes.ts)
+Скопируйте весь код из раздела 2️⃣
+
+Шаг 3: Создать store (lib/settings-store.ts)
+Скопируйте код из раздела 1️⃣
+
+Шаг 4: Применить в root layout
+Скопируйте код из раздела 3️⃣
+
+Шаг 5: Использовать в компонентах
+const themeKey = useSettingsStore(s => s.theme);
+const theme = getTheme(themeKey);
+
+// Используйте theme.colors.XXX для всех цветов
+✨ КЛЮЧЕВЫЕ ПРЕИМУЩЕСТВА ЭТОЙ СИСТЕМЫ
+•
+Централизация - все цвета в одном месте
+•
+Автоматическое обновление - при смене темы перерисовывается всё приложение
+•
+Персистентность - выбор сохраняется между запусками
+•
+Типобезопасность - TypeScript гарантирует, что все цвета есть в каждой теме
+•
+Легко расширять - добавить новую тему = добавить объект в themes

@@ -15,6 +15,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettingsStore } from "@/lib/settings-store";
+import { themeList } from "@/lib/themes";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -132,6 +134,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 
 export default function SettingsScreen({ navigation }: Props) {
   const { theme, accentColor, setAccentColor, language, setLanguage, hapticsEnabled, toggleHaptics, chatFullscreen, toggleChatFullscreen } = useTheme();
+  const currentThemeKey = useSettingsStore(s => s.theme);
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -308,9 +311,9 @@ export default function SettingsScreen({ navigation }: Props) {
       items: [
         {
           customIcon: SETTINGS_ICONS.appearance,
-          title: t("App Color", "Цвет приложения"),
-          subtitle: ACCENT_COLORS.find(c => c.color === (accentColor || "#5C7A5C"))?.name || t("Default", "По умолчанию"),
-          onPress: () => setShowColorPicker(true),
+          title: t("App Theme", "Тема приложения"),
+          subtitle: themeList.find(t => t.key === currentThemeKey)?.name || t("Default", "По умолчанию"),
+          onPress: () => navigation.navigate("ThemeSelection"),
         },
         {
           customIcon: SETTINGS_ICONS.chat,
