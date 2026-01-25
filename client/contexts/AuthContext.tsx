@@ -10,6 +10,7 @@ interface AuthContextType {
   register: (username: string, pin: string) => Promise<void>;
   login: (userId: string, pin: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,6 +76,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSessionId(null);
   }, [sessionId]);
 
+  const refreshUser = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const url = new URL(`/api/users/${user.id}`, getApiUrl());
+      const response = await fetch(url.toString(), { credentials: "include" });
+      if (response.ok) {
+        const freshUserData = await response.json();
+        const updatedUser = { ...user, ...freshUserData };
+        setUser(updatedUser);
+        if (sessionId) {
+          await storeAuth(updatedUser, sessionId);
+        }
+      }
+    } catch {
+      // Silent fail
+    }
+  }, [user, sessionId]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -85,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         login,
         logout,
+        refreshUser,
       }}
     >
       {children}
