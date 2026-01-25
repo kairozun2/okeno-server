@@ -173,24 +173,18 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [isGlobal, setIsGlobal] = useState(false);
 
-  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
-
   const presetBackgrounds = [
-    "https://www.imgbly.com/7LrPlX4Iji8B7My.png",
-    "https://www.imgbly.com/dXlgA0NxiQ0OQrf.png",
-    "https://www.imgbly.com/LfiUT8bTrfnCxxi.png",
-    "https://www.imgbly.com/Oe0Zr0pZL1AaiYc.png",
-    "https://www.imgbly.com/DtLmUPp1J7D93Y6.png",
-    "https://www.imgbly.com/sXwxiUNCKhTknmC.png"
+    "https://i.imgbly.com/7LrPlX4Iji8B7My.png",
+    "https://i.imgbly.com/dXlgA0NxiQ0OQrf.png",
+    "https://i.imgbly.com/LfiUT8bTrfnCxxi.png",
+    "https://i.imgbly.com/Oe0Zr0pZL1AaiYc.png",
+    "https://i.imgbly.com/DtLmUPp1J7D93Y6.png",
+    "https://i.imgbly.com/sXwxiUNCKhTknmC.png"
   ];
 
-  // Helper function to get direct image links for imgbly
-  const getDirectLink = (url: string) => {
-    if (url.includes("imgbly.com") && !url.includes("i.imgbly.com")) {
-      return url.replace("www.imgbly.com", "i.imgbly.com");
-    }
-    return url;
-  };
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
+  // Removed redundant helper function
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -411,7 +405,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                       ]}
                     >
                       <Image 
-                        source={{ uri: getDirectLink(url) }} 
+                        source={{ uri: url }} 
                         style={styles.presetImage} 
                         contentFit="cover"
                         cachePolicy="memory-disk"
