@@ -511,6 +511,27 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
+  app.patch("/api/messages/:id", async (req, res) => {
+    try {
+      const { content, senderId } = req.body;
+      const message = await storage.getMessage(req.params.id);
+      
+      if (!message) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+
+      if (message.senderId !== senderId) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      const updated = await storage.updateMessage(req.params.id, content);
+      res.json(updated);
+    } catch (error) {
+      console.error("Update message error:", error);
+      res.status(500).json({ error: "Failed to update message" });
+    }
+  });
+
   // Message Reactions
   app.get("/api/messages/:messageId/reactions", async (req, res) => {
     try {
