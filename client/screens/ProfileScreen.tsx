@@ -170,9 +170,12 @@ export default function ProfileScreen({ navigation }: Props) {
       await storeAuth(updatedUser, sessionId);
     }
     
-    await queryClient.invalidateQueries({ queryKey: ["/api/users", user.id] });
-    await queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "posts"] });
+    // Force a small delay to ensure state has propagated
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "posts"] });
+    }, 100);
   };
 
   const scrollHandler = useAnimatedScrollHandler({

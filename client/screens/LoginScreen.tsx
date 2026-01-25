@@ -41,7 +41,8 @@ export default function LoginScreen({ navigation }: Props) {
     setError(false);
 
     try {
-      await login(userId.trim(), pin.trim());
+      const result = await login(userId.trim(), pin.trim());
+      // No need to manually setUser here since AuthContext's login already handles it
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
       setError(true);

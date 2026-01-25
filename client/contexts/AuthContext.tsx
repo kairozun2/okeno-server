@@ -63,12 +63,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await authRegister(username, pin);
     setUser(result.user);
     setSessionId(result.sessionId);
+    await storeAuth(result.user, result.sessionId);
   }, []);
 
   const login = useCallback(async (userId: string, pin: string) => {
     const result = await authLogin(userId, pin);
     setUser(result.user);
     setSessionId(result.sessionId);
+    await storeAuth(result.user, result.sessionId);
   }, []);
 
   const logout = useCallback(async () => {
