@@ -164,6 +164,8 @@ export default function ProfileScreen({ navigation }: Props) {
     }
     
     await refreshUser();
+    await queryClient.invalidateQueries({ queryKey: ["/api/users", user.id] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "posts"] });
   };
 
