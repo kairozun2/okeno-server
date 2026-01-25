@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { User, getStoredAuth, storeAuth, register as authRegister, login as authLogin, logout as authLogout } from "@/lib/auth";
 import { getApiUrl } from "@/lib/query-client";
+import { registerForPushNotificationsAsync, unregisterPushNotifications } from "@/lib/push-notifications";
 
 interface AuthContextType {
   user: User | null;
@@ -20,10 +21,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const pushTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     loadStoredAuth();
   }, []);
+
+  useEffect(() => {
+    if (user?.id && !pushTokenRef.current) {
+      registerForPushNotificationsAsync(user.id).then((token) => {
+        pushTokenRef.current = token;
+      });
+    }
+  }, [user?.id]);
 
   const loadStoredAuth = async () => {
     try {
@@ -77,10 +87,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    if (user?.id && pushTokenRef.current) {
+      await unregisterPushNotifications(user.id, pushTokenRef.current);
+      pushTokenRef.current = null;
+    }
     await authLogout(sessionId);
     setUser(null);
     setSessionId(null);
-  }, [sessionId]);
+  }, [sessionId, user?.id]);
 
   const refreshUser = useCallback(async () => {
     if (!user?.id) return;
