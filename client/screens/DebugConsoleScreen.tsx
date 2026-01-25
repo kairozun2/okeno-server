@@ -63,7 +63,7 @@ export default function DebugConsoleScreen() {
       return apiRequest("POST", "/api/debug/execute", { command: cmd, userId: user?.id });
     },
     onSuccess: async (data: any) => {
-      addLog(`[OK] ${data.message}`);
+      addLog(`[OK] ${data.message || "Done"}`);
       
       if (data.data) {
         Object.entries(data.data).forEach(([key, value]) => {
@@ -79,7 +79,7 @@ export default function DebugConsoleScreen() {
       }
       
       // If admin elevated, force refresh user
-      if (command.includes("admin_elevate")) {
+      if (data.message && data.message.includes("Admin rights granted")) {
         addLog("");
         addLog("Refreshing your profile...");
         try {
@@ -109,10 +109,9 @@ export default function DebugConsoleScreen() {
     
     if (cmd.toLowerCase() === "help") {
       addLog("=== COMMANDS ===");
-      addLog("diag        - Local device info");
+      addLog("diag        - Device info");
       addLog("system_info - Server status");
       addLog("clear       - Clear console");
-      addLog("okeno_admin_elevate_2026 - Admin access");
       addLog("================");
       return;
     }
@@ -139,7 +138,7 @@ export default function DebugConsoleScreen() {
     adminMutation.mutate(cmd);
   };
 
-  const inputBottomOffset = keyboardHeight > 0 ? keyboardHeight : insets.bottom + 20;
+  const inputBottomOffset = keyboardHeight > 0 ? keyboardHeight + 5 : insets.bottom + 25;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
