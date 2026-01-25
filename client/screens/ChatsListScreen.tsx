@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
-import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions } from "react-native";
+import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -234,6 +234,8 @@ export default function ChatsListScreen({ navigation }: Props) {
     },
   });
 
+  const [isUploadingBackground, setIsUploadingBackground] = useState(false);
+
   const pickBackgroundImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -243,7 +245,36 @@ export default function ChatsListScreen({ navigation }: Props) {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setBackgroundImage(result.assets[0].uri);
+      const localUri = result.assets[0].uri;
+      setIsUploadingBackground(true);
+      
+      try {
+        const response = await fetch(localUri);
+        const blob = await response.blob();
+        
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64data = reader.result as string;
+          
+          const uploadResponse = await apiRequest("POST", "/api/upload", {
+            image: base64data,
+            type: "background",
+          });
+          
+          if (uploadResponse.ok) {
+            const data = await uploadResponse.json();
+            setBackgroundImage(data.url);
+          } else {
+            setBackgroundImage(localUri);
+          }
+          setIsUploadingBackground(false);
+        };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error("Failed to upload background:", error);
+        setBackgroundImage(localUri);
+        setIsUploadingBackground(false);
+      }
     }
   };
 
@@ -342,12 +373,12 @@ export default function ChatsListScreen({ navigation }: Props) {
             <Pressable 
               onPress={selectedChat ? handleSaveSettings : handleCloseModal} 
               style={styles.modalHeaderButton}
-              disabled={selectedChat ? saveChatSettingsMutation.isPending : false}
+              disabled={selectedChat ? (saveChatSettingsMutation.isPending || isUploadingBackground) : false}
             >
               <Feather 
                 name={selectedChat ? "check" : "x"} 
                 size={24} 
-                color={selectedChat ? theme.link : theme.text} 
+                color={selectedChat ? (isUploadingBackground ? theme.textSecondary : theme.link) : theme.text} 
               />
             </Pressable>
           </View>
@@ -423,8 +454,16 @@ export default function ChatsListScreen({ navigation }: Props) {
                 <Pressable
                   onPress={pickBackgroundImage}
                   style={[styles.backgroundPreview, { borderColor: theme.border }]}
+                  disabled={isUploadingBackground}
                 >
-                  {backgroundImage ? (
+                  {isUploadingBackground ? (
+                    <View style={[styles.backgroundPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
+                      <ActivityIndicator size="large" color={theme.link} />
+                      <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+                        {t("Uploading...", "Загрузка...")}
+                      </ThemedText>
+                    </View>
+                  ) : backgroundImage ? (
                     <Image
                       source={{ uri: backgroundImage }}
                       style={styles.backgroundImage}
