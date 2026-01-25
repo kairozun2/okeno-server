@@ -266,7 +266,7 @@ function MessageBubble({
           {message.imageUrl ? (
             <Pressable onPress={() => onImagePress?.(message.imageUrl!)}>
               <Image
-                source={{ uri: getImageUrl(message.imageUrl) }}
+                source={{ uri: message.imageUrl }}
                 style={{ 
                   width: 200, 
                   height: 150, 

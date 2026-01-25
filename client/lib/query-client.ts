@@ -31,12 +31,12 @@ export function getImageUrl(path: string | null | undefined): string {
   const host = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
   
   // Invalid URL types that can't be loaded from server
-  if (path.startsWith("file://") || path.startsWith("blob:")) {
+  if (path.startsWith("blob:")) {
     return "";
   }
   
-  // If it's already an absolute URL, return as-is
-  if (path.startsWith("http://") || path.startsWith("https://")) {
+  // If it's a local file URI or already an absolute URL, return as-is
+  if (path.startsWith("file://") || path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
     // Check if it's using an old development domain and needs to be rewritten
     if (path.includes("/uploads/")) {
       // Extract just the /uploads/... part and rebuild with current domain
