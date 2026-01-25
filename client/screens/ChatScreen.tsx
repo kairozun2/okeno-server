@@ -1241,9 +1241,10 @@ export default function ChatScreen({ route, navigation }: Props) {
       {backgroundImage ? (
         <View style={StyleSheet.absoluteFill}>
           <Image
-            source={{ uri: getImageUrl(backgroundImage) }}
+            source={{ uri: backgroundImage.includes('imgbly.com') && !backgroundImage.includes('i.imgbly.com') ? backgroundImage.replace('www.imgbly.com', 'i.imgbly.com') : getImageUrl(backgroundImage) }}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
+            cachePolicy="memory-disk"
           />
           <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.4)' }}>
             {chatContent}
