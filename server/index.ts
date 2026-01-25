@@ -178,7 +178,8 @@ function configureExpoAndLanding(app: express.Application) {
       return next();
     }
 
-    if (req.path !== "/" && req.path !== "/manifest") {
+    const isLandingPath = req.path === "/" || req.path === "/manifest" || req.path.startsWith("/u/") || req.path.startsWith("/post/");
+    if (!isLandingPath) {
       return next();
     }
 
