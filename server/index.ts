@@ -173,24 +173,30 @@ function configureExpoAndLanding(app: express.Application) {
 
   log("Serving static Expo files with dynamic manifest routing");
 
-  app.get(["/", "/manifest", "/u/:username", "/post/:id"], (req, res, next) => {
+  app.use((req, res, next) => {
     const path = req.path;
     if (path.startsWith("/api")) {
       return next();
     }
 
-    log(`[Landing] Serving path: ${path}`);
-    const platform = req.header("expo-platform");
-    if (platform && (platform === "ios" || platform === "android")) {
-      return serveExpoManifest(platform, res);
+    const isLandingPath = path === "/" || path === "/manifest" || path.startsWith("/u/") || path.startsWith("/post/");
+    
+    if (isLandingPath) {
+      log(`[Landing] Attempting to serve landing for path: ${path}`);
+      const platform = req.header("expo-platform");
+      if (platform && (platform === "ios" || platform === "android")) {
+        return serveExpoManifest(platform, res);
+      }
+
+      return serveLandingPage({
+        req,
+        res,
+        landingPageTemplate,
+        appName,
+      });
     }
 
-    return serveLandingPage({
-      req,
-      res,
-      landingPageTemplate,
-      appName,
-    });
+    next();
   });
 
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
