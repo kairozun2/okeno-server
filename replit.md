@@ -191,7 +191,16 @@ To test features:
 - Images from old development domains are rewritten to current domain
 - All image components handle empty URLs gracefully with fallback UI
 
-### URL Routes
+### URL Routes & Social Sharing
 - `/u/username` - User profile landing pages (requires deployment)
 - `/post/:id` - Post detail landing pages (requires deployment)
 - Landing pages work in development but require publishing for custom domain
+
+### Open Graph / Link Previews
+- All shared links display rich previews in Telegram, WhatsApp, iMessage, etc.
+- Dynamic OG meta tags populated based on route:
+  - **Main page**: Shows app icon with "Okeno" title
+  - **User profiles** (`/u/username`): Shows user's emoji + username
+  - **Posts** (`/post/:id`): Shows post image (if valid), author emoji + name, location
+- OG image defaults to `/assets/images/icon.png` when no specific image available
+- Twitter Card meta tags also included for Twitter/X compatibility

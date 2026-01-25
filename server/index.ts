@@ -199,7 +199,7 @@ async function getOGDataForPath(reqPath: string, baseUrl: string): Promise<OGDat
           }
           
           const userName = postUser?.username || "someone";
-          const locationText = post.locationName ? ` at ${post.locationName}` : "";
+          const locationText = post.location ? ` at ${post.location}` : "";
           const feelingText = post.feeling ? ` ${post.feeling}` : "";
           
           return {
