@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { View, StyleSheet, TextInput, ScrollView, Pressable, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, TextInput, ScrollView, Pressable, Alert, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -16,9 +16,10 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 
 export default function DebugConsoleScreen() {
   const { theme, language } = useTheme();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const queryClient = useQueryClient();
   const [command, setCommand] = useState("");
   const [logs, setLogs] = useState<string[]>(["--- Debug Console Initialized ---"]);
 
@@ -30,8 +31,19 @@ export default function DebugConsoleScreen() {
     mutationFn: async (cmd: string) => {
       return apiRequest("POST", "/api/debug/execute", { command: cmd, userId: user?.id });
     },
-    onSuccess: (data: any) => {
+    onSuccess: async (data: any) => {
       addLog(`Success: ${data.message || "Command executed"}`);
+      if (data.data) {
+        addLog(`Response Data: ${JSON.stringify(data.data, null, 2)}`);
+      }
+      
+      // If we elevated to admin, refresh user data immediately
+      if (command.includes("admin_elevate")) {
+        addLog("Refreshing user profile...");
+        await refreshUser();
+        queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}`] });
+      }
+      
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     onError: (error: any) => {
@@ -41,26 +53,38 @@ export default function DebugConsoleScreen() {
   });
 
   const handleExecute = () => {
-    if (!command.trim()) return;
+    const trimmedCmd = command.trim();
+    if (!trimmedCmd) return;
     
-    addLog(`Executing: ${command}`);
+    addLog(`Executing: ${trimmedCmd}`);
     
-    if (command.trim().toLowerCase() === "diag") {
+    if (trimmedCmd.toLowerCase() === "diag") {
+      addLog("--- Local Diagnostics ---");
       addLog(`User ID: ${user?.id}`);
-      addLog(`Platform: ${process.env.NODE_ENV}`);
+      addLog(`Username: ${user?.username}`);
+      addLog(`Is Admin: ${user?.isAdmin}`);
+      addLog(`Is Verified: ${user?.isVerified}`);
+      addLog(`Platform: ${Platform.OS} (${process.env.NODE_ENV})`);
       addLog(`Language: ${language}`);
+      addLog(`Device: ${Platform.Version}`);
       setCommand("");
       return;
     }
 
-    adminMutation.mutate(command);
+    if (trimmedCmd.toLowerCase() === "clear") {
+      setLogs(["--- Console Cleared ---"]);
+      setCommand("");
+      return;
+    }
+
+    adminMutation.mutate(trimmedCmd);
     setCommand("");
   };
 
   return (
     <KeyboardAvoidingView 
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      behavior="padding"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={0}
     >
       <View style={[styles.header, { height: headerHeight, paddingTop: insets.top }]}>
@@ -70,25 +94,30 @@ export default function DebugConsoleScreen() {
       <ScrollView 
         style={styles.logContainer}
         contentContainerStyle={styles.logContent}
+        showsVerticalScrollIndicator={true}
       >
         {[...logs].reverse().map((log, i) => (
           <ThemedText key={i} style={styles.logText}>{log}</ThemedText>
         ))}
       </ScrollView>
 
-      <View style={[styles.inputContainer, { paddingBottom: insets.bottom + Spacing.md }]}>
-        <TextInput
-          value={command}
-          onChangeText={setCommand}
-          placeholder="Enter command..."
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.input, { backgroundColor: theme.backgroundSecondary, color: theme.text, borderColor: theme.border }]}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <Button onPress={handleExecute} style={styles.button}>
-          <Feather name="play" size={20} color="#fff" />
-        </Button>
+      <View style={[styles.inputArea, { paddingBottom: insets.bottom + Spacing.md }]}>
+        <View style={styles.inputContainer}>
+          <TextInput
+            value={command}
+            onChangeText={setCommand}
+            placeholder="Enter command..."
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { backgroundColor: theme.backgroundSecondary, color: theme.text, borderColor: theme.border }]}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="send"
+            onSubmitEditing={handleExecute}
+          />
+          <Button onPress={handleExecute} style={styles.button}>
+            <Feather name="play" size={20} color="#fff" />
+          </Button>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -112,13 +141,16 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
   },
   logText: {
-    fontFamily: "SpaceMono_400Regular",
+    fontFamily: Platform.OS === 'ios' ? "Courier" : "monospace",
     fontSize: 12,
     marginBottom: 4,
     opacity: 0.8,
   },
-  inputContainer: {
+  inputArea: {
     padding: Spacing.md,
+    backgroundColor: "transparent",
+  },
+  inputContainer: {
     flexDirection: "row",
     gap: Spacing.sm,
   },

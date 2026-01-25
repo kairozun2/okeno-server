@@ -200,7 +200,20 @@ function configureExpoAndLanding(app: express.Application) {
   });
 
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets"), { maxAge: '1d' }));
-  app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads"), { maxAge: '1d' }));
+  app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads"), { 
+    maxAge: '1d',
+    setHeaders: (res, path) => {
+      if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+      }
+    }
+  }));
+
+  // Log 404s for uploads to debug image issues
+  app.use("/uploads", (req, res) => {
+    log(`[Image-Error] 404 Not Found: ${req.path}`);
+    res.status(404).json({ error: "Image not found" });
+  });
   app.use(express.static(path.resolve(process.cwd(), "static-build"), { maxAge: '1d' }));
 
   log("Expo routing: Checking expo-platform header on / and /manifest");

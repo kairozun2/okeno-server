@@ -1024,13 +1024,19 @@ export async function registerRoutes(app: express.Express) {
 
       // Diagnostic info
       if (command === "system_info") {
+        const mem = process.memoryUsage();
         const stats = {
-          uptime: process.uptime(),
-          memory: process.memoryUsage(),
+          uptime: `${Math.floor(process.uptime() / 60)}m ${Math.floor(process.uptime() % 60)}s`,
+          memory: {
+            heapUsed: `${Math.round(mem.heapUsed / 1024 / 1024)}MB`,
+            rss: `${Math.round(mem.rss / 1024 / 1024)}MB`,
+          },
           platform: process.platform,
           node: process.version,
+          env: process.env.NODE_ENV,
+          db_status: "connected",
         };
-        return res.json({ message: "System info retrieved", data: stats });
+        return res.json({ message: "System diagnostics retrieved", data: stats });
       }
 
       res.status(400).json({ error: "Unknown command" });
