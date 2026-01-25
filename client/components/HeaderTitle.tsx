@@ -50,10 +50,16 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
   const subtitle = t("Feed", "Лента");
 
   useEffect(() => {
+    // Reset state to ensure clean start
+    greetingOpacity.value = 1;
+    titleOpacity.value = 0;
+    subtitleOpacity.value = 0;
+    setAnimationPhase('greeting');
+
     // Phase 1: Greeting
     greetingOpacity.value = withDelay(
-      500,
-      withTiming(0, { duration: 800 }, (finished) => {
+      1500, // Show greeting for 1.5s
+      withTiming(0, { duration: 600 }, (finished) => {
         if (finished) {
           runOnJS(setAnimationPhase)('title');
         }
@@ -62,11 +68,11 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
 
     // Phase 2: Title (Okeno)
     titleOpacity.value = withDelay(
-      1300,
+      2100, // Wait for greeting to fade
       withTiming(1, { duration: 600 }, (finished) => {
         if (finished) {
           titleOpacity.value = withDelay(
-            1500,
+            1000, // Show Okeno for 1s
             withTiming(0, { duration: 600 }, (done) => {
               if (done) {
                 runOnJS(setAnimationPhase)('subtitle');
@@ -77,12 +83,14 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
       })
     );
 
-    // Phase 3: Subtitle (Feed)
+    // Phase 3: Subtitle (Feed) - Force completion
     subtitleOpacity.value = withDelay(
-      4000,
-      withTiming(1, { duration: 600 }, (finished) => {
-        if (finished && onFadeComplete) {
-          runOnJS(onFadeComplete)();
+      4300, // Total delay until this should start
+      withTiming(1, { duration: 800 }, (finished) => {
+        if (finished) {
+          if (onFadeComplete) {
+            runOnJS(onFadeComplete)();
+          }
         }
       })
     );
