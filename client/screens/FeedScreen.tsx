@@ -447,7 +447,8 @@ export default function FeedScreen({ navigation }: Props) {
   } = useInfiniteQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
     queryFn: async ({ pageParam = 0 }) => {
-      const res = await fetch(`${getApiUrl()}/api/posts?limit=${PAGE_SIZE}&offset=${pageParam}`, {
+      const baseUrl = getApiUrl().replace(/\/$/, "");
+      const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=${pageParam}`, {
         headers: { "x-user-id": currentUser?.id || "" },
       });
       if (!res.ok) throw new Error("Failed to fetch posts");
