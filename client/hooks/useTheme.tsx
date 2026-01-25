@@ -127,15 +127,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-  if (isLoading) return null;
-
-  return (
-    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, hapticsEnabled, chatFullscreen, setAccentColor, setLanguage, toggleHaptics, toggleChatFullscreen }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
