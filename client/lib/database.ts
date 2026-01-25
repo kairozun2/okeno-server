@@ -1,18 +1,35 @@
-import * as SQLite from 'expo-sqlite';
+import { Platform } from 'react-native';
 
 const DB_NAME = 'okeno_offline.db';
 
-let db: SQLite.SQLiteDatabase | null = null;
+let SQLite: any = null;
+let db: any = null;
 
-export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
+const isNative = Platform.OS !== 'web';
+
+async function loadSQLite() {
+  if (!SQLite && isNative) {
+    SQLite = await import('expo-sqlite');
+  }
+  return SQLite;
+}
+
+export async function getDatabase(): Promise<any> {
+  if (!isNative) {
+    return null;
+  }
+  
   if (!db) {
-    db = await SQLite.openDatabaseAsync(DB_NAME);
+    const sqlite = await loadSQLite();
+    if (!sqlite) return null;
+    db = await sqlite.openDatabaseAsync(DB_NAME);
     await initializeSchema(db);
   }
   return db;
 }
 
-async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> {
+async function initializeSchema(database: any): Promise<void> {
+  if (!database) return;
   await database.execAsync(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;
@@ -211,6 +228,7 @@ export interface LocalMessage {
 
 export async function saveUser(user: any): Promise<void> {
   const database = await getDatabase();
+  if (!database) return;
   await database.runAsync(
     `INSERT OR REPLACE INTO users (id, username, emoji, is_admin, is_verified, is_banned, created_at, last_seen, updated_at, is_synced)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 1)`,
@@ -229,6 +247,7 @@ export async function saveUser(user: any): Promise<void> {
 
 export async function getUser(userId: string): Promise<LocalUser | null> {
   const database = await getDatabase();
+  if (!database) return null;
   const result = await database.getFirstAsync<any>(
     'SELECT * FROM users WHERE id = ?',
     [userId]
@@ -239,6 +258,7 @@ export async function getUser(userId: string): Promise<LocalUser | null> {
 
 export async function savePost(post: any, currentUserId: string): Promise<void> {
   const database = await getDatabase();
+  if (!database) return;
   
   if (post.user) {
     await saveUser(post.user);
@@ -273,6 +293,7 @@ export async function savePosts(posts: any[], currentUserId: string): Promise<vo
 
 export async function getPosts(limit: number = 20, offset: number = 0): Promise<LocalPost[]> {
   const database = await getDatabase();
+  if (!database) return [];
   const results = await database.getAllAsync<any>(
     `SELECT p.*, u.id as user_id, u.username, u.emoji, u.is_verified, u.is_admin
      FROM posts p
@@ -286,6 +307,7 @@ export async function getPosts(limit: number = 20, offset: number = 0): Promise<
 
 export async function getPostById(postId: string): Promise<LocalPost | null> {
   const database = await getDatabase();
+  if (!database) return null;
   const result = await database.getFirstAsync<any>(
     `SELECT p.*, u.id as user_id, u.username, u.emoji, u.is_verified, u.is_admin
      FROM posts p
@@ -299,6 +321,7 @@ export async function getPostById(postId: string): Promise<LocalPost | null> {
 
 export async function saveChat(chat: any, currentUserId: string): Promise<void> {
   const database = await getDatabase();
+  if (!database) return;
   
   if (chat.user1) await saveUser(chat.user1);
   if (chat.user2) await saveUser(chat.user2);
@@ -328,6 +351,7 @@ export async function saveChats(chats: any[], currentUserId: string): Promise<vo
 
 export async function getChats(userId: string): Promise<LocalChat[]> {
   const database = await getDatabase();
+  if (!database) return [];
   const results = await database.getAllAsync<any>(
     `SELECT c.*, 
             CASE WHEN c.user1_id = ? THEN u2.id ELSE u1.id END as other_user_id,
@@ -346,6 +370,7 @@ export async function getChats(userId: string): Promise<LocalChat[]> {
 
 export async function saveMessage(message: any): Promise<void> {
   const database = await getDatabase();
+  if (!database) return;
   await database.runAsync(
     `INSERT OR REPLACE INTO messages (id, chat_id, sender_id, content, image_url, voice_url, voice_duration, reply_to_id, is_edited, is_read, created_at, updated_at, is_synced)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 1)`,
@@ -373,6 +398,7 @@ export async function saveMessages(messages: any[]): Promise<void> {
 
 export async function getMessages(chatId: string, limit: number = 50): Promise<LocalMessage[]> {
   const database = await getDatabase();
+  if (!database) return [];
   const results = await database.getAllAsync<any>(
     `SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at DESC LIMIT ?`,
     [chatId, limit]
@@ -382,6 +408,7 @@ export async function getMessages(chatId: string, limit: number = 50): Promise<L
 
 export async function updatePostLikeStatus(postId: string, isLiked: boolean, likesCount: number): Promise<void> {
   const database = await getDatabase();
+  if (!database) return;
   await database.runAsync(
     'UPDATE posts SET is_liked = ?, likes_count = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
     [isLiked ? 1 : 0, likesCount, postId]
@@ -390,6 +417,7 @@ export async function updatePostLikeStatus(postId: string, isLiked: boolean, lik
 
 export async function updatePostSaveStatus(postId: string, isSaved: boolean): Promise<void> {
   const database = await getDatabase();
+  if (!database) return;
   await database.runAsync(
     'UPDATE posts SET is_saved = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
     [isSaved ? 1 : 0, postId]
@@ -398,6 +426,7 @@ export async function updatePostSaveStatus(postId: string, isSaved: boolean): Pr
 
 export async function getSyncMetadata(key: string): Promise<string | null> {
   const database = await getDatabase();
+  if (!database) return null;
   const result = await database.getFirstAsync<any>(
     'SELECT value FROM sync_metadata WHERE key = ?',
     [key]
@@ -407,6 +436,7 @@ export async function getSyncMetadata(key: string): Promise<string | null> {
 
 export async function setSyncMetadata(key: string, value: string): Promise<void> {
   const database = await getDatabase();
+  if (!database) return;
   await database.runAsync(
     'INSERT OR REPLACE INTO sync_metadata (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
     [key, value]
@@ -415,6 +445,7 @@ export async function setSyncMetadata(key: string, value: string): Promise<void>
 
 export async function clearAllData(): Promise<void> {
   const database = await getDatabase();
+  if (!database) return;
   await database.execAsync(`
     DELETE FROM messages;
     DELETE FROM chats;
