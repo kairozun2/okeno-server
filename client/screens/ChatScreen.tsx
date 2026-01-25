@@ -487,7 +487,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     }
   };
 
-  const { data: chatSettings } = useQuery<ChatSettings | null>({
+  const { data: chatSettings, refetch: refetchChatSettings } = useQuery<ChatSettings | null>({
     queryKey: ["/api/users", user?.id, "chat-settings", otherUserId],
     queryFn: async () => {
       const response = await apiRequest("GET", `/api/users/${user?.id}/chat-settings/${otherUserId}`, null);
@@ -495,7 +495,14 @@ export default function ChatScreen({ route, navigation }: Props) {
       return response.json();
     },
     enabled: !!user?.id && !!otherUserId,
+    staleTime: 0,
   });
+
+  useEffect(() => {
+    if (user?.id && otherUserId) {
+      refetchChatSettings();
+    }
+  }, [user?.id, otherUserId]);
 
   const getDirectLink = (url: string) => {
     if (url.includes("imgbly.com") && !url.includes("i.imgbly.com")) {
@@ -1241,7 +1248,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       {backgroundImage ? (
         <View style={StyleSheet.absoluteFill}>
           <Image
-            source={{ uri: backgroundImage }}
+            source={{ uri: getDirectLink(backgroundImage) }}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             cachePolicy="memory-disk"

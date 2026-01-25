@@ -223,8 +223,9 @@ export default function ChatsListScreen({ navigation }: Props) {
     mutationFn: async (data: { otherUserId: string; nickname?: string | null; backgroundImage?: string | null; isGlobal?: boolean }) => {
       await apiRequest("POST", `/api/users/${user?.id}/chat-settings`, data);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "chat-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "chat-settings", variables.otherUserId] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowSettingsModal(false);
       setSelectedChat(null);
