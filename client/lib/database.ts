@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 
-const DB_NAME = 'okeno_offline.db';
+const DB_NAME = 'okeno_offline_v2.db';
+const DB_VERSION = 2;
 
 let SQLite: any = null;
 let db: any = null;
@@ -28,11 +29,27 @@ export async function getDatabase(): Promise<any> {
   return db;
 }
 
+export async function resetDatabase(): Promise<void> {
+  if (!isNative) return;
+  
+  const sqlite = await loadSQLite();
+  if (!sqlite) return;
+  
+  if (db) {
+    await db.closeAsync();
+    db = null;
+  }
+  
+  await sqlite.deleteDatabaseAsync(DB_NAME);
+  db = await sqlite.openDatabaseAsync(DB_NAME);
+  await initializeSchema(db);
+}
+
 async function initializeSchema(database: any): Promise<void> {
   if (!database) return;
   await database.execAsync(`
     PRAGMA journal_mode = WAL;
-    PRAGMA foreign_keys = ON;
+    PRAGMA foreign_keys = OFF;
 
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -63,8 +80,7 @@ async function initializeSchema(database: any): Promise<void> {
       likes_count INTEGER DEFAULT 0,
       comments_count INTEGER DEFAULT 0,
       is_liked INTEGER DEFAULT 0,
-      is_saved INTEGER DEFAULT 0,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      is_saved INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS chats (
@@ -76,9 +92,7 @@ async function initializeSchema(database: any): Promise<void> {
       is_synced INTEGER DEFAULT 1,
       last_message TEXT,
       last_message_time TEXT,
-      unread_count INTEGER DEFAULT 0,
-      FOREIGN KEY (user1_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (user2_id) REFERENCES users(id) ON DELETE CASCADE
+      unread_count INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS messages (
@@ -96,9 +110,7 @@ async function initializeSchema(database: any): Promise<void> {
       is_read INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      is_synced INTEGER DEFAULT 1,
-      FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
-      FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+      is_synced INTEGER DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS likes (
@@ -106,9 +118,7 @@ async function initializeSchema(database: any): Promise<void> {
       user_id TEXT NOT NULL,
       post_id TEXT NOT NULL,
       created_at TEXT NOT NULL,
-      is_synced INTEGER DEFAULT 1,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+      is_synced INTEGER DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS saves (
@@ -116,9 +126,7 @@ async function initializeSchema(database: any): Promise<void> {
       user_id TEXT NOT NULL,
       post_id TEXT NOT NULL,
       created_at TEXT NOT NULL,
-      is_synced INTEGER DEFAULT 1,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+      is_synced INTEGER DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS comments (
@@ -128,9 +136,7 @@ async function initializeSchema(database: any): Promise<void> {
       content TEXT NOT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      is_synced INTEGER DEFAULT 1,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+      is_synced INTEGER DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS notifications (
@@ -142,8 +148,7 @@ async function initializeSchema(database: any): Promise<void> {
       chat_id TEXT,
       is_read INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
-      is_synced INTEGER DEFAULT 1,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      is_synced INTEGER DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS sync_metadata (

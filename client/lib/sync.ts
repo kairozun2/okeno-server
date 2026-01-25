@@ -25,9 +25,10 @@ export async function fetchAndCacheFeed(userId: string, limit: number = 20, offs
   
   try {
     const baseUrl = getApiUrl();
-    const url = new URL(`/api/feed?limit=${limit}&offset=${offset}`, baseUrl);
+    const url = new URL(`/api/posts?limit=${limit}&offset=${offset}`, baseUrl);
     
     const response = await fetch(url.toString(), {
+      headers: { 'x-user-id': userId },
       credentials: 'include',
     });
     
