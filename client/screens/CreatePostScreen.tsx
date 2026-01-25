@@ -71,20 +71,30 @@ export default function CreatePostScreen({ navigation }: Props) {
   const [isUploading, setIsUploading] = useState(false);
 
   const uploadImage = async (uri: string): Promise<string> => {
-    // Read the file as base64
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: 'base64',
-    });
+    try {
+      // Read the file as base64
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64',
+      });
 
-    // Determine mime type from URI
-    const extension = uri.split('.').pop()?.toLowerCase() || 'jpg';
-    const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
-    const dataUrl = `data:${mimeType};base64,${base64}`;
+      // Determine mime type from URI
+      const extension = uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
+      const dataUrl = `data:${mimeType};base64,${base64}`;
 
-    // Upload to server
-    const response = await apiRequest("POST", "/api/upload", { image: dataUrl });
-    const data = await response.json();
-    return data.url;
+      // Upload to server
+      const response = await apiRequest("POST", "/api/upload", { image: dataUrl });
+      const data = await response.json();
+      
+      if (!data.url) {
+        throw new Error("Server did not return image URL");
+      }
+      
+      return data.url;
+    } catch (error: any) {
+      console.error("Image upload failed:", error);
+      throw new Error(error?.message || "Failed to upload image");
+    }
   };
 
   const createPostMutation = useMutation({
