@@ -496,13 +496,17 @@ export default function ChatScreen({ route, navigation }: Props) {
     },
     enabled: !!user?.id && !!otherUserId,
     staleTime: 0,
+    gcTime: 0,
   });
 
   useEffect(() => {
-    if (user?.id && otherUserId) {
-      refetchChatSettings();
-    }
-  }, [user?.id, otherUserId]);
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (user?.id && otherUserId) {
+        refetchChatSettings();
+      }
+    });
+    return unsubscribe;
+  }, [navigation, user?.id, otherUserId]);
 
   const getDirectLink = (url: string) => {
     if (url.includes("imgbly.com") && !url.includes("i.imgbly.com")) {
