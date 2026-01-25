@@ -27,7 +27,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 export default function RegisterScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { register } = useAuth();
+  const { register, setUser } = useAuth();
   
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
@@ -74,7 +74,7 @@ export default function RegisterScreen({ navigation }: Props) {
     setError(false);
 
     try {
-      await register(username.trim(), pin);
+      const result = await register(username.trim(), pin);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: any) {
       setError(true);

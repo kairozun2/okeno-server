@@ -27,6 +27,7 @@ import { ProfileEditModal } from "@/components/ProfileEditModal";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { getImageUrl, apiRequest } from "@/lib/query-client";
+import { storeAuth } from "@/lib/auth";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -107,7 +108,7 @@ type Props = CompositeScreenProps<
 
 export default function ProfileScreen({ navigation }: Props) {
   const { theme, isDark, language } = useTheme();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, setUser, sessionId } = useAuth();
   const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
@@ -162,8 +163,13 @@ export default function ProfileScreen({ navigation }: Props) {
       const data = await response.json();
       throw new Error(data.error || "Failed to save profile");
     }
+
+    const updatedUser = await response.json();
+    setUser(updatedUser);
+    if (sessionId) {
+      await storeAuth(updatedUser, sessionId);
+    }
     
-    await refreshUser();
     await queryClient.invalidateQueries({ queryKey: ["/api/users", user.id] });
     await queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
     queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "posts"] });
