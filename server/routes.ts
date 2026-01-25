@@ -1,12 +1,13 @@
 import { createServer } from "http";
 import express, { type Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema } from "@shared/schema";
+import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema } from "@shared/schema";
 import { z } from "zod";
 import { moderateUsername } from "./moderation";
 import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
+import { sendNewMessageNotification, sendLikeNotification, sendCommentNotification } from "./push-notifications";
 
 const EMOJIS = ["🐸", "🦊", "🐻", "🐼", "🦁", "🐯", "🐨", "🐮", "🐷", "🐵", "🐔", "🐧", "🐦", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🕷", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊", "🐇", "🦝", "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿", "🦔"];
 
@@ -406,6 +407,14 @@ export async function registerRoutes(app: express.Express) {
         res.json({ liked: false });
       } else {
         await storage.createLike({ userId, postId: req.params.id });
+        
+        // Send push notification for new like
+        const post = await storage.getPost(req.params.id);
+        const liker = await storage.getUser(userId);
+        if (post && liker && post.userId !== userId) {
+          sendLikeNotification(post.userId, liker.username, liker.emoji, post.id);
+        }
+        
         res.json({ liked: true });
       }
     } catch (error) {
@@ -498,6 +507,13 @@ export async function registerRoutes(app: express.Express) {
       const commentData = insertCommentSchema.parse({ ...req.body, postId: req.params.id });
       const comment = await storage.createComment(commentData);
       const user = await storage.getUser(comment.userId);
+      
+      // Send push notification for new comment
+      const post = await storage.getPost(req.params.id);
+      if (post && user && post.userId !== comment.userId) {
+        sendCommentNotification(post.userId, user.username, user.emoji, comment.content, post.id);
+      }
+      
       res.json({
         ...comment,
         user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined
@@ -571,6 +587,15 @@ export async function registerRoutes(app: express.Express) {
     try {
       const messageData = insertMessageSchema.parse(req.body);
       const message = await storage.createMessage(messageData);
+      
+      // Send push notification for new message
+      const chat = await storage.getChat(messageData.chatId);
+      const sender = await storage.getUser(messageData.senderId);
+      if (chat && sender) {
+        const recipientId = chat.user1Id === messageData.senderId ? chat.user2Id : chat.user1Id;
+        sendNewMessageNotification(recipientId, sender.username, sender.emoji, messageData.content, chat.id);
+      }
+      
       res.json(message);
     } catch (error) {
       console.error("Create message error:", error);
@@ -1103,6 +1128,32 @@ export async function registerRoutes(app: express.Express) {
     } catch (error) {
       console.error("Set ban error:", error);
       res.status(500).json({ error: "Failed to update ban status" });
+    }
+  });
+
+  // Push notification token routes
+  app.post("/api/push-tokens", async (req, res) => {
+    try {
+      const tokenData = insertPushTokenSchema.parse(req.body);
+      const token = await storage.savePushToken(tokenData);
+      res.json({ success: true, token });
+    } catch (error) {
+      console.error("Save push token error:", error);
+      res.status(400).json({ error: "Failed to save push token" });
+    }
+  });
+
+  app.delete("/api/push-tokens", async (req, res) => {
+    try {
+      const { userId, token } = req.body;
+      if (!userId || !token) {
+        return res.status(400).json({ error: "userId and token are required" });
+      }
+      await storage.deletePushToken(userId, token);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete push token error:", error);
+      res.status(500).json({ error: "Failed to delete push token" });
     }
   });
 
