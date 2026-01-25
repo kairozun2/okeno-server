@@ -84,7 +84,7 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
     refreshOpacity.value = withTiming(refreshing ? 1 : 0, { duration: 200 });
   }, [refreshing]);
 
-  const { isOnline } = useIsOnline();
+  const isOnline = useIsOnline();
 
   const greetingStyle = useAnimatedStyle(() => ({
     opacity: greetingOpacity.value,
@@ -111,8 +111,10 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
       <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, titleStyle]}>
         <ThemedText style={styles.titleText}>{title}</ThemedText>
       </Animated.View>
-      <Animated.View style={[styles.titleRow, subtitleStyle]}>
-        <ThemedText style={styles.subtitleText}>{subtitle}</ThemedText>
+      <Animated.View style={[styles.titleRow]}>
+        <Animated.View style={subtitleStyle}>
+          <ThemedText style={styles.subtitleText}>{subtitle}</ThemedText>
+        </Animated.View>
         <OfflineIndicator />
       </Animated.View>
       <Animated.View style={[styles.greetingContainer, spinnerStyle]}>
