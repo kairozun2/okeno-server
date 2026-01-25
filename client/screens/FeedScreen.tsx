@@ -17,7 +17,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 
@@ -371,8 +371,8 @@ export default function FeedScreen({ navigation }: Props) {
   const { theme, language, isDark } = useTheme();
   const { user: currentUser } = useAuth();
   const headerHeight = useHeaderHeight() || 64;
-  const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
   const { setFeedRefreshing: setRefreshStatus } = useRefresh();
@@ -443,40 +443,60 @@ export default function FeedScreen({ navigation }: Props) {
   };
 
   const PAGE_SIZE = 10;
+  const [allPosts, setAllPosts] = useState<PostWithUser[]>([]);
+  const [currentOffset, setCurrentOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   const {
-    data: postsPages,
+    data: initialPosts,
     isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery<PostWithUser[]>({
-    queryKey: ["/api/posts"],
-    queryFn: async ({ pageParam = 0 }) => {
+    refetch,
+  } = useQuery<PostWithUser[]>({
+    queryKey: ["/api/posts", "initial"],
+    queryFn: async () => {
       const baseUrl = getApiUrl().replace(/\/$/, "");
-      const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=${pageParam}`, {
+      const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=0`, {
         headers: { "x-user-id": currentUser?.id || "" },
       });
       if (!res.ok) throw new Error("Failed to fetch posts");
-      return res.json();
+      const data = await res.json();
+      const posts = Array.isArray(data) ? data : [];
+      setAllPosts(posts);
+      setCurrentOffset(posts.length);
+      setHasMore(posts.length >= PAGE_SIZE);
+      return posts;
     },
-    getNextPageParam: (lastPage, allPages) => {
-      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
-      return allPages.length * PAGE_SIZE;
-    },
-    initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
   });
 
-  const postsData = useMemo(() => {
-    return postsPages?.pages.flat() || [];
-  }, [postsPages]);
+  const postsData = allPosts;
 
-  const handleLoadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+  const handleLoadMore = useCallback(async () => {
+    if (!hasMore || isFetchingMore || isLoading) return;
+    
+    setIsFetchingMore(true);
+    try {
+      const baseUrl = getApiUrl().replace(/\/$/, "");
+      const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=${currentOffset}`, {
+        headers: { "x-user-id": currentUser?.id || "" },
+      });
+      if (!res.ok) throw new Error("Failed to fetch posts");
+      const data = await res.json();
+      const newPosts = Array.isArray(data) ? data : [];
+      
+      if (newPosts.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+      
+      setAllPosts(prev => [...prev, ...newPosts]);
+      setCurrentOffset(prev => prev + newPosts.length);
+    } catch (error) {
+      console.error("Failed to load more posts:", error);
+    } finally {
+      setIsFetchingMore(false);
     }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasMore, isFetchingMore, isLoading, currentOffset, currentUser?.id]);
 
 
   const likeMutation = useMutation({
@@ -502,10 +522,13 @@ export default function FeedScreen({ navigation }: Props) {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setRefreshStatus(true);
-    await queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    setCurrentOffset(0);
+    setHasMore(true);
+    setAllPosts([]);
+    await refetch();
     setRefreshing(false);
     setRefreshStatus(false);
-  }, [queryClient, setRefreshStatus]);
+  }, [refetch, setRefreshStatus]);
 
   const renderItem = useCallback(
     ({ item }: { item: PostWithUser }) => (
@@ -643,7 +666,7 @@ export default function FeedScreen({ navigation }: Props) {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={!isLoading ? <EmptyFeed t={t} /> : null}
-        ListFooterComponent={isFetchingNextPage ? (
+        ListFooterComponent={isFetchingMore ? (
           <View style={{ paddingVertical: Spacing.lg, alignItems: "center" }}>
             <ActivityIndicator size="small" />
           </View>
