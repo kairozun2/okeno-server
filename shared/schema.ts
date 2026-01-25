@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   isBanned: boolean("is_banned").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastSeen: timestamp("last_seen").defaultNow().notNull(),
+  lastUsernameChange: timestamp("last_username_change"),
 });
 
 // Posts table - photos with location
