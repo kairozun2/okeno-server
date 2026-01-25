@@ -175,7 +175,7 @@ To test features:
 
 ### Feed Pagination
 - Feed uses infinite scroll with 10 posts per page
-- `useInfiniteQuery` from TanStack Query for efficient pagination
+- Manual pagination with `useQuery` + state (useInfiniteQuery has issues with React 19 + React Compiler)
 - Posts load more at 50% scroll threshold
 - Server API accepts `limit` and `offset` query parameters
 
