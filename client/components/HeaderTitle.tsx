@@ -97,7 +97,12 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
   }));
 
   const subtitleStyle = useAnimatedStyle(() => ({
-    opacity: subtitleOpacity.value * (1 - refreshOpacity.value) * (isOnline ? 1 : 0),
+    opacity: subtitleOpacity.value * (1 - refreshOpacity.value),
+  }));
+
+  const offlineIndicatorStyle = useAnimatedStyle(() => ({
+    opacity: isOnline ? 0 : 1,
+    position: 'absolute' as const,
   }));
 
   const spinnerStyle = useAnimatedStyle(() => ({
@@ -117,11 +122,9 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
         <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, subtitleStyle]}>
           <ThemedText style={styles.subtitleText}>{subtitle}</ThemedText>
         </Animated.View>
-        {!isOnline && (
-          <Animated.View entering={FadeIn} exiting={FadeOut}>
-            <OfflineIndicator />
-          </Animated.View>
-        )}
+        <Animated.View style={[styles.greetingContainer, offlineIndicatorStyle]}>
+          <OfflineIndicator />
+        </Animated.View>
       </Animated.View>
       <Animated.View style={[styles.greetingContainer, spinnerStyle]}>
         <ActivityIndicator size="small" color={theme.text} />
