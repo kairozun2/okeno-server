@@ -361,7 +361,7 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   // Optimized state management for user identity to prevent flicker
   const [identity, setIdentity] = useState({
-    name: otherUserName || "",
+    name: (route.params as any).otherUserNickname || otherUserName || "",
     emoji: otherUserEmoji || "🐸"
   });
 

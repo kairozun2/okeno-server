@@ -141,7 +141,7 @@ export default function RootStackNavigator() {
             options={({ route }) => ({
               headerTitle: () => (
                 <ChatHeaderTitle
-                  name={(route.params as any).otherUserName}
+                  name={(route.params as any).otherUserNickname || (route.params as any).otherUserName}
                   emoji={(route.params as any).otherUserEmoji}
                   isVerified={(route.params as any).otherUserUsername === "admin"}
                   onPress={() => {}}

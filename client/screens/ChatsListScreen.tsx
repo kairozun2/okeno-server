@@ -344,13 +344,17 @@ export default function ChatsListScreen({ navigation }: Props) {
           chat={item}
           allChatSettings={allChatSettings}
           language={language}
-          onPress={() => navigation.navigate("Chat", { 
-            chatId: item.id,
-            otherUserId: item.otherUser?.id,
-            otherUserName: item.otherUser?.username,
-            otherUserEmoji: item.otherUser?.emoji,
-            otherUserUsername: item.otherUser?.username, // Pass the username too
-          })}
+          onPress={() => {
+            const settings = allChatSettings.find(s => s.otherUserId === item.otherUser?.id);
+            navigation.navigate("Chat", { 
+              chatId: item.id,
+              otherUserId: item.otherUser?.id,
+              otherUserName: item.otherUser?.username,
+              otherUserNickname: settings?.nickname,
+              otherUserEmoji: item.otherUser?.emoji,
+              otherUserUsername: item.otherUser?.username,
+            });
+          }}
         />
       );
     },
