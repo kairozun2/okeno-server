@@ -114,9 +114,11 @@ export default function CreatePostScreen({ navigation }: Props) {
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "posts"] });
       navigation.goBack();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       setIsUploading(false);
-      Alert.alert(t("Error", "Ошибка"), t("Failed to create post", "Не удалось создать пост"));
+      console.error("Create post error:", error);
+      const message = error?.message || t("Failed to create post", "Не удалось создать публикацию");
+      Alert.alert(t("Error", "Ошибка"), message);
     },
   });
 

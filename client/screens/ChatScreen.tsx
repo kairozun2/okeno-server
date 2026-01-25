@@ -2,7 +2,8 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import { useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, RecordingPresets, AudioModule } from 'expo-audio';
-import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking, Dimensions, KeyboardAvoidingView, Keyboard, LayoutAnimation } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking, Dimensions, Keyboard, LayoutAnimation } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -884,7 +885,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior="padding"
-        keyboardVerticalOffset={chatFullscreen ? 0 : 50}
+        keyboardVerticalOffset={0}
       >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable

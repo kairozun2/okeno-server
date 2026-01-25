@@ -470,7 +470,7 @@ export default function FeedScreen({ navigation }: Props) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const postsData = allPosts;
+  const postsData = allPosts.length > 0 ? allPosts : (initialPosts || []);
 
   const handleLoadMore = useCallback(async () => {
     if (!hasMore || isFetchingMore || isLoading) return;

@@ -143,8 +143,8 @@ export default function CommentsScreen({ route, navigation }: Props) {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 20}
+      behavior="padding"
+      keyboardVerticalOffset={0}
     >
       <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
         <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
