@@ -223,17 +223,17 @@ export default function UserProfileScreen({ route, navigation }: Props) {
       return response.json();
     },
     onSuccess: (chat) => {
-      // Close the modal before navigating
-      navigation.goBack();
-      // Small delay to ensure modal close animation starts/finishes before navigation
-      setTimeout(() => {
-        navigation.navigate("Chat", { 
-          chatId: chat.id,
-          otherUserId: profileUser?.id,
-          otherUserName: profileUser?.username,
-          otherUserEmoji: profileUser?.emoji,
-        });
-      }, 100);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Navigate to chat, replacing current screen
+      navigation.replace("Chat", { 
+        chatId: chat.id,
+        otherUserId: profileUser?.id,
+        otherUserName: profileUser?.username,
+        otherUserEmoji: profileUser?.emoji,
+      });
+    },
+    onError: () => {
+      Alert.alert("Error", "Failed to start chat. Please try again.");
     },
   });
 

@@ -115,7 +115,7 @@ export default function QRCodeScreen({ navigation }: Props) {
     }
   };
 
-  const qrValue = `moments:user:${user?.id}`;
+  const qrValue = `okeno:user:${user?.id}`;
 
   return (
     <ThemedView style={styles.container}>
