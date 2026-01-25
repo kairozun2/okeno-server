@@ -14,6 +14,7 @@ export interface User {
   isBanned: boolean;
   createdAt: string;
   lastSeen: string;
+  lastUsernameChange?: string | null;
 }
 
 export interface AuthState {

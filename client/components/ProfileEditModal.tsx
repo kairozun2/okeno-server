@@ -232,7 +232,7 @@ export function ProfileEditModal({
             </View>
           ) : null}
 
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
+          <ThemedText type="body" style={styles.sectionTitle}>
             {isAdmin ? t("All Emojis", "Все эмодзи") : t("Choose Avatar", "Выберите аватар")}
           </ThemedText>
 

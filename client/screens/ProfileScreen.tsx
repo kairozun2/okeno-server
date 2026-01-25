@@ -17,15 +17,16 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { ProfileEditModal } from "@/components/ProfileEditModal";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { getImageUrl } from "@/lib/query-client";
+import { getImageUrl, apiRequest } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -106,12 +107,13 @@ type Props = CompositeScreenProps<
 
 export default function ProfileScreen({ navigation }: Props) {
   const { theme, isDark, language } = useTheme();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
   const { setProfileRefreshing } = useRefresh();
   const scrollY = useSharedValue(0);
   const refreshOpacity = useSharedValue(0);
@@ -141,6 +143,28 @@ export default function ProfileScreen({ navigation }: Props) {
       await Clipboard.setStringAsync(user.id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
+  };
+
+  const handleAvatarLongPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setEditModalVisible(true);
+  };
+
+  const handleSaveProfile = async (emoji: string, username: string) => {
+    if (!user?.id) throw new Error("Not authenticated");
+    
+    const response = await apiRequest("PATCH", `/api/users/${user.id}/profile`, {
+      emoji,
+      username,
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Failed to save profile");
+    }
+    
+    await refreshUser();
+    queryClient.invalidateQueries({ queryKey: ["/api/users", user.id, "posts"] });
   };
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -224,9 +248,11 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const headerComponent = useMemo(() => (
     <View style={styles.header}>
-      <Animated.View style={[styles.avatarContainer, mainAvatarStyle]}>
-        <Avatar emoji={user?.emoji || "🐸"} size={80} />
-      </Animated.View>
+      <Pressable onLongPress={handleAvatarLongPress} delayLongPress={500}>
+        <Animated.View style={[styles.avatarContainer, mainAvatarStyle]}>
+          <Avatar emoji={user?.emoji || "🐸"} size={80} />
+        </Animated.View>
+      </Pressable>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <ThemedText type="h3" style={styles.username} truncate maxLength={15}>
           {user?.username}
@@ -242,10 +268,19 @@ export default function ProfileScreen({ navigation }: Props) {
         </View>
       </View>
     </View>
-  ), [user, posts.length, theme, mainAvatarStyle, language]);
+  ), [user, posts.length, theme, mainAvatarStyle, language, handleAvatarLongPress]);
 
   return (
     <ThemedView style={styles.container}>
+      <ProfileEditModal
+        visible={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
+        currentEmoji={user?.emoji || "🐸"}
+        currentUsername={user?.username || ""}
+        isAdmin={user?.isAdmin || false}
+        lastUsernameChange={user?.lastUsernameChange || null}
+        onSave={handleSaveProfile}
+      />
       <View style={[styles.customHeader, { height: headerHeight + insets.top }]}>
         <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
         <View style={[styles.headerContent, { paddingTop: insets.top }]}>
