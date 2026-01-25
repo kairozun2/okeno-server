@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okeno - Help Center</title>
+    <style>
+        :root {
+            --primary: #053264;
+            --accent: #FFD482;
+            --bg: #031E3D;
+            --text: #F5F2ED;
+            --text-secondary: rgba(245, 242, 237, 0.6);
+            --card: rgba(10, 74, 138, 0.3);
+            --border: rgba(245, 242, 237, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            margin-bottom: 40px;
+            background: linear-gradient(180deg, var(--primary), var(--bg));
+            border-radius: 24px;
+        }
+
+        .app-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+
+        .lang-switch {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .lang-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .lang-btn.active {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+        }
+
+        .contact-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+
+        .contact-btn:hover {
+            opacity: 0.8;
+        }
+
+        [lang="ru"] { display: none; }
+        body.ru [lang="en"] { display: none; }
+        body.ru [lang="ru"] { display: block; }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="lang-switch">
+            <button class="lang-btn active" onclick="setLang('en')">English</button>
+            <button class="lang-btn" onclick="setLang('ru')">Русский</button>
+        </div>
+
+        <header>
+            <div class="app-icon">🌊</div>
+            <h1>Okeno</h1>
+            <p class="subtitle" lang="en">Help Center & Support</p>
+            <p class="subtitle" lang="ru">Центр помощи и поддержка</p>
+        </header>
+
+        <div class="section">
+            <h2 lang="en">Common Issues</h2>
+            <h2 lang="ru">Частые вопросы</h2>
+
+            <div class="card">
+                <h3 lang="en">🔄 Feed not updating?</h3>
+                <h3 lang="ru">🔄 Лента не обновляется?</h3>
+                <p lang="en">If you don't see new posts or your feed feels stuck, try pulling down to refresh. If that doesn't work, we recommend restarting the application.</p>
+                <p lang="ru">Если вы не видите новые посты или лента «зависла», попробуйте потянуть экран вниз для обновления. Если это не помогает, мы рекомендуем перезагрузить приложение.</p>
+            </div>
+
+            <div class="card">
+                <h3 lang="en">📱 App feeling slow?</h3>
+                <h3 lang="ru">📱 Приложение тормозит?</h3>
+                <p lang="en">Okeno uses caching to work offline. If the app feels sluggish, you can clear the cache in Settings > Data & Storage > Storage Usage.</p>
+                <p lang="ru">Okeno использует кэширование для работы офлайн. Если приложение работает медленно, вы можете очистить кэш в разделе Настройки > Данные и память > Использование хранилища.</p>
+            </div>
+
+            <div class="card">
+                <h3 lang="en">🔑 Connection problems?</h3>
+                <h3 lang="ru">🔑 Проблемы с подключением?</h3>
+                <p lang="en">Check your internet connection. Okeno requires an active connection for real-time features like messaging and uploading posts.</p>
+                <p lang="ru">Проверьте ваше интернет-соединение. Okeno требует активного подключения для работы чатов и загрузки новых публикаций.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 lang="en">Still have questions?</h2>
+            <h2 lang="ru">Остались вопросы?</h2>
+            <div class="card" style="text-align: center;">
+                <p lang="en">Our support team is always here to help you with any technical difficulties.</p>
+                <p lang="ru">Наша служба поддержки всегда готова помочь вам с любыми техническими трудностями.</p>
+                <a href="mailto:messaconfirmation@gmail.com" class="contact-btn" lang="en">Contact Support</a>
+                <a href="mailto:messaconfirmation@gmail.com" class="contact-btn" lang="ru">Написать в поддержку</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 Okeno. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        function setLang(lang) {
+            document.body.className = lang;
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText.toLowerCase().includes(lang === 'ru' ? 'рус' : 'eng')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

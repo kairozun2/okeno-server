@@ -336,7 +336,7 @@ export default function SettingsScreen({ navigation }: Props) {
           title: t("Help Center", "Центр помощи"),
           subtitle: t("FAQs and instructions", "Часто задаваемые вопросы"),
           onPress: () => {
-            Linking.openURL("https://skaisay.github.io/Okeno-App-Privacy/");
+            Linking.openURL("https://skaisay.github.io/Okeno-help-center/");
           },
         },
         {
