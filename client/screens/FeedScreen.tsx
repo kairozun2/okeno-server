@@ -450,17 +450,24 @@ export default function FeedScreen({ navigation }: Props) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
   } = useInfiniteQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
     queryFn: async ({ pageParam = 0 }) => {
-      const baseUrl = getApiUrl().replace(/\/$/, "");
-      const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=${pageParam}`, {
-        headers: { "x-user-id": currentUser?.id || "" },
-      });
-      if (!res.ok) throw new Error("Failed to fetch posts");
-      return res.json();
+      try {
+        const baseUrl = getApiUrl().replace(/\/$/, "");
+        const res = await fetch(`${baseUrl}/api/posts?limit=${PAGE_SIZE}&offset=${pageParam}`, {
+          headers: { "x-user-id": currentUser?.id || "" },
+        });
+        if (!res.ok) throw new Error("Failed to fetch posts");
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error("Feed fetch error:", error);
+        return [];
+      }
     },
-    getNextPageParam: (lastPage: PostWithUser[] | undefined, allPages) => {
+    getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || !Array.isArray(lastPage) || lastPage.length < PAGE_SIZE) return undefined;
       return allPages.length * PAGE_SIZE;
     },
