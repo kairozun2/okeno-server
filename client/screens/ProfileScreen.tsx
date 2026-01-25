@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList, ActivityIndicator } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -259,7 +259,7 @@ export default function ProfileScreen({ navigation }: Props) {
     [navigation]
   );
 
-  const headerComponent = useMemo(() => (
+  const headerComponent = (
     <View style={styles.header}>
       <Pressable onLongPress={handleAvatarLongPress} delayLongPress={500}>
         <Animated.View style={[styles.avatarContainer, mainAvatarStyle]}>
@@ -281,7 +281,7 @@ export default function ProfileScreen({ navigation }: Props) {
         </View>
       </View>
     </View>
-  ), [user, posts.length, theme, mainAvatarStyle, language, handleAvatarLongPress]);
+  );
 
   return (
     <ThemedView style={styles.container}>
