@@ -365,9 +365,11 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   };
 
   const handleShare = async () => {
+    if (!post) return;
     try {
+      const shareUrl = `https://okeno.app/post/${post.id}`;
       await Share.share({
-        message: t("Check out this post!", "Посмотрите этот пост!"),
+        message: `${t("Check out this post on Okeno!", "Посмотрите этот пост в Okeno!")} ${shareUrl}`,
       });
     } catch {
       // Silent fail

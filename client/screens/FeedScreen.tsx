@@ -143,10 +143,9 @@ function PostCard({
   const handleShare = async () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const shareUrl = `https://${process.env.EXPO_PUBLIC_DOMAIN}/post/${post.id}`;
+      const shareUrl = `https://okeno.app/post/${post.id}`;
       await Share.share({
         message: `Check out this moment on Okeno: ${shareUrl}`,
-        url: shareUrl,
       });
     } catch {
       // Silent fail

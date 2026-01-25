@@ -29,7 +29,7 @@ export function getImageUrl(path: string | null | undefined): string {
     return "";
   }
   
-  const host = process.env.EXPO_PUBLIC_DOMAIN || "okeno.replit.app";
+  const host = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
   
   // If it's already an absolute URL, return as-is
   if (path.startsWith("http://") || path.startsWith("https://")) {
