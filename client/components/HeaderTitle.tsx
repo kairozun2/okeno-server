@@ -97,21 +97,14 @@ export function HeaderTitle({ title, onFadeComplete, refreshing = false }: Heade
   }));
 
   const subtitleStyle = useAnimatedStyle(() => {
-    // Determine the visible phase
-    const isVisiblePhase = animationPhase === 'subtitle';
-    const baseOpacity = isVisiblePhase ? 1 : 0;
-    
     return {
-      opacity: baseOpacity * (1 - refreshOpacity.value) * (isOnline ? 1 : 0),
+      opacity: subtitleOpacity.value * (1 - refreshOpacity.value) * (isOnline ? 1 : 0),
     };
   });
 
   const offlineIndicatorStyle = useAnimatedStyle(() => {
-    const isVisiblePhase = animationPhase === 'subtitle';
-    const baseOpacity = isVisiblePhase ? 1 : 0;
-    
     return {
-      opacity: baseOpacity * (1 - refreshOpacity.value) * (isOnline ? 0 : 1),
+      opacity: subtitleOpacity.value * (1 - refreshOpacity.value) * (isOnline ? 0 : 1),
       position: 'absolute' as const,
     };
   });
