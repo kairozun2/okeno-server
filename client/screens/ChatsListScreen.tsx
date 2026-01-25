@@ -257,19 +257,21 @@ export default function ChatsListScreen({ navigation }: Props) {
           const base64data = reader.result as string;
           
           try {
+            console.log("Starting background upload...");
             const uploadResponse = await apiRequest("POST", "/api/upload", {
               image: base64data,
               type: "background",
             });
             
             const data = await uploadResponse.json();
+            console.log("Upload result:", data);
             if (data.url) {
               setBackgroundImage(data.url);
             } else {
               throw new Error("No URL in upload response");
             }
           } catch (err) {
-            console.error("Upload error:", err);
+            console.error("Upload error details:", err);
             setBackgroundImage(localUri);
           } finally {
             setIsUploadingBackground(false);
