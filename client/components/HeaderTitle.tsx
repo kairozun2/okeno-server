@@ -27,41 +27,108 @@ interface HeaderTitleProps {
 export function HeaderTitle({ title, onFadeComplete, refreshing = false }: HeaderTitleProps) {
   const { theme, language } = useTheme();
   const { user } = useAuth();
-  const refreshOpacity = useSharedValue(0);
   const isOnline = useIsOnline();
+  
+  const greetingOpacity = useSharedValue(1);
+  const titleOpacity = useSharedValue(0);
+  const subtitleOpacity = useSharedValue(0);
+  const refreshOpacity = useSharedValue(0);
+  
+  const [animationPhase, setAnimationPhase] = useState<'greeting' | 'title' | 'subtitle'>('greeting');
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 6) return t("Welcome", "Добро пожаловать");
+    if (hour < 12) return t("Welcome", "Добро пожаловать");
+    if (hour < 18) return t("Welcome", "Добро пожаловать");
+    return t("Welcome", "Добро пожаловать");
+  };
+
+  const greeting = `${getGreeting()}, ${user?.username || t("guest", "гость")}`;
   const subtitle = t("Feed", "Лента");
+
+  useEffect(() => {
+    // Phase 1: Greeting
+    greetingOpacity.value = withDelay(
+      500,
+      withTiming(0, { duration: 800 }, (finished) => {
+        if (finished) {
+          runOnJS(setAnimationPhase)('title');
+        }
+      })
+    );
+
+    // Phase 2: Title (Okeno)
+    titleOpacity.value = withDelay(
+      1300,
+      withTiming(1, { duration: 600 }, (finished) => {
+        if (finished) {
+          titleOpacity.value = withDelay(
+            1500,
+            withTiming(0, { duration: 600 }, (done) => {
+              if (done) {
+                runOnJS(setAnimationPhase)('subtitle');
+              }
+            })
+          );
+        }
+      })
+    );
+
+    // Phase 3: Subtitle (Feed)
+    subtitleOpacity.value = withDelay(
+      4000,
+      withTiming(1, { duration: 600 }, (finished) => {
+        if (finished && onFadeComplete) {
+          runOnJS(onFadeComplete)();
+        }
+      })
+    );
+  }, []);
 
   useEffect(() => {
     refreshOpacity.value = withTiming(refreshing ? 1 : 0, { duration: 200 });
   }, [refreshing]);
 
-  useEffect(() => {
-    // Call completion callback immediately since we removed animations
-    if (onFadeComplete) {
-      onFadeComplete();
-    }
-  }, []);
+  const greetingStyle = useAnimatedStyle(() => ({
+    opacity: greetingOpacity.value,
+  }));
+
+  const titleStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value * (1 - refreshOpacity.value),
+  }));
+
+  const subtitleStyle = useAnimatedStyle(() => ({
+    opacity: subtitleOpacity.value * (1 - refreshOpacity.value) * (isOnline ? 1 : 0),
+  }));
+
+  const offlineIndicatorStyle = useAnimatedStyle(() => ({
+    opacity: subtitleOpacity.value * (1 - refreshOpacity.value) * (isOnline ? 0 : 1),
+    position: 'absolute' as const,
+  }));
 
   const spinnerStyle = useAnimatedStyle(() => ({
     opacity: refreshOpacity.value,
     position: 'absolute' as const,
   }));
 
-  const contentStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(refreshing ? 0 : 1, { duration: 200 }),
-  }));
-
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.titleRow, contentStyle]}>
-        {isOnline ? (
+      <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, greetingStyle]}>
+        <ThemedText style={styles.greetingText}>{greeting}</ThemedText>
+      </Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, titleStyle]}>
+        <ThemedText style={styles.titleText}>{title}</ThemedText>
+      </Animated.View>
+      <Animated.View style={[styles.titleRow]}>
+        <Animated.View style={[StyleSheet.absoluteFill, styles.greetingContainer, subtitleStyle]}>
           <ThemedText style={styles.subtitleText}>{subtitle}</ThemedText>
-        ) : (
+        </Animated.View>
+        <Animated.View style={[styles.greetingContainer, offlineIndicatorStyle]}>
           <OfflineIndicator />
-        )}
+        </Animated.View>
       </Animated.View>
       <Animated.View style={[styles.greetingContainer, spinnerStyle]}>
         <ActivityIndicator size="small" color={theme.text} />
