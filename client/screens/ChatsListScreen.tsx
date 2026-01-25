@@ -425,7 +425,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                 >
                   {backgroundImage ? (
                     <Image
-                      source={{ uri: getDirectLink(backgroundImage) }}
+                      source={{ uri: backgroundImage }}
                       style={styles.backgroundImage}
                       contentFit="cover"
                       cachePolicy="memory-disk"
