@@ -461,7 +461,7 @@ export default function FeedScreen({ navigation }: Props) {
       return res.json();
     },
     getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length < PAGE_SIZE) return undefined;
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
       return allPages.length * PAGE_SIZE;
     },
     initialPageParam: 0,
