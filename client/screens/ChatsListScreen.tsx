@@ -256,18 +256,24 @@ export default function ChatsListScreen({ navigation }: Props) {
         reader.onloadend = async () => {
           const base64data = reader.result as string;
           
-          const uploadResponse = await apiRequest("POST", "/api/upload", {
-            image: base64data,
-            type: "background",
-          });
-          
-          if (uploadResponse.ok) {
+          try {
+            const uploadResponse = await apiRequest("POST", "/api/upload", {
+              image: base64data,
+              type: "background",
+            });
+            
             const data = await uploadResponse.json();
-            setBackgroundImage(data.url);
-          } else {
+            if (data.url) {
+              setBackgroundImage(data.url);
+            } else {
+              throw new Error("No URL in upload response");
+            }
+          } catch (err) {
+            console.error("Upload error:", err);
             setBackgroundImage(localUri);
+          } finally {
+            setIsUploadingBackground(false);
           }
-          setIsUploadingBackground(false);
         };
         reader.readAsDataURL(blob);
       } catch (error) {
