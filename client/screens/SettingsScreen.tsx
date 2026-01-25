@@ -142,14 +142,33 @@ export default function SettingsScreen({ navigation }: Props) {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [isIdVisible, setIsIdVisible] = useState(false);
   const [deletePin, setDeletePin] = useState("");
+  const [debugTapCount, setDebugTapCount] = useState(0);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
+  const handleDebugTap = () => {
+    const newCount = debugTapCount + 1;
+    if (newCount >= 6) {
+      setDebugTapCount(0);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigation.navigate("DebugConsole");
+    } else {
+      setDebugTapCount(newCount);
+      if (newCount > 2) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    }
+  };
+
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: t("Settings", "Настройки"),
+      headerTitle: () => (
+        <Pressable onPress={handleDebugTap}>
+          <ThemedText type="h3">{t("Settings", "Настройки")}</ThemedText>
+        </Pressable>
+      ),
     });
-  }, [navigation, language]);
+  }, [navigation, language, debugTapCount]);
 
   const deleteAccountMutation = useMutation({
     mutationFn: async () => {

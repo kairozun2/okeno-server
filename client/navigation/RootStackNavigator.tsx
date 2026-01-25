@@ -24,6 +24,7 @@ import ArchiveScreen from "@/screens/ArchiveScreen";
 import SavedPostsScreen from "@/screens/SavedPostsScreen";
 import AdminPanelScreen from "@/screens/AdminPanelScreen";
 import BlockedUsersScreen from "@/screens/BlockedUsersScreen";
+import DebugConsoleScreen from "@/screens/DebugConsoleScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -52,6 +53,7 @@ export type RootStackParamList = {
   SavedPosts: undefined;
   AdminPanel: undefined;
   BlockedUsers: undefined;
+  DebugConsole: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -296,6 +298,16 @@ export default function RootStackNavigator() {
             options={({ navigation }) => ({
               ...modalOptions,
               headerTitle: "Blocked Users",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
+          />
+          <Stack.Screen
+            name="DebugConsole"
+            component={DebugConsoleScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: "Debug Console",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               headerShadowVisible: false,
             })}
