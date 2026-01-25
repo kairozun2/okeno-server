@@ -78,7 +78,7 @@ UPDATE users SET is_admin = true, is_verified = true WHERE id = 'USER_ID_HERE';
 - **Client**: Automatic permission request and token registration on login
 - **Triggers**: New messages, likes, and comments send push notifications
 - **Important**: Push notifications only work on physical devices (not simulators)
-- **Project ID**: `7e94d6f4-d3cd-4ed4-8ecb-84b20d1e7dd4`
+- **Note**: Push notifications require EAS project ID - will work after `eas build`, not in Expo Go development mode without proper EAS configuration
 
 ### Environment Variables
 - `DATABASE_URL`: PostgreSQL connection string (required)
