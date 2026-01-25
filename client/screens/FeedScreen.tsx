@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
-import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert, TextInput, ScrollView } from "react-native";
+import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert, TextInput, ScrollView, ActivityIndicator } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -17,7 +17,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 
@@ -27,7 +27,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest, getImageUrl } from "@/lib/query-client";
+import { apiRequest, getImageUrl, getApiUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useRefresh } from "@/contexts/RefreshContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -436,10 +436,40 @@ export default function FeedScreen({ navigation }: Props) {
     reportMutation.mutate();
   };
 
-  const { data: postsData = [], isLoading } = useQuery<PostWithUser[]>({
+  const PAGE_SIZE = 10;
+
+  const {
+    data: postsPages,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<PostWithUser[]>({
     queryKey: ["/api/posts"],
+    queryFn: async ({ pageParam = 0 }) => {
+      const res = await fetch(`${getApiUrl()}/api/posts?limit=${PAGE_SIZE}&offset=${pageParam}`, {
+        headers: { "x-user-id": currentUser?.id || "" },
+      });
+      if (!res.ok) throw new Error("Failed to fetch posts");
+      return res.json();
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      return allPages.length * PAGE_SIZE;
+    },
+    initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
   });
+
+  const postsData = useMemo(() => {
+    return postsPages?.pages.flat() || [];
+  }, [postsPages]);
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 
   const likeMutation = useMutation({
@@ -603,7 +633,14 @@ export default function FeedScreen({ navigation }: Props) {
         }}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
         ListEmptyComponent={!isLoading ? <EmptyFeed t={t} /> : null}
+        ListFooterComponent={isFetchingNextPage ? (
+          <View style={{ paddingVertical: Spacing.lg, alignItems: "center" }}>
+            <ActivityIndicator size="small" />
+          </View>
+        ) : null}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
       />
 

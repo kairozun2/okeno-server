@@ -225,7 +225,9 @@ export async function registerRoutes(app: express.Express) {
   // Posts routes
   app.get("/api/posts", async (req, res) => {
     try {
-      const posts = await storage.getPosts();
+      const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+      const offset = parseInt(req.query.offset as string) || 0;
+      const posts = await storage.getPosts(limit, offset);
       const postsWithUser = await Promise.all(posts.map(async (post) => {
         const user = await storage.getUser(post.userId);
         const likesCount = await storage.getPostLikesCount(post.id);
