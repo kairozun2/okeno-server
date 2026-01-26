@@ -1006,7 +1006,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           windowSize={21}
         />
 
-        <View style={[styles.inputContainer, { backgroundColor: theme.backgroundRoot }]}>
+        <View style={[styles.inputContainer, { backgroundColor: 'transparent' }]}>
           {(replyTo || editingMessage) ? (
             <Animated.View 
               entering={FadeIn.duration(150)} 
@@ -1026,7 +1026,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               </Pressable>
             </Animated.View>
           ) : null}
-          <View style={[styles.inputWrapper, { paddingBottom: insets.bottom > 0 ? insets.bottom / 2 : Spacing.sm }]}>
+          <View style={[styles.inputWrapper, { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.sm }]}>
             {isRecording ? (
               <Animated.View 
                 entering={FadeIn.duration(200)}
@@ -1063,21 +1063,16 @@ export default function ChatScreen({ route, navigation }: Props) {
                 <Pressable
                   onPress={handlePickImage}
                   disabled={sendMutation.isPending}
-                  style={[
-                    styles.attachButton,
-                    { backgroundColor: theme.backgroundSecondary }
-                  ]}
+                  style={styles.attachButton}
                 >
-                  <Feather name="image" size={20} color={theme.textSecondary} />
+                  <Feather name="image" size={24} color={theme.textSecondary} />
                 </Pressable>
                 <TextInput
                   style={[
                     styles.input,
                     {
                       color: theme.text,
-                      borderWidth: 1,
-                      borderColor: theme.border,
-                      backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                      backgroundColor: 'transparent',
                     },
                   ]}
                   placeholder={t("Message...", "Сообщение...")}
@@ -1113,12 +1108,9 @@ export default function ChatScreen({ route, navigation }: Props) {
                       }
                     }}
                     disabled={sendMutation.isPending}
-                    style={[
-                      styles.sendButton,
-                      { backgroundColor: theme.backgroundSecondary }
-                    ]}
+                    style={styles.sendButton}
                   >
-                    <Feather name="mic" size={18} color={theme.textSecondary} />
+                    <Feather name="mic" size={24} color={theme.textSecondary} />
                   </Pressable>
                 )}
               </>
@@ -1389,10 +1381,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 40,
     maxHeight: 150,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontSize: 15,
-    borderRadius: 20,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    fontSize: 16,
   },
   sendButton: {
     width: 40,
