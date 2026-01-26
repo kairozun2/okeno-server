@@ -39,15 +39,23 @@ export async function fetchAndCacheFeed(userId: string, limit: number = 20, offs
     
     const posts = await response.json();
     
-    await Database.savePosts(posts, userId);
+    try {
+      await Database.savePosts(posts, userId);
+    } catch {
+      // SQLite not available on web, continue without caching
+    }
     
     notifySyncListeners();
     
     return posts;
   } catch (error) {
-    console.log('Feed fetch failed, using local data:', error);
-    const localPosts = await Database.getPosts(limit, offset);
-    return localPosts;
+    console.log('Feed fetch error, trying local database:', error);
+    try {
+      const localPosts = await Database.getPosts(limit, offset);
+      return localPosts;
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -74,15 +82,23 @@ export async function fetchAndCacheChats(userId: string): Promise<any[]> {
     
     const chats = await response.json();
     
-    await Database.saveChats(chats, userId);
+    try {
+      await Database.saveChats(chats, userId);
+    } catch {
+      // SQLite not available on web, continue without caching
+    }
     
     notifySyncListeners();
     
     return chats;
   } catch (error) {
-    console.log('Chats fetch failed, using local data:', error);
-    const localChats = await Database.getChats(userId);
-    return localChats;
+    console.log('Chats fetch error, trying local database:', error);
+    try {
+      const localChats = await Database.getChats(userId);
+      return localChats;
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -109,15 +125,23 @@ export async function fetchAndCacheMessages(chatId: string, limit: number = 50):
     
     const messages = await response.json();
     
-    await Database.saveMessages(messages);
+    try {
+      await Database.saveMessages(messages);
+    } catch {
+      // SQLite not available on web, continue without caching
+    }
     
     notifySyncListeners();
     
     return messages;
   } catch (error) {
-    console.log('Messages fetch failed, using local data:', error);
-    const localMessages = await Database.getMessages(chatId, limit);
-    return localMessages;
+    console.log('Messages fetch error, trying local database:', error);
+    try {
+      const localMessages = await Database.getMessages(chatId, limit);
+      return localMessages;
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -144,13 +168,21 @@ export async function fetchAndCacheUser(userId: string): Promise<any | null> {
     
     const user = await response.json();
     
-    await Database.saveUser(user);
+    try {
+      await Database.saveUser(user);
+    } catch {
+      // SQLite not available on web, continue without caching
+    }
     
     return user;
   } catch (error) {
-    console.log('User fetch failed, using local data:', error);
-    const localUser = await Database.getUser(userId);
-    return localUser;
+    console.log('User fetch error, trying local database:', error);
+    try {
+      const localUser = await Database.getUser(userId);
+      return localUser;
+    } catch {
+      return null;
+    }
   }
 }
 

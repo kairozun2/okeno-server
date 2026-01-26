@@ -1,48 +1,53 @@
 import { Platform } from 'react-native';
+import * as SQLiteModule from 'expo-sqlite';
 
 const DB_NAME = 'okeno_offline_v2.db';
 const DB_VERSION = 2;
 
-let SQLite: any = null;
-let db: any = null;
+let db: SQLiteModule.SQLiteDatabase | null = null;
+let initializationFailed = false;
 
 const isNative = Platform.OS !== 'web';
 
-async function loadSQLite() {
-  if (!SQLite && isNative) {
-    SQLite = await import('expo-sqlite');
-  }
-  return SQLite;
-}
-
-export async function getDatabase(): Promise<any> {
-  if (!isNative) {
+export async function getDatabase(): Promise<SQLiteModule.SQLiteDatabase | null> {
+  if (!isNative || initializationFailed) {
     return null;
   }
   
   if (!db) {
-    const sqlite = await loadSQLite();
-    if (!sqlite) return null;
-    db = await sqlite.openDatabaseAsync(DB_NAME);
-    await initializeSchema(db);
+    try {
+      if (typeof SQLiteModule.openDatabaseAsync !== 'function') {
+        console.log('SQLite not available in this environment');
+        initializationFailed = true;
+        return null;
+      }
+      db = await SQLiteModule.openDatabaseAsync(DB_NAME);
+      await initializeSchema(db);
+    } catch (error) {
+      console.log('SQLite initialization failed:', error);
+      initializationFailed = true;
+      return null;
+    }
   }
   return db;
 }
 
 export async function resetDatabase(): Promise<void> {
-  if (!isNative) return;
+  if (!isNative || initializationFailed) return;
   
-  const sqlite = await loadSQLite();
-  if (!sqlite) return;
-  
-  if (db) {
-    await db.closeAsync();
-    db = null;
+  try {
+    if (db) {
+      await db.closeAsync();
+      db = null;
+    }
+    
+    await SQLiteModule.deleteDatabaseAsync(DB_NAME);
+    db = await SQLiteModule.openDatabaseAsync(DB_NAME);
+    await initializeSchema(db);
+  } catch (error) {
+    console.log('Database reset failed:', error);
+    initializationFailed = true;
   }
-  
-  await sqlite.deleteDatabaseAsync(DB_NAME);
-  db = await sqlite.openDatabaseAsync(DB_NAME);
-  await initializeSchema(db);
 }
 
 async function initializeSchema(database: any): Promise<void> {
