@@ -181,6 +181,7 @@ To test features:
 - Data cached for 7 days for offline viewing
 - `networkMode: 'offlineFirst'` prioritizes cached data when offline
 - Images must be online to load (no local image caching yet)
+- **SQLite Limitation**: expo-sqlite is only available on native iOS/Android devices. On web platform (including Replit webview), SQLite operations are gracefully skipped and the app uses network-only mode. This is handled automatically in `client/lib/database.ts` and `client/lib/sync.ts`.
 
 ### Feed Pagination
 - Feed uses infinite scroll with 10 posts per page
