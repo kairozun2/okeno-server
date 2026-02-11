@@ -38,7 +38,8 @@ Core entities defined in Drizzle schema:
 - **Posts**: image URL, optional location data (name, lat/long), feeling emoji
 - **Likes/Saves**: user-post relationships
 - **Comments**: text content on posts
-- **Chats/Messages**: direct messaging between users
+- **Chats/Messages**: direct messaging and group chats between users
+- **GroupChatMembers**: membership tracking for group chats (role: admin/member)
 - **Sessions**: device-based auth sessions
 - **Notifications**: activity alerts
 
