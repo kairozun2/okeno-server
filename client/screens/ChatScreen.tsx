@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import { useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, RecordingPresets, AudioModule } from 'expo-audio';
@@ -136,6 +136,8 @@ function MessageBubble({
   isSelected,
   onSwipeReply,
   onImagePress,
+  senderName,
+  senderEmoji,
 }: {
   message: Message;
   isOwn: boolean;
@@ -145,6 +147,8 @@ function MessageBubble({
   isSelected: boolean;
   onSwipeReply: (msg: Message) => void;
   onImagePress?: (imageUrl: string) => void;
+  senderName?: string;
+  senderEmoji?: string;
 }) {
   const { theme, isDark } = useTheme();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
@@ -253,6 +257,14 @@ function MessageBubble({
             },
           ]}
         >
+          {senderName ? (
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4, gap: 4 }}>
+              {senderEmoji ? <Avatar emoji={senderEmoji} size={16} /> : null}
+              <ThemedText type="caption" style={{ color: theme.link, fontWeight: "600", fontSize: 11 }}>
+                {senderName}
+              </ThemedText>
+            </View>
+          ) : null}
           {replyMessage ? (
             <View style={[styles.replyContainer, { borderLeftColor: isOwn ? "rgba(255,255,255,0.5)" : theme.link }]}>
               <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontWeight: "600" }}>
@@ -353,7 +365,7 @@ function MessageBubble({
 type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
 export default function ChatScreen({ route, navigation }: Props) {
-  const { chatId, otherUserName, otherUserUsername, otherUserEmoji, otherUserId } = route.params;
+  const { chatId, otherUserName, otherUserUsername, otherUserEmoji, otherUserId, isGroupChat, groupName, groupEmoji } = route.params;
   const { theme, isDark, language, hapticsEnabled, chatFullscreen } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -559,9 +571,31 @@ export default function ChatScreen({ route, navigation }: Props) {
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 
-  const displayName = chatSettings?.nickname || userData?.username || identity.name || t("User", "Пользователь");
-  const displayEmoji = userData?.emoji || identity.emoji || "🐸";
-  const backgroundImage = chatSettings?.backgroundImage;
+  const { data: groupMembersData } = useQuery<{ id: string; username: string; emoji: string }[]>({
+    queryKey: ["/api/group-chats", chatId, "members"],
+    queryFn: async () => {
+      const url = new URL(`/api/group-chats/${chatId}/members`, getApiUrl());
+      const response = await fetch(url.toString(), { credentials: "include" });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: isGroupChat === true,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const membersMap = useMemo(() => {
+    const map: Record<string, { username: string; emoji: string }> = {};
+    if (groupMembersData) {
+      groupMembersData.forEach((m) => {
+        map[m.id] = { username: m.username, emoji: m.emoji };
+      });
+    }
+    return map;
+  }, [groupMembersData]);
+
+  const displayName = isGroupChat ? (groupName || t("Group", "Группа")) : (chatSettings?.nickname || userData?.username || identity.name || t("User", "Пользователь"));
+  const displayEmoji = isGroupChat ? (groupEmoji || "🐸") : (userData?.emoji || identity.emoji || "🐸");
+  const backgroundImage = isGroupChat ? null : chatSettings?.backgroundImage;
 
   const {
     data,
@@ -881,19 +915,26 @@ export default function ChatScreen({ route, navigation }: Props) {
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: Message }) => (
-      <MessageBubble
-        message={item}
-        isOwn={item.senderId === user?.id}
-        onLongPress={() => handleLongPress(item)}
-        replyMessage={getReplyMessage(item.replyToId)}
-        language={language}
-        isSelected={selectedMessage?.id === item.id && showActionModal}
-        onSwipeReply={handleReply}
-        onImagePress={handleImagePreview}
-      />
-    ),
-    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply, handleImagePreview]
+    ({ item }: { item: Message }) => {
+      const senderInfo = isGroupChat && item.senderId !== user?.id
+        ? membersMap[item.senderId]
+        : undefined;
+      return (
+        <MessageBubble
+          message={item}
+          isOwn={item.senderId === user?.id}
+          onLongPress={() => handleLongPress(item)}
+          replyMessage={getReplyMessage(item.replyToId)}
+          language={language}
+          isSelected={selectedMessage?.id === item.id && showActionModal}
+          onSwipeReply={handleReply}
+          onImagePress={handleImagePreview}
+          senderName={senderInfo?.username}
+          senderEmoji={senderInfo?.emoji}
+        />
+      );
+    },
+    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply, handleImagePreview, isGroupChat, membersMap]
   );
 
   const chatContent = (
@@ -919,7 +960,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           </Pressable>
 
           <View style={[styles.headerCenter, { backgroundColor: 'transparent' }]} pointerEvents="none">
-            {isOtherUserTyping ? (
+            {!isGroupChat && isOtherUserTyping ? (
               <Animated.View 
                 entering={FadeIn.duration(400)} 
                 exiting={FadeOut.duration(400)}
@@ -947,7 +988,11 @@ export default function ChatScreen({ route, navigation }: Props) {
           </View>
 
           <Pressable
-            onPress={() => otherUserId && navigation.navigate("UserProfile", { userId: otherUserId })}
+            onPress={() => {
+              if (!isGroupChat && otherUserId) {
+                navigation.navigate("UserProfile", { userId: otherUserId });
+              }
+            }}
             style={styles.userInfo}
           >
             {Platform.OS === 'ios' && (
@@ -960,7 +1005,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end' }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
-                {userData?.isVerified ? <VerifiedBadge size={14} /> : null}
+                {!isGroupChat && userData?.isVerified ? <VerifiedBadge size={14} /> : null}
               </View>
             </View>
             <Avatar emoji={displayEmoji} size={32} />

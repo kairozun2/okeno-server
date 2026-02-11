@@ -1,7 +1,9 @@
 import { createServer } from "http";
 import express, { type Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema } from "@shared/schema";
+import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema, chats, groupChatMembers } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { moderateUsername } from "./moderation";
 import * as fs from "fs";
@@ -534,18 +536,33 @@ export async function registerRoutes(app: express.Express) {
   // Chats routes
   app.get("/api/users/:id/chats", async (req, res) => {
     try {
-      const chats = await storage.getUserChats(req.params.id);
-      const chatsWithUsers = await Promise.all(chats.map(async (chat) => {
+      const userChats = await storage.getUserChats(req.params.id);
+      const chatsWithUsers = await Promise.all(userChats.map(async (chat) => {
+        if (chat.isGroup) {
+          const members = await storage.getGroupChatMembers(chat.id);
+          const memberUsers = await Promise.all(members.map(async (m) => {
+            const u = await storage.getUser(m.userId);
+            return u ? { id: u.id, username: u.username, emoji: u.emoji, isVerified: u.isVerified } : null;
+          }));
+          const lastMessages = await storage.getChatMessages(chat.id, 1);
+          const unreadCount = await storage.getUnreadMessagesCount(chat.id, req.params.id);
+          return {
+            ...chat,
+            members: memberUsers.filter(Boolean),
+            lastMessage: lastMessages[0] || null,
+            unreadCount,
+          };
+        }
+
         const otherUserId = chat.user1Id === req.params.id ? chat.user2Id : chat.user1Id;
         const otherUser = await storage.getUser(otherUserId);
         const lastMessages = await storage.getChatMessages(chat.id, 1);
         const unreadCount = await storage.getUnreadMessagesCount(chat.id, req.params.id);
-        
         return {
           ...chat,
           otherUser: otherUser ? { id: otherUser.id, username: otherUser.username, emoji: otherUser.emoji, isVerified: otherUser.isVerified } : undefined,
           lastMessage: lastMessages[0] || null,
-          unreadCount
+          unreadCount,
         };
       }));
       res.json(chatsWithUsers);
@@ -565,6 +582,89 @@ export async function registerRoutes(app: express.Express) {
     } catch (error) {
       console.error("Create chat error:", error);
       res.status(400).json({ error: "Invalid chat data" });
+    }
+  });
+
+  // Group chat routes
+  app.post("/api/group-chats", async (req, res) => {
+    try {
+      const { name, groupEmoji, creatorId, memberIds } = req.body;
+      if (!name || !creatorId || !memberIds || memberIds.length < 1) {
+        return res.status(400).json({ error: "Name, creator, and at least 1 member required" });
+      }
+      const [chat] = await db.insert(chats).values({
+        user1Id: creatorId,
+        user2Id: creatorId,
+        isGroup: true,
+        name,
+        groupEmoji: groupEmoji || null,
+      }).returning();
+
+      await storage.addGroupChatMember({ chatId: chat.id, userId: creatorId, role: "admin" });
+
+      for (const memberId of memberIds) {
+        if (memberId !== creatorId) {
+          await storage.addGroupChatMember({ chatId: chat.id, userId: memberId, role: "member" });
+        }
+      }
+
+      res.json(chat);
+    } catch (error) {
+      console.error("Create group chat error:", error);
+      res.status(500).json({ error: "Failed to create group chat" });
+    }
+  });
+
+  app.get("/api/group-chats/:id/members", async (req, res) => {
+    try {
+      const members = await storage.getGroupChatMembers(req.params.id);
+      const membersWithUsers = await Promise.all(members.map(async (member) => {
+        const user = await storage.getUser(member.userId);
+        return {
+          ...member,
+          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined,
+        };
+      }));
+      res.json(membersWithUsers);
+    } catch (error) {
+      console.error("Get group members error:", error);
+      res.status(500).json({ error: "Failed to get members" });
+    }
+  });
+
+  app.post("/api/group-chats/:id/members", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) return res.status(400).json({ error: "userId required" });
+      const member = await storage.addGroupChatMember({ chatId: req.params.id, userId, role: "member" });
+      res.json(member);
+    } catch (error) {
+      console.error("Add group member error:", error);
+      res.status(500).json({ error: "Failed to add member" });
+    }
+  });
+
+  app.delete("/api/group-chats/:id/members/:userId", async (req, res) => {
+    try {
+      await storage.removeGroupChatMember(req.params.id, req.params.userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Remove group member error:", error);
+      res.status(500).json({ error: "Failed to remove member" });
+    }
+  });
+
+  app.patch("/api/group-chats/:id", async (req, res) => {
+    try {
+      const { name, groupEmoji } = req.body;
+      const [updated] = await db.update(chats).set({
+        ...(name !== undefined ? { name } : {}),
+        ...(groupEmoji !== undefined ? { groupEmoji } : {}),
+      }).where(eq(chats.id, req.params.id)).returning();
+      res.json(updated);
+    } catch (error) {
+      console.error("Update group chat error:", error);
+      res.status(500).json({ error: "Failed to update group chat" });
     }
   });
 
@@ -599,8 +699,17 @@ export async function registerRoutes(app: express.Express) {
       const chat = await storage.getChat(messageData.chatId);
       const sender = await storage.getUser(messageData.senderId);
       if (chat && sender) {
-        const recipientId = chat.user1Id === messageData.senderId ? chat.user2Id : chat.user1Id;
-        sendNewMessageNotification(recipientId, sender.username, sender.emoji, messageData.content, chat.id);
+        if (chat.isGroup) {
+          const members = await storage.getGroupChatMembers(chat.id);
+          for (const member of members) {
+            if (member.userId !== messageData.senderId) {
+              sendNewMessageNotification(member.userId, sender.username, sender.emoji, messageData.content, chat.id);
+            }
+          }
+        } else {
+          const recipientId = chat.user1Id === messageData.senderId ? chat.user2Id : chat.user1Id;
+          sendNewMessageNotification(recipientId, sender.username, sender.emoji, messageData.content, chat.id);
+        }
       }
       
       res.json(message);

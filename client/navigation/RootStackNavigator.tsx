@@ -26,6 +26,7 @@ import AdminPanelScreen from "@/screens/AdminPanelScreen";
 import BlockedUsersScreen from "@/screens/BlockedUsersScreen";
 import DebugConsoleScreen from "@/screens/DebugConsoleScreen";
 import ThemeSelectionScreen from "@/screens/ThemeSelectionScreen";
+import CreateGroupChatScreen from "@/screens/CreateGroupChatScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -37,7 +38,7 @@ import { Spacing } from "@/constants/theme";
 export type RootStackParamList = {
   Main: undefined;
   Auth: undefined;
-  Chat: { chatId: string; otherUserId?: string; otherUserName?: string; otherUserEmoji?: string; otherUserUsername?: string };
+  Chat: { chatId: string; otherUserId?: string; otherUserName?: string; otherUserEmoji?: string; otherUserUsername?: string; isGroupChat?: boolean; groupName?: string; groupEmoji?: string };
   Comments: { postId: string };
   Settings: undefined;
   UserProfile: { userId: string };
@@ -56,6 +57,7 @@ export type RootStackParamList = {
   BlockedUsers: undefined;
   DebugConsole: undefined;
   ThemeSelection: undefined;
+  CreateGroupChat: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -323,6 +325,15 @@ export default function RootStackNavigator() {
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               headerShadowVisible: false,
             })}
+          />
+          <Stack.Screen
+            name="CreateGroupChat"
+            component={CreateGroupChatScreen}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
           />
         </>
       ) : (

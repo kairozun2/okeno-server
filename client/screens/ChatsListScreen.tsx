@@ -64,7 +64,11 @@ interface User {
 }
 
 interface ChatWithDetails extends Chat {
+  isGroup?: boolean;
+  name?: string;
+  groupEmoji?: string;
   otherUser?: User;
+  members?: User[];
   lastMessage?: string;
   unreadCount?: number;
 }
@@ -82,6 +86,13 @@ function ChatItem({
 }) {
   const { theme } = useTheme();
 
+  const isGroup = chat.isGroup === true;
+  const displayEmoji = isGroup ? (chat.groupEmoji || "🐸") : (chat.otherUser?.emoji || "🐸");
+  const displayName = isGroup
+    ? (chat.name || "Group")
+    : (allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User");
+  const memberCount = isGroup && chat.members ? chat.members.length : 0;
+
   return (
     <Animated.View entering={FadeIn}>
       <Pressable
@@ -96,15 +107,15 @@ function ChatItem({
           },
         ]}
       >
-        <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
+        <Avatar emoji={displayEmoji} size={44} />
         <View style={styles.chatInfo}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1, flexGrow: 1 }}>
               <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1 }}>
                 <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
-                  {allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User"}
+                  {displayName}
                 </ThemedText>
-                {chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
+                {!isGroup && chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
               </View>
             </View>
             <ThemedText type="caption" style={{ color: theme.textSecondary, flexShrink: 0, marginLeft: Spacing.xs, fontSize: 11 }}>
@@ -112,15 +123,21 @@ function ChatItem({
             </ThemedText>
           </View>
           <View style={styles.chatPreview}>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: 4 }} truncate maxLength={15}>
-              @{chat.otherUser?.username || "user"}
-            </ThemedText>
+            {isGroup ? (
+              <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: 4 }} truncate maxLength={15}>
+                {memberCount} {language === "ru" ? "уч." : (memberCount === 1 ? "member" : "members")}
+              </ThemedText>
+            ) : (
+              <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: 4 }} truncate maxLength={15}>
+                @{chat.otherUser?.username || "user"}
+              </ThemedText>
+            )}
             <ThemedText
               type="small"
               numberOfLines={1}
               style={{ color: theme.textSecondary, flex: 1 }}
             >
-              • {typeof chat.lastMessage === 'string' ? chat.lastMessage : "Start a conversation"}
+              • {typeof chat.lastMessage === 'string' ? chat.lastMessage : (language === "ru" ? "Начните разговор" : "Start a conversation")}
             </ThemedText>
             {chat.unreadCount && chat.unreadCount > 0 ? (
               <View style={[styles.unreadBadge, { backgroundColor: theme.link }]}>
@@ -192,15 +209,26 @@ export default function ChatsListScreen({ navigation }: Props) {
     navigation.setOptions({
       headerTitle: language === "ru" ? "Чаты" : "Chats",
       headerRight: () => (
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowSettingsModal(true);
-          }}
-          style={{ padding: Spacing.sm, marginRight: Spacing.sm }}
-        >
-          <Feather name="edit" size={20} color={theme.text} />
-        </Pressable>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              navigation.navigate("CreateGroupChat");
+            }}
+            style={{ padding: Spacing.sm }}
+          >
+            <Feather name="users" size={20} color={theme.text} />
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowSettingsModal(true);
+            }}
+            style={{ padding: Spacing.sm, marginRight: Spacing.sm }}
+          >
+            <Feather name="edit" size={20} color={theme.text} />
+          </Pressable>
+        </View>
       ),
     });
   }, [navigation, theme.text, language]);
@@ -345,15 +373,24 @@ export default function ChatsListScreen({ navigation }: Props) {
           allChatSettings={allChatSettings}
           language={language}
           onPress={() => {
-            const settings = allChatSettings.find(s => s.otherUserId === item.otherUser?.id);
-            navigation.navigate("Chat", { 
-              chatId: item.id,
-              otherUserId: item.otherUser?.id,
-              otherUserName: item.otherUser?.username,
-              otherUserNickname: settings?.nickname,
-              otherUserEmoji: item.otherUser?.emoji,
-              otherUserUsername: item.otherUser?.username,
-            });
+            if (item.isGroup) {
+              navigation.navigate("Chat", {
+                chatId: item.id,
+                isGroupChat: true,
+                groupName: item.name,
+                groupEmoji: item.groupEmoji,
+              });
+            } else {
+              const settings = allChatSettings.find(s => s.otherUserId === item.otherUser?.id);
+              navigation.navigate("Chat", { 
+                chatId: item.id,
+                otherUserId: item.otherUser?.id,
+                otherUserName: item.otherUser?.username,
+                otherUserNickname: settings?.nickname,
+                otherUserEmoji: item.otherUser?.emoji,
+                otherUserUsername: item.otherUser?.username,
+              } as any);
+            }
           }}
         />
       );

@@ -72,8 +72,20 @@ export const chats = pgTable("chats", {
     .default(sql`gen_random_uuid()`),
   user1Id: varchar("user1_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   user2Id: varchar("user2_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  isGroup: boolean("is_group").default(false).notNull(),
+  name: text("name"),
+  groupEmoji: text("group_emoji"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Group chat members table
+export const groupChatMembers = pgTable("group_chat_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  chatId: varchar("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: text("role").default("member").notNull(),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
 });
 
 // Messages table
@@ -287,6 +299,11 @@ export const messageReactionsRelations = relations(messageReactions, ({ one }) =
   }),
 }));
 
+export const groupChatMembersRelations = relations(groupChatMembers, ({ one }) => ({
+  chat: one(chats, { fields: [groupChatMembers.chatId], references: [chats.id] }),
+  user: one(users, { fields: [groupChatMembers.userId], references: [users.id] }),
+}));
+
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, {
     fields: [notifications.userId],
@@ -419,6 +436,12 @@ export const insertPushTokenSchema = createInsertSchema(pushTokens).pick({
   platform: true,
 });
 
+export const insertGroupChatMemberSchema = createInsertSchema(groupChatMembers).pick({
+  chatId: true,
+  userId: true,
+  role: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -448,3 +471,5 @@ export type InsertMessageReaction = z.infer<typeof insertMessageReactionSchema>;
 export type MessageReaction = typeof messageReactions.$inferSelect;
 export type InsertPushToken = z.infer<typeof insertPushTokenSchema>;
 export type PushToken = typeof pushTokens.$inferSelect;
+export type InsertGroupChatMember = z.infer<typeof insertGroupChatMemberSchema>;
+export type GroupChatMember = typeof groupChatMembers.$inferSelect;

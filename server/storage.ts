@@ -15,6 +15,7 @@ import {
   reports,
   blockedUsers,
   pushTokens,
+  groupChatMembers,
   type User,
   type InsertUser,
   type Post,
@@ -43,9 +44,11 @@ import {
   type InsertBlockedUser,
   type PushToken,
   type InsertPushToken,
+  type GroupChatMember,
+  type InsertGroupChatMember,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -141,6 +144,12 @@ export interface IStorage {
   getBlockedUsers(userId: string): Promise<string[]>;
   isBlocked(userId: string, blockedUserId: string): Promise<boolean>;
   
+  // Group chats
+  getGroupChatMembers(chatId: string): Promise<GroupChatMember[]>;
+  addGroupChatMember(member: InsertGroupChatMember): Promise<GroupChatMember>;
+  removeGroupChatMember(chatId: string, userId: string): Promise<void>;
+  getUserGroupChats(userId: string): Promise<Chat[]>;
+
   // Account deletion
   deleteUser(userId: string): Promise<void>;
 }
@@ -301,9 +310,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserChats(userId: string): Promise<Chat[]> {
-    return db.select().from(chats).where(
-      or(eq(chats.user1Id, userId), eq(chats.user2Id, userId))
+    const dmChats = await db.select().from(chats).where(
+      and(
+        or(eq(chats.user1Id, userId), eq(chats.user2Id, userId)),
+        eq(chats.isGroup, false)
+      )
     ).orderBy(desc(chats.updatedAt));
+
+    const groupChatIds = await db.select({ chatId: groupChatMembers.chatId }).from(groupChatMembers).where(eq(groupChatMembers.userId, userId));
+    const groupChats = groupChatIds.length > 0
+      ? await db.select().from(chats).where(
+          and(
+            eq(chats.isGroup, true),
+            inArray(chats.id, groupChatIds.map(g => g.chatId))
+          )
+        ).orderBy(desc(chats.updatedAt))
+      : [];
+
+    return [...dmChats, ...groupChats];
   }
 
   async createChat(chat: InsertChat): Promise<Chat> {
@@ -571,6 +595,31 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
   
+  // Group chats
+  async getGroupChatMembers(chatId: string): Promise<GroupChatMember[]> {
+    return db.select().from(groupChatMembers).where(eq(groupChatMembers.chatId, chatId));
+  }
+
+  async addGroupChatMember(member: InsertGroupChatMember): Promise<GroupChatMember> {
+    const [newMember] = await db.insert(groupChatMembers).values(member).returning();
+    return newMember;
+  }
+
+  async removeGroupChatMember(chatId: string, userId: string): Promise<void> {
+    await db.delete(groupChatMembers).where(
+      and(eq(groupChatMembers.chatId, chatId), eq(groupChatMembers.userId, userId))
+    );
+  }
+
+  async getUserGroupChats(userId: string): Promise<Chat[]> {
+    const memberRows = await db.select({ chatId: groupChatMembers.chatId }).from(groupChatMembers).where(eq(groupChatMembers.userId, userId));
+    if (memberRows.length === 0) return [];
+    const chatIds = memberRows.map(r => r.chatId);
+    return db.select().from(chats).where(
+      and(eq(chats.isGroup, true), inArray(chats.id, chatIds))
+    ).orderBy(desc(chats.updatedAt));
+  }
+
   // Account deletion - deletes user and all associated data
   async deleteUser(userId: string): Promise<void> {
     await db.delete(users).where(eq(users.id, userId));
