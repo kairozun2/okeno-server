@@ -167,7 +167,7 @@ To test features:
 - No in-app purchases (free app)
 - No push notifications yet
 - No background location tracking
-- **App Name in TestFlight**: Shows as "Moments" due to bundleIdentifier `com.moments.app`. Per Expo/EAS guidelines, this cannot be changed after the app has been submitted to prevent breaking updates for existing users. The display name in App Store Connect can still be customized.
+- **App Name**: Display name is "Okeno" (matching App Store listing). Bundle identifier remains `com.moments.app` (must not change after initial submission).
 
 ### Image Upload System
 - Images are uploaded as base64 to the `/api/upload` endpoint
