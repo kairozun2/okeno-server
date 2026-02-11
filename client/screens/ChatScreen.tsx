@@ -997,7 +997,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           onEndReachedThreshold={0.5}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: 8, paddingBottom: insets.top + 80 },
+            { paddingTop: 8, paddingBottom: insets.top + 110 },
           ]}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
@@ -1042,7 +1042,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                 >
                   <Feather name="x" size={20} color="#ff3b30" />
                 </Pressable>
-                <View style={[styles.recordingIndicator, { backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", borderColor: theme.border }]}>
+                <View style={[styles.recordingIndicator, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)", borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)" }]}>
                   <View style={styles.recordingDot} />
                   <ThemedText type="body" style={{ color: "#ff3b30", fontWeight: "600" }}>
                     {formatDuration(recordingDuration)}
@@ -1072,7 +1072,10 @@ export default function ChatScreen({ route, navigation }: Props) {
                     styles.input,
                     {
                       color: theme.text,
-                      backgroundColor: 'transparent',
+                      backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
+                      borderWidth: 1,
+                      borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)",
+                      borderRadius: 20,
                     },
                   ]}
                   placeholder={t("Message...", "Сообщение...")}

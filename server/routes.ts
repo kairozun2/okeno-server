@@ -61,7 +61,14 @@ export async function registerRoutes(app: express.Express) {
         return res.status(400).json({ error: "User ID and PIN required" });
       }
 
-      const user = await storage.getUserByIdAndPin(userId, pin);
+      let user = await storage.getUserByIdAndPin(userId, pin);
+      
+      if (!user) {
+        const userByUsername = await storage.getUserByUsername(userId.trim());
+        if (userByUsername) {
+          user = await storage.getUserByIdAndPin(userByUsername.id, pin);
+        }
+      }
       if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
       }

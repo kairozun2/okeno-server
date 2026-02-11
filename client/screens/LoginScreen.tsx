@@ -83,8 +83,8 @@ export default function LoginScreen({ navigation }: Props) {
           style={styles.form}
         >
           <Input
-            label="User ID"
-            placeholder="Enter your ID"
+            label="Username or User ID"
+            placeholder="Enter username or ID"
             value={userId}
             onChangeText={(text) => {
               setUserId(text);
