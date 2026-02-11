@@ -29,7 +29,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing } from "@/constants/theme";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getImageUrl } from "@/lib/query-client";
 import { fetchAndCacheChats } from "@/lib/sync";
 import * as Database from "@/lib/database";
 import { useRefresh } from "@/contexts/RefreshContext";
@@ -193,12 +193,12 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [isGlobal, setIsGlobal] = useState(false);
 
   const presetBackgrounds = [
-    "https://i.imgbly.com/7LrPlX4Iji8B7My.png",
-    "https://i.imgbly.com/dXlgA0NxiQ0OQrf.png",
-    "https://i.imgbly.com/LfiUT8bTrfnCxxi.png",
-    "https://i.imgbly.com/Oe0Zr0pZL1AaiYc.png",
-    "https://i.imgbly.com/DtLmUPp1J7D93Y6.png",
-    "https://i.imgbly.com/sXwxiUNCKhTknmC.png"
+    "/uploads/bg-preset-1.png",
+    "/uploads/bg-preset-2.png",
+    "/uploads/bg-preset-3.png",
+    "/uploads/bg-preset-4.png",
+    "/uploads/bg-preset-5.png",
+    "/uploads/bg-preset-6.png",
   ];
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
@@ -498,7 +498,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                       ]}
                     >
                       <Image 
-                        source={{ uri: url }} 
+                        source={{ uri: url.startsWith("http") ? url : getImageUrl(url) }} 
                         style={styles.presetImage} 
                         contentFit="cover"
                         cachePolicy="memory-disk"
@@ -526,7 +526,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                     </View>
                   ) : backgroundImage ? (
                     <Image
-                      source={{ uri: backgroundImage }}
+                      source={{ uri: backgroundImage.startsWith("http") ? backgroundImage : getImageUrl(backgroundImage) }}
                       style={styles.backgroundImage}
                       contentFit="cover"
                       cachePolicy="memory-disk"
