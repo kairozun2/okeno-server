@@ -901,7 +901,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior="padding"
-        keyboardVerticalOffset={chatFullscreen ? 0 : 40}
+        keyboardVerticalOffset={0}
       >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
@@ -1373,7 +1373,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: Spacing.md,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   recordingRow: {
     flex: 1,
@@ -1384,9 +1384,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 40,
     maxHeight: 150,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Platform.OS === 'ios' ? 10 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 10 : 8,
     fontSize: 16,
+    textAlignVertical: 'center',
   },
   sendButton: {
     width: 40,
