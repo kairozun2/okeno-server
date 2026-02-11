@@ -3,7 +3,6 @@ import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList, Acti
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import Animated, { 
@@ -294,8 +293,7 @@ export default function ProfileScreen({ navigation }: Props) {
         lastUsernameChange={user?.lastUsernameChange || null}
         onSave={handleSaveProfile}
       />
-      <View style={[styles.customHeader, { height: headerHeight + insets.top }]}>
-        <BlurView intensity={80} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+      <View style={[styles.customHeader, { height: headerHeight + insets.top, backgroundColor: theme.backgroundRoot }]}>
         <View style={[styles.headerContent, { paddingTop: insets.top }]}>
           <View style={styles.headerLeft}>
             {user?.isAdmin || user?.id === "36277fd7-5211-4715-9411-4401ea120d88" ? (

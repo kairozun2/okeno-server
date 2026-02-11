@@ -214,7 +214,7 @@ export default function UserSearchScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.xl }]}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.closeButton}

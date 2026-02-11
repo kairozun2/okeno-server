@@ -1,47 +1,47 @@
 import { Platform } from "react-native";
 
-// Soft sage green palette matching screenshots
-const primaryGreen = "#5C7A5C";
-const accentGreen = "#6B8E6B";
+// Blue palette for the app
+const primaryBlue = "#3478F6";
+const accentBlue = "#5A9CFF";
 
 export const Colors = {
   light: {
-    text: "#2D3A2D",
-    textSecondary: "#5C6E5C",
+    text: "#1C1C1E",
+    textSecondary: "#6E6E73",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#8A9A8A",
-    tabIconSelected: primaryGreen,
-    link: primaryGreen,
-    accent: accentGreen,
-    backgroundRoot: "#E8EDE8",
-    backgroundDefault: "#F0F4F0",
-    backgroundSecondary: "#D8E0D8",
-    backgroundTertiary: "#C8D4C8",
-    border: "rgba(92, 122, 92, 0.15)",
+    tabIconDefault: "#8E8E93",
+    tabIconSelected: primaryBlue,
+    link: primaryBlue,
+    accent: accentBlue,
+    backgroundRoot: "#F2F2F7",
+    backgroundDefault: "#FFFFFF",
+    backgroundSecondary: "#E5E5EA",
+    backgroundTertiary: "#D1D1D6",
+    border: "rgba(60, 60, 67, 0.12)",
     inputBackground: "rgba(255, 255, 255, 0.5)",
     cardBackground: "rgba(255, 255, 255, 0.4)",
-    success: "#4A7A4A",
-    error: "#A85454",
-    warning: "#A88A54",
+    success: "#34C759",
+    error: "#FF3B30",
+    warning: "#FF9500",
   },
   dark: {
-    text: "#E8EDE8",
-    textSecondary: "#A8B8A8",
+    text: "#F5F5F7",
+    textSecondary: "#98989D",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#6A7A6A",
-    tabIconSelected: "#8AAA8A",
-    link: "#8AAA8A",
-    accent: accentGreen,
-    backgroundRoot: "#1A221A",
-    backgroundDefault: "#222A22",
-    backgroundSecondary: "#2A342A",
-    backgroundTertiary: "#323E32",
-    border: "rgba(138, 170, 138, 0.15)",
+    tabIconDefault: "#636366",
+    tabIconSelected: "#5A9CFF",
+    link: "#5A9CFF",
+    accent: accentBlue,
+    backgroundRoot: "#000000",
+    backgroundDefault: "#1C1C1E",
+    backgroundSecondary: "#2C2C2E",
+    backgroundTertiary: "#3A3A3C",
+    border: "rgba(84, 84, 88, 0.25)",
     inputBackground: "rgba(255, 255, 255, 0.08)",
     cardBackground: "rgba(255, 255, 255, 0.06)",
-    success: "#6A9A6A",
-    error: "#C87070",
-    warning: "#C8A870",
+    success: "#30D158",
+    error: "#FF453A",
+    warning: "#FFD60A",
   },
 };
 

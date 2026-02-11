@@ -420,7 +420,7 @@ export default function ChatsListScreen({ navigation }: Props) {
         onRequestClose={handleCloseModal}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.md }]}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.xl }]}>
             <View style={styles.modalHeaderButton}>
               {selectedChat && (
                 <Pressable onPress={() => setSelectedChat(null)} style={styles.modalHeaderBackButton}>
