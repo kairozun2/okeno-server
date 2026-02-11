@@ -151,11 +151,7 @@ export default function MainTabNavigator() {
   const unreadCount = unreadData?.count || 0;
 
   const headerBackground = () => (
-    <BlurView
-      intensity={Platform.OS === "ios" ? 80 : 100}
-      tint={isDark ? "dark" : "light"}
-      style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot + 'A0' }]}
-    />
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot }]} />
   );
 
   return (
@@ -168,7 +164,7 @@ export default function MainTabNavigator() {
           tabBarShowLabel: false,
           tabBarStyle: {
             position: "absolute",
-            backgroundColor: Platform.OS === "ios" ? "transparent" : theme.backgroundRoot,
+            backgroundColor: theme.backgroundRoot,
             borderTopWidth: 0,
             elevation: 0,
             height: 50 + insets.bottom,
@@ -176,14 +172,9 @@ export default function MainTabNavigator() {
           tabBarItemStyle: {
             paddingTop: 16,
           },
-          tabBarBackground: () =>
-            Platform.OS === "ios" ? (
-              <BlurView
-                intensity={Platform.OS === "ios" ? 80 : 100}
-                tint={isDark ? "dark" : "light"}
-                style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot + 'A0' }]}
-              />
-            ) : null,
+          tabBarBackground: () => (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundRoot }]} />
+          ),
           headerTransparent: true,
           headerBackground,
           headerStyle: {

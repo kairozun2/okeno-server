@@ -281,7 +281,8 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const shareUrl = `https://okeno.app/u/${profileUser.username}`;
+      const domain = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
+      const shareUrl = `https://${domain}/u/${profileUser.username}`;
       
       await Share.share({
         message: `Check out ${profileUser.username}'s profile on Okeno: ${shareUrl}`,
