@@ -898,11 +898,11 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const chatContent = (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot, flex: 1 }]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior="padding"
-        keyboardVerticalOffset={0}
-      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior="padding"
+          keyboardVerticalOffset={Platform.OS === 'ios' ? -5 : 0}
+        >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
             onPress={() => navigation.goBack()}
@@ -997,7 +997,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           onEndReachedThreshold={0.5}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: 8, paddingBottom: insets.top + 110 },
+            { paddingTop: 16, paddingBottom: insets.top + 110 },
           ]}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
@@ -1389,6 +1389,7 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 10 : 8,
     fontSize: 16,
     textAlignVertical: 'center',
+    lineHeight: 20,
   },
   sendButton: {
     width: 40,
