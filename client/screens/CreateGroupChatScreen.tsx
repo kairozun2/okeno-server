@@ -105,7 +105,7 @@ export default function CreateGroupChatScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+      <View style={[styles.header, { paddingTop: Spacing.sm }]}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.headerButton}

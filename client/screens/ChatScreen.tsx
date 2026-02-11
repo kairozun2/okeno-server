@@ -95,30 +95,30 @@ function VoiceMessagePlayer({
         onPress={togglePlayback}
         style={[
           styles.voicePlayButton,
-          { backgroundColor: isOwn ? "rgba(255,255,255,0.2)" : theme.backgroundSecondary }
+          { backgroundColor: isOwn ? "rgba(0,0,0,0.08)" : theme.backgroundSecondary }
         ]}
       >
         <Feather 
           name={isPlaying ? "pause" : "play"} 
           size={18} 
-          color={isOwn ? "#fff" : theme.text} 
+          color={theme.text} 
         />
       </Pressable>
       <View style={{ flex: 1, gap: 4 }}>
-        <View style={[styles.voiceProgress, { backgroundColor: isOwn ? "rgba(255,255,255,0.3)" : theme.border }]}>
+        <View style={[styles.voiceProgress, { backgroundColor: isOwn ? "rgba(0,0,0,0.15)" : theme.border }]}>
           <View 
             style={[
               styles.voiceProgressFill, 
               { 
                 width: `${progress * 100}%`,
-                backgroundColor: isOwn ? "#fff" : theme.link 
+                backgroundColor: theme.link 
               }
             ]} 
           />
         </View>
         <ThemedText 
           type="caption" 
-          style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontSize: 11 }}
+          style={{ color: theme.textSecondary, fontSize: 11 }}
         >
           {formatTime(voiceDuration)}
         </ThemedText>
@@ -202,7 +202,7 @@ function MessageBubble({
       return (
         <ThemedText
           type="body"
-          style={{ color: isOwn ? "#fff" : theme.text }}
+          style={{ color: theme.text }}
         >
           {content}
         </ThemedText>
@@ -212,7 +212,7 @@ function MessageBubble({
     return (
       <ThemedText
         type="body"
-        style={{ color: isOwn ? "#fff" : theme.text }}
+        style={{ color: theme.text }}
       >
         {parts.map((part, i) => {
           if (part === undefined) return null;
@@ -221,7 +221,7 @@ function MessageBubble({
               <ThemedText
                 key={i}
                 type="body"
-                style={{ color: isOwn ? "rgba(255,255,255,0.9)" : theme.link, textDecorationLine: 'underline' }}
+                style={{ color: theme.link, textDecorationLine: 'underline' }}
                 onPress={() => handleUrlPress(part)}
               >
                 {part}
@@ -250,11 +250,13 @@ function MessageBubble({
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: isSelected ? 1.05 : 1 }],
               shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: isSelected ? 0.3 : 0,
-              shadowRadius: 8,
-              elevation: isSelected ? 10 : 0,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: isOwn ? 0.08 : (isSelected ? 0.3 : 0),
+              shadowRadius: isOwn ? 4 : 8,
+              elevation: isOwn ? 2 : (isSelected ? 10 : 0),
               overflow: isOwn ? 'hidden' : undefined,
+              borderWidth: isOwn ? 1 : 0,
+              borderColor: isOwn ? (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)') : 'transparent',
             },
           ]}
         >
@@ -262,12 +264,14 @@ function MessageBubble({
             <>
               {Platform.OS === 'ios' ? (
                 <BlurView
-                  intensity={80}
-                  tint="dark"
-                  style={[StyleSheet.absoluteFill, { backgroundColor: isSelected ? 'rgba(52, 120, 246, 0.7)' : 'rgba(52, 120, 246, 0.55)' }]}
+                  intensity={60}
+                  tint={isDark ? "dark" : "light"}
+                  style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.65)' }]}
                 />
               ) : (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: isSelected ? 'rgba(52, 120, 246, 0.85)' : 'rgba(52, 120, 246, 0.7)' }]} />
+                <View style={[StyleSheet.absoluteFill, { 
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)',
+                }]} />
               )}
             </>
           ) : null}
@@ -280,11 +284,11 @@ function MessageBubble({
             </View>
           ) : null}
           {replyMessage ? (
-            <View style={[styles.replyContainer, { borderLeftColor: isOwn ? "rgba(255,255,255,0.5)" : theme.link }]}>
-              <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, fontWeight: "600" }}>
+            <View style={[styles.replyContainer, { borderLeftColor: theme.link }]}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, fontWeight: "600" }}>
                 {t("Reply", "Ответ")}
               </ThemedText>
-              <ThemedText type="caption" style={{ color: isOwn ? "rgba(255,255,255,0.6)" : theme.textSecondary }} numberOfLines={1}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }} numberOfLines={1}>
                 {replyMessage.voiceUrl ? t("Voice message", "Голосовое") : replyMessage.imageUrl ? t("Photo", "Фото") : (typeof replyMessage.content === 'string' ? replyMessage.content : "")}
               </ThemedText>
             </View>
@@ -337,7 +341,7 @@ function MessageBubble({
             {message.isEdited ? (
               <ThemedText
                 type="caption"
-                style={[styles.editedLabel, { color: isOwn ? "rgba(255,255,255,0.5)" : theme.textSecondary }]}
+                style={[styles.editedLabel, { color: theme.textSecondary }]}
               >
                 {t("edited", "изм.")}
               </ThemedText>
@@ -347,7 +351,7 @@ function MessageBubble({
                 type="caption"
                 style={[
                   styles.messageTime,
-                  { color: isOwn ? "rgba(255,255,255,0.7)" : theme.textSecondary, marginRight: 2 },
+                  { color: theme.textSecondary, marginRight: 2 },
                 ]}
               >
                 {formatMessageTime(new Date(message.createdAt))}
@@ -356,7 +360,7 @@ function MessageBubble({
                 <Feather 
                   name="check" 
                   size={11} 
-                  color={message.isRead ? "#fff" : "rgba(255,255,255,0.4)"} 
+                  color={message.isRead ? theme.link : theme.textSecondary} 
                   style={{ marginLeft: 2 }}
                 />
               )}
@@ -364,7 +368,7 @@ function MessageBubble({
                 <Feather 
                   name="check" 
                   size={11} 
-                  color="#fff" 
+                  color={theme.link} 
                   style={{ marginLeft: -7 }}
                 />
               )}
@@ -956,7 +960,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior="padding"
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? -50 : 10) : 0}
         >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
@@ -1111,10 +1115,14 @@ export default function ChatScreen({ route, navigation }: Props) {
                   onPress={stopRecording}
                   style={[
                     styles.sendButton,
-                    { backgroundColor: theme.link }
+                    { 
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)',
+                      borderWidth: 1,
+                      borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                    }
                   ]}
                 >
-                  <Feather name="send" size={18} color="#fff" />
+                  <Feather name="send" size={18} color={theme.text} />
                 </Pressable>
               </Animated.View>
             ) : (
@@ -1150,13 +1158,17 @@ export default function ChatScreen({ route, navigation }: Props) {
                     disabled={sendMutation.isPending || editMutation.isPending}
                     style={[
                       styles.sendButton,
-                      { backgroundColor: theme.link }
+                      { 
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)',
+                        borderWidth: 1,
+                        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                      }
                     ]}
                   >
                     <Feather
                       name={editingMessage ? "check" : "send"}
                       size={18}
-                      color="#fff"
+                      color={theme.text}
                     />
                   </Pressable>
                 ) : (

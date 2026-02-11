@@ -282,45 +282,31 @@ export default function ChatsListScreen({ navigation }: Props) {
       allowsEditing: true,
       aspect: [9, 16],
       quality: 0.8,
+      base64: true,
     });
 
     if (!result.canceled && result.assets[0]) {
-      const localUri = result.assets[0].uri;
+      const asset = result.assets[0];
       setIsUploadingBackground(true);
       
       try {
-        const response = await fetch(localUri);
-        const blob = await response.blob();
+        const mimeType = asset.mimeType || "image/jpeg";
+        const base64data = `data:${mimeType};base64,${asset.base64}`;
         
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64data = reader.result as string;
-          
-          try {
-            console.log("Starting background upload...");
-            const uploadResponse = await apiRequest("POST", "/api/upload", {
-              image: base64data,
-              type: "background",
-            });
-            
-            const data = await uploadResponse.json();
-            console.log("Upload result:", data);
-            if (data.url) {
-              setBackgroundImage(data.url);
-            } else {
-              throw new Error("No URL in upload response");
-            }
-          } catch (err) {
-            console.error("Upload error details:", err);
-            setBackgroundImage(localUri);
-          } finally {
-            setIsUploadingBackground(false);
-          }
-        };
-        reader.readAsDataURL(blob);
-      } catch (error) {
-        console.error("Failed to upload background:", error);
-        setBackgroundImage(localUri);
+        const uploadResponse = await apiRequest("POST", "/api/upload", {
+          image: base64data,
+          type: "background",
+        });
+        
+        const data = await uploadResponse.json();
+        if (data.url) {
+          setBackgroundImage(data.url);
+        } else {
+          throw new Error("No URL in upload response");
+        }
+      } catch (err) {
+        console.error("Upload error:", err);
+      } finally {
         setIsUploadingBackground(false);
       }
     }
@@ -420,7 +406,7 @@ export default function ChatsListScreen({ navigation }: Props) {
         onRequestClose={handleCloseModal}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.xs }]}>
+          <View style={[styles.modalHeader, { paddingTop: Spacing.sm }]}>
             <View style={styles.modalHeaderButton}>
               {selectedChat && (
                 <Pressable onPress={() => setSelectedChat(null)} style={styles.modalHeaderBackButton}>
