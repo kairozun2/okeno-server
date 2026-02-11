@@ -223,46 +223,57 @@ function PostCard({
       <Modal
         visible={showActions}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowActions(false)}
       >
-        <Pressable 
-          style={styles.actionSheetOverlay} 
-          onPress={() => setShowActions(false)}
-        >
-          <ThemedView style={styles.actionSheetContainer}>
+        <View style={styles.actionSheetOverlay}>
+          <Pressable 
+            style={StyleSheet.absoluteFillObject} 
+            onPress={() => setShowActions(false)}
+          />
+          <Animated.View 
+            entering={FadeIn}
+            style={[styles.actionSheetContainer, { backgroundColor: theme.backgroundRoot }]}
+          >
             <Pressable 
-              style={styles.actionSheetItem}
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowActions(false);
-                onReport();
+                setTimeout(() => onReport(), 100);
               }}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
             >
               <Feather name="flag" size={20} color={theme.error} />
-              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>{t("Report", "Пожаловаться")}</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error, fontSize: 16, fontWeight: "500" }}>{t("Report", "Пожаловаться")}</ThemedText>
             </Pressable>
 
+            <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: Spacing.md }} />
+
             <Pressable 
-              style={styles.actionSheetItem}
               onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowActions(false);
-                onBlock();
+                setTimeout(() => onBlock(), 100);
               }}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
             >
               <Feather name="slash" size={20} color={theme.error} />
-              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>{t("Block", "Заблокировать")}</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error, fontSize: 16, fontWeight: "500" }}>{t("Block", "Заблокировать")}</ThemedText>
             </Pressable>
 
-            <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
+            <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: Spacing.md }} />
 
             <Pressable 
-              style={[styles.actionSheetItem, { marginTop: Spacing.xs }]}
-              onPress={() => setShowActions(false)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowActions(false);
+              }}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
             >
-              <ThemedText style={{ width: "100%", textAlign: "center", color: theme.textSecondary }}>{t("Cancel", "Отмена")}</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.textSecondary, fontSize: 16, fontWeight: "500" }}>{t("Cancel", "Отмена")}</ThemedText>
             </Pressable>
-          </ThemedView>
-        </Pressable>
+          </Animated.View>
+        </View>
       </Modal>
 
       <GestureDetector gesture={doubleTapGesture}>
