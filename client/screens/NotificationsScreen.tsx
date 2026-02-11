@@ -226,7 +226,7 @@ export default function NotificationsScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.xl }]}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.xs }]}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
           <Feather name="x" size={24} color={theme.text} />
         </Pressable>

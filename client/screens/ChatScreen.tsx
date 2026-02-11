@@ -245,7 +245,7 @@ function MessageBubble({
             isOwn ? styles.ownMessage : styles.otherMessage,
             { 
               backgroundColor: isOwn 
-                ? (isSelected ? (isDark ? "#4a9eff" : "#2a89ff") : theme.link) 
+                ? "transparent"
                 : (isSelected ? (isDark ? "#323235" : "#f0f0f2") : theme.cardBackground),
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: isSelected ? 1.05 : 1 }],
@@ -254,9 +254,23 @@ function MessageBubble({
               shadowOpacity: isSelected ? 0.3 : 0,
               shadowRadius: 8,
               elevation: isSelected ? 10 : 0,
+              overflow: isOwn ? 'hidden' : undefined,
             },
           ]}
         >
+          {isOwn ? (
+            <>
+              {Platform.OS === 'ios' ? (
+                <BlurView
+                  intensity={80}
+                  tint="dark"
+                  style={[StyleSheet.absoluteFill, { backgroundColor: isSelected ? 'rgba(52, 120, 246, 0.7)' : 'rgba(52, 120, 246, 0.55)' }]}
+                />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: isSelected ? 'rgba(52, 120, 246, 0.85)' : 'rgba(52, 120, 246, 0.7)' }]} />
+              )}
+            </>
+          ) : null}
           {senderName ? (
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4, gap: 4 }}>
               {senderEmoji ? <Avatar emoji={senderEmoji} size={16} /> : null}
@@ -531,10 +545,9 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const getDirectLink = (url: string | null | undefined) => {
     if (!url) return "";
+    if (url.startsWith("file://") || url.startsWith("blob:")) return "";
     if (url.startsWith("http")) return url;
-    const fullUrl = getImageUrl(url);
-    console.log('getDirectLink mapping:', url, '->', fullUrl);
-    return fullUrl;
+    return getImageUrl(url);
   };
 
   useEffect(() => {
@@ -595,7 +608,8 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const displayName = isGroupChat ? (groupName || t("Group", "Группа")) : (chatSettings?.nickname || userData?.username || identity.name || t("User", "Пользователь"));
   const displayEmoji = isGroupChat ? (groupEmoji || "🐸") : (userData?.emoji || identity.emoji || "🐸");
-  const backgroundImage = isGroupChat ? null : chatSettings?.backgroundImage;
+  const rawBackgroundImage = isGroupChat ? null : chatSettings?.backgroundImage;
+  const backgroundImage = rawBackgroundImage && !rawBackgroundImage.startsWith("file://") && !rawBackgroundImage.startsWith("blob:") ? rawBackgroundImage : null;
 
   const {
     data,
@@ -942,7 +956,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior="padding"
-          keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? 0 : -15) : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
