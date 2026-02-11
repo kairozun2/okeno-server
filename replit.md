@@ -112,8 +112,10 @@ UPDATE users SET is_admin = true, is_verified = true WHERE id = 'USER_ID_HERE';
 ### App Review Notes (Demo Credentials)
 ```
 Username: reviewer
-User ID: (create a test account and provide ID)
 PIN: 1234
+
+Login supports both username and User ID.
+User ID (alternative): 3565e11b-5a6b-41d0-8973-028383b27c92
 
 To test features:
 1. Create posts using the camera or photo library
