@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
-import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator, Platform, ActionSheetIOS } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator, Platform, FlatList } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS } from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -73,89 +73,176 @@ interface ChatWithDetails extends Chat {
   unreadCount?: number;
 }
 
+const SWIPE_ACTION_WIDTH = 72;
+
 function ChatItem({
   chat,
   onPress,
-  onLongPress,
+  onDelete,
+  onEditGroup,
   allChatSettings,
   language,
+  currentUserId,
 }: {
   chat: ChatWithDetails;
   onPress: () => void;
-  onLongPress: () => void;
+  onDelete: () => void;
+  onEditGroup?: () => void;
   allChatSettings: ChatSettings[];
   language: string;
+  currentUserId?: string;
 }) {
   const { theme } = useTheme();
 
   const isGroup = chat.isGroup === true;
+  const isGroupAdmin = isGroup && chat.user1Id === currentUserId;
+  const actionsCount = isGroupAdmin ? 2 : 1;
+  const maxSwipe = SWIPE_ACTION_WIDTH * actionsCount;
+
   const displayEmoji = isGroup ? (chat.groupEmoji || "🐸") : (chat.otherUser?.emoji || "🐸");
   const displayName = isGroup
     ? (chat.name || "Group")
     : (allChatSettings?.find((s: ChatSettings) => s.otherUserId === chat.otherUser?.id)?.nickname || chat.otherUser?.username || "User");
   const memberCount = isGroup && chat.members ? chat.members.length : 0;
 
+  const translateX = useSharedValue(0);
+  const contextX = useSharedValue(0);
+
+  const triggerHaptic = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-10, 10])
+    .onStart(() => {
+      contextX.value = translateX.value;
+    })
+    .onUpdate((event) => {
+      const newX = contextX.value + event.translationX;
+      if (newX > 0) {
+        translateX.value = 0;
+      } else if (newX < -maxSwipe) {
+        translateX.value = -maxSwipe;
+      } else {
+        translateX.value = newX;
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationX < -40) {
+        translateX.value = withSpring(-maxSwipe, { damping: 20, stiffness: 200 });
+        runOnJS(triggerHaptic)();
+      } else {
+        translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+      }
+    });
+
+  const tapGesture = Gesture.Tap()
+    .onEnd(() => {
+      if (translateX.value < -10) {
+        translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+      } else {
+        runOnJS(onPress)();
+        runOnJS(triggerHaptic)();
+      }
+    });
+
+  const composedGesture = Gesture.Race(panGesture, tapGesture);
+
+  const rowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  const actionsStyle = useAnimatedStyle(() => ({
+    width: -translateX.value > 0 ? -translateX.value : 0,
+    opacity: -translateX.value > 10 ? withTiming(1, { duration: 100 }) : withTiming(0, { duration: 100 }),
+  }));
+
+  const handleDelete = () => {
+    translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+    onDelete();
+  };
+
+  const handleEdit = () => {
+    translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+    if (onEditGroup) onEditGroup();
+  };
+
   return (
-    <Animated.View entering={FadeIn}>
-      <Pressable
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onPress();
-        }}
-        onLongPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-          onLongPress();
-        }}
-        delayLongPress={500}
-        style={({ pressed }) => [
-          styles.chatItem,
-          {
-            backgroundColor: pressed ? theme.backgroundSecondary : "transparent",
-          },
-        ]}
-      >
-        <Avatar emoji={displayEmoji} size={44} />
-        <View style={styles.chatInfo}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1, flexGrow: 1 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1 }}>
-                <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
-                  {displayName}
-                </ThemedText>
-                {!isGroup && chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
+    <Animated.View entering={FadeIn} style={{ overflow: 'hidden' }}>
+      <Animated.View style={[styles.swipeActionsContainer, actionsStyle]}>
+        {isGroupAdmin ? (
+          <Pressable
+            onPress={handleEdit}
+            style={[styles.swipeAction, { backgroundColor: theme.link }]}
+          >
+            <Feather name="edit-2" size={20} color="#fff" />
+            <ThemedText type="caption" style={{ color: "#fff", fontSize: 10, marginTop: 2 }}>
+              {language === "ru" ? "Ред." : "Edit"}
+            </ThemedText>
+          </Pressable>
+        ) : null}
+        <Pressable
+          onPress={handleDelete}
+          style={[styles.swipeAction, { backgroundColor: theme.error }]}
+        >
+          <Feather name="trash-2" size={20} color="#fff" />
+          <ThemedText type="caption" style={{ color: "#fff", fontSize: 10, marginTop: 2 }}>
+            {language === "ru" ? "Удал." : "Delete"}
+          </ThemedText>
+        </Pressable>
+      </Animated.View>
+      <GestureDetector gesture={composedGesture}>
+        <Animated.View
+          style={[
+            styles.chatItem,
+            { backgroundColor: theme.backgroundRoot },
+            rowStyle,
+          ]}
+        >
+          <Avatar emoji={displayEmoji} size={44} />
+          <View style={styles.chatInfo}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1, flexGrow: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1 }}>
+                  <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
+                    {displayName}
+                  </ThemedText>
+                  {!isGroup && chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
+                </View>
               </View>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, flexShrink: 0, marginLeft: Spacing.xs, fontSize: 11 }}>
+                {formatCompactDate(new Date(chat.updatedAt), language)}
+              </ThemedText>
             </View>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, flexShrink: 0, marginLeft: Spacing.xs, fontSize: 11 }}>
-              {formatCompactDate(new Date(chat.updatedAt), language)}
-            </ThemedText>
-          </View>
-          <View style={styles.chatPreview}>
-            {isGroup ? (
-              <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: 4 }} truncate maxLength={15}>
-                {memberCount} {language === "ru" ? "уч." : (memberCount === 1 ? "member" : "members")}
-              </ThemedText>
-            ) : (
-              <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: 4 }} truncate maxLength={15}>
-                @{chat.otherUser?.username || "user"}
-              </ThemedText>
-            )}
-            <ThemedText
-              type="small"
-              numberOfLines={1}
-              style={{ color: theme.textSecondary, flex: 1 }}
-            >
-              • {typeof chat.lastMessage === 'string' ? chat.lastMessage : (language === "ru" ? "Начните разговор" : "Start a conversation")}
-            </ThemedText>
-            {chat.unreadCount && chat.unreadCount > 0 ? (
-              <View style={[styles.unreadBadge, { backgroundColor: theme.link }]}>
-                <ThemedText type="caption" style={{ color: "#fff", fontWeight: "600", fontSize: 11 }}>
-                  {chat.unreadCount}
+            <View style={styles.chatPreview}>
+              {isGroup ? (
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: 4 }} truncate maxLength={15}>
+                  {memberCount} {language === "ru" ? "уч." : (memberCount === 1 ? "member" : "members")}
                 </ThemedText>
-              </View>
-            ) : null}
+              ) : (
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginRight: 4 }} truncate maxLength={15}>
+                  @{chat.otherUser?.username || "user"}
+                </ThemedText>
+              )}
+              <ThemedText
+                type="small"
+                numberOfLines={1}
+                style={{ color: theme.textSecondary, flex: 1 }}
+              >
+                • {typeof chat.lastMessage === 'string' ? chat.lastMessage : (language === "ru" ? "Начните разговор" : "Start a conversation")}
+              </ThemedText>
+              {chat.unreadCount && chat.unreadCount > 0 ? (
+                <View style={[styles.unreadBadge, { backgroundColor: theme.link }]}>
+                  <ThemedText type="caption" style={{ color: "#fff", fontWeight: "600", fontSize: 11 }}>
+                    {chat.unreadCount}
+                  </ThemedText>
+                </View>
+              ) : null}
+            </View>
           </View>
-        </View>
-      </Pressable>
+        </Animated.View>
+      </GestureDetector>
     </Animated.View>
   );
 }
@@ -199,7 +286,6 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [isGlobal, setIsGlobal] = useState(false);
   const [longPressChat, setLongPressChat] = useState<ChatWithDetails | null>(null);
-  const [showLongPressModal, setShowLongPressModal] = useState(false);
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
   const [editGroupName, setEditGroupName] = useState("");
   const [editGroupEmoji, setEditGroupEmoji] = useState("");
@@ -308,47 +394,17 @@ export default function ChatsListScreen({ navigation }: Props) {
     },
   });
 
-  const handleLongPress = useCallback((chat: ChatWithDetails) => {
+  const handleDeleteChat = useCallback((chat: ChatWithDetails) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    deleteChatMutation.mutate(chat.id);
+  }, []);
+
+  const handleEditGroup = useCallback((chat: ChatWithDetails) => {
     setLongPressChat(chat);
-    
-    if (Platform.OS === 'ios') {
-      const isGroup = chat.isGroup === true;
-      const isGroupAdmin = isGroup && chat.user1Id === user?.id;
-      
-      const options: string[] = [];
-      
-      if (isGroupAdmin) {
-        options.push(language === 'ru' ? 'Редактировать группу' : 'Edit Group');
-      }
-      options.push(language === 'ru' ? 'Удалить чат' : 'Delete Chat');
-      options.push(language === 'ru' ? 'Отмена' : 'Cancel');
-      
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options,
-          destructiveButtonIndex: isGroupAdmin ? 1 : 0,
-          cancelButtonIndex: options.length - 1,
-        },
-        (buttonIndex) => {
-          if (isGroupAdmin) {
-            if (buttonIndex === 0) {
-              setEditGroupName(chat.name || '');
-              setEditGroupEmoji(chat.groupEmoji || '🐸');
-              setShowEditGroupModal(true);
-            } else if (buttonIndex === 1) {
-              deleteChatMutation.mutate(chat.id);
-            }
-          } else {
-            if (buttonIndex === 0) {
-              deleteChatMutation.mutate(chat.id);
-            }
-          }
-        }
-      );
-    } else {
-      setShowLongPressModal(true);
-    }
-  }, [user?.id, language]);
+    setEditGroupName(chat.name || '');
+    setEditGroupEmoji(chat.groupEmoji || '🐸');
+    setShowEditGroupModal(true);
+  }, []);
 
   const [isUploadingBackground, setIsUploadingBackground] = useState(false);
 
@@ -429,11 +485,13 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   const renderItem = useCallback(
     ({ item }: { item: ChatWithDetails }) => {
+      const isGroupAdmin = item.isGroup === true && item.user1Id === user?.id;
       return (
         <ChatItem
           chat={item}
           allChatSettings={allChatSettings}
           language={language}
+          currentUserId={user?.id}
           onPress={() => {
             if (item.isGroup) {
               navigation.navigate("Chat", {
@@ -454,16 +512,17 @@ export default function ChatsListScreen({ navigation }: Props) {
               } as any);
             }
           }}
-          onLongPress={() => handleLongPress(item)}
+          onDelete={() => handleDeleteChat(item)}
+          onEditGroup={isGroupAdmin ? () => handleEditGroup(item) : undefined}
         />
       );
     },
-    [navigation, allChatSettings, language]
+    [navigation, allChatSettings, language, user?.id]
   );
 
   return (
     <ThemedView style={styles.container}>
-      <FlashList
+      <FlatList
         data={sortedChats}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
@@ -475,51 +534,6 @@ export default function ChatsListScreen({ navigation }: Props) {
         refreshing={refreshing}
         ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
       />
-
-      <Modal
-        visible={showLongPressModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowLongPressModal(false)}
-      >
-        <Pressable 
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
-          onPress={() => setShowLongPressModal(false)}
-        >
-          <View style={{ backgroundColor: theme.backgroundRoot, borderTopLeftRadius: 16, borderTopRightRadius: 16, paddingBottom: insets.bottom + Spacing.md }}>
-            {longPressChat?.isGroup && longPressChat?.user1Id === user?.id ? (
-              <Pressable
-                onPress={() => {
-                  setShowLongPressModal(false);
-                  setEditGroupName(longPressChat?.name || '');
-                  setEditGroupEmoji(longPressChat?.groupEmoji || '🐸');
-                  setShowEditGroupModal(true);
-                }}
-                style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, gap: Spacing.md }}
-              >
-                <Feather name="edit-2" size={20} color={theme.text} />
-                <ThemedText type="body">{t("Edit Group", "Редактировать группу")}</ThemedText>
-              </Pressable>
-            ) : null}
-            <Pressable
-              onPress={() => {
-                setShowLongPressModal(false);
-                if (longPressChat) deleteChatMutation.mutate(longPressChat.id);
-              }}
-              style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, gap: Spacing.md }}
-            >
-              <Feather name="trash-2" size={20} color={theme.error} />
-              <ThemedText type="body" style={{ color: theme.error }}>{t("Delete Chat", "Удалить чат")}</ThemedText>
-            </Pressable>
-            <Pressable
-              onPress={() => setShowLongPressModal(false)}
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: Spacing.lg }}
-            >
-              <ThemedText type="body" style={{ color: theme.textSecondary }}>{t("Cancel", "Отмена")}</ThemedText>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
 
       <Modal
         visible={showEditGroupModal}
@@ -782,6 +796,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
+  },
+  swipeActionsContainer: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    overflow: 'hidden',
+  },
+  swipeAction: {
+    width: SWIPE_ACTION_WIDTH,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chatInfo: {
     flex: 1,
