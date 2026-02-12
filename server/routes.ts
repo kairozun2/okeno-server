@@ -13,8 +13,9 @@ import { sendNewMessageNotification, sendLikeNotification, sendCommentNotificati
 
 const EMOJIS = ["🐸", "🦊", "🐻", "🐼", "🦁", "🐯", "🐨", "🐮", "🐷", "🐵", "🐔", "🐧", "🐦", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🕷", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊", "🐇", "🦝", "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿", "🦔"];
 
-function sanitizeString(input: string | undefined | null): string {
-  if (!input) return "";
+function sanitizeString(input: string | undefined | null): string | null {
+  if (input === undefined || input === null) return null as any;
+  if (input === "") return "";
   return input
     .replace(/[<>]/g, "")
     .replace(/javascript:/gi, "")
@@ -778,7 +779,9 @@ export async function registerRoutes(app: express.Express) {
   app.post("/api/messages", async (req, res) => {
     try {
       const messageData = insertMessageSchema.parse(req.body);
-      messageData.content = sanitizeString(messageData.content);
+      if (messageData.content) {
+        messageData.content = sanitizeString(messageData.content) || messageData.content;
+      }
       const message = await storage.createMessage(messageData);
       
       // Send push notification for new message
