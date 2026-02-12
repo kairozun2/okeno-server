@@ -1133,7 +1133,9 @@ export default function ChatScreen({ route, navigation }: Props) {
 
           <Pressable
             onPress={() => {
-              if (!isGroupChat && otherUserId) {
+              if (isGroupChat && chatId) {
+                navigation.navigate("GroupChatInfo", { chatId, groupName: displayName, groupEmoji: displayEmoji });
+              } else if (!isGroupChat && otherUserId) {
                 navigation.navigate("UserProfile", { userId: otherUserId });
               }
             }}
