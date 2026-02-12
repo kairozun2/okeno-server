@@ -369,6 +369,8 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
   const [editGroupName, setEditGroupName] = useState("");
   const [editGroupEmoji, setEditGroupEmoji] = useState("");
+  const [addMemberSearch, setAddMemberSearch] = useState("");
+  const [showAddMemberSection, setShowAddMemberSection] = useState(false);
 
   const swipeCloseRef = useRef<Record<string, () => void>>({});
   const openSwipeIdRef = useRef<string | null>(null);
@@ -501,6 +503,40 @@ export default function ChatsListScreen({ navigation }: Props) {
     },
   });
 
+  const addMemberMutation = useMutation({
+    mutationFn: async ({ chatId, userId }: { chatId: string; userId: string }) => {
+      await apiRequest("POST", `/api/group-chats/${chatId}/members`, { userId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/group-chats", longPressChat?.id, "members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "chats"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setAddMemberSearch("");
+    },
+  });
+
+  const contacts = useMemo(() => {
+    const userMap = new Map<string, User>();
+    chatsData.forEach((chat) => {
+      if (chat.otherUser && !chat.isGroup) {
+        userMap.set(chat.otherUser.id, chat.otherUser);
+      }
+    });
+    return Array.from(userMap.values());
+  }, [chatsData]);
+
+  const existingMemberIds = useMemo(() => {
+    if (!groupMembersQuery.data) return new Set<string>();
+    return new Set((groupMembersQuery.data as any[]).map((m: any) => m.userId));
+  }, [groupMembersQuery.data]);
+
+  const filteredAddContacts = useMemo(() => {
+    const available = contacts.filter((c) => !existingMemberIds.has(c.id));
+    if (!addMemberSearch.trim()) return available;
+    const q = addMemberSearch.toLowerCase();
+    return available.filter((u) => u.username.toLowerCase().includes(q));
+  }, [contacts, existingMemberIds, addMemberSearch]);
+
   const handleDeleteChat = useCallback((chat: ChatWithDetails) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     deleteChatMutation.mutate(chat.id);
@@ -510,6 +546,8 @@ export default function ChatsListScreen({ navigation }: Props) {
     setLongPressChat(chat);
     setEditGroupName(chat.name || '');
     setEditGroupEmoji(chat.groupEmoji || '🐸');
+    setShowAddMemberSection(false);
+    setAddMemberSearch("");
     setShowEditGroupModal(true);
   }, []);
 
@@ -802,6 +840,87 @@ export default function ChatsListScreen({ navigation }: Props) {
                 );
               })}
             </View>
+
+            {longPressChat?.user1Id === user?.id ? (
+              <>
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowAddMemberSection(!showAddMemberSection);
+                    setAddMemberSearch("");
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: Spacing.md,
+                    marginTop: Spacing.md,
+                    backgroundColor: theme.backgroundSecondary,
+                    borderRadius: 12,
+                    gap: 8,
+                  }}
+                >
+                  <Feather name={showAddMemberSection ? "chevron-up" : "user-plus"} size={18} color={theme.link} />
+                  <ThemedText type="body" style={{ color: theme.link, fontWeight: '600' }}>
+                    {t("Add Members", "Добавить участников")}
+                  </ThemedText>
+                </Pressable>
+
+                {showAddMemberSection ? (
+                  <View style={{ marginTop: Spacing.md }}>
+                    <TextInput
+                      value={addMemberSearch}
+                      onChangeText={setAddMemberSearch}
+                      placeholder={t("Search contacts...", "Поиск контактов...")}
+                      placeholderTextColor={theme.textSecondary}
+                      style={[
+                        styles.nicknameInput,
+                        { backgroundColor: theme.backgroundSecondary, color: theme.text, borderColor: theme.border, marginBottom: Spacing.sm },
+                      ]}
+                      autoFocus
+                    />
+                    <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
+                      {filteredAddContacts.length === 0 ? (
+                        <View style={{ padding: Spacing.lg, alignItems: 'center' }}>
+                          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                            {t("No contacts to add", "Нет контактов для добавления")}
+                          </ThemedText>
+                        </View>
+                      ) : filteredAddContacts.map((contact, index) => (
+                        <Pressable
+                          key={contact.id}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            if (longPressChat) {
+                              addMemberMutation.mutate({ chatId: longPressChat.id, userId: contact.id });
+                            }
+                          }}
+                          disabled={addMemberMutation.isPending}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            padding: Spacing.md,
+                            borderBottomWidth: index === filteredAddContacts.length - 1 ? 0 : StyleSheet.hairlineWidth,
+                            borderBottomColor: theme.border,
+                          }}
+                        >
+                          <Avatar emoji={contact.emoji || "🐸"} size={36} />
+                          <View style={{ flex: 1, marginLeft: Spacing.md }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <ThemedText type="body" style={{ fontWeight: '500' }}>
+                                {contact.username}
+                              </ThemedText>
+                              {contact.isVerified ? <VerifiedBadge size={14} /> : null}
+                            </View>
+                          </View>
+                          <Feather name="plus-circle" size={20} color={theme.link} />
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+                ) : null}
+              </>
+            ) : null}
           </ScrollView>
         </View>
       </Modal>
