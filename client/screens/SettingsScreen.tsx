@@ -640,12 +640,13 @@ export default function SettingsScreen({ navigation }: Props) {
 
       <Modal
         visible={showReactionPicker}
-        animationType="slide"
+        animationType="fade"
         transparent
         onRequestClose={() => setShowReactionPicker(false)}
       >
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowReactionPicker(false)}>
-          <Pressable onPress={() => {}} style={{ backgroundColor: theme.backgroundRoot, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + Spacing.md }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowReactionPicker(false)} />
+          <Animated.View entering={FadeIn.duration(200)} style={{ backgroundColor: theme.backgroundRoot, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + Spacing.md }}>
             <View style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 4 }}>
               <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: theme.textSecondary + '40' }} />
             </View>
@@ -721,8 +722,8 @@ export default function SettingsScreen({ navigation }: Props) {
                 </Pressable>
               </View>
             </View>
-          </Pressable>
-        </Pressable>
+          </Animated.View>
+        </View>
       </Modal>
 
       <Modal
