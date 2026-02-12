@@ -173,16 +173,16 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
           <Animated.View style={[styles.controlsBar, { top: insets.top + 8 }, controlsAnimStyle]}>
             <Pressable
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); navigation.goBack(); }}
-              style={styles.controlBtn}
-            >
-              <Feather name="x" size={20} color="#FFF" />
-            </Pressable>
-            <Pressable
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); webViewRef.current?.reload(); }}
               style={styles.controlBtn}
             >
               <Feather name="refresh-cw" size={18} color="#FFF" />
+            </Pressable>
+            <Pressable
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); navigation.goBack(); }}
+              style={styles.controlBtn}
+            >
+              <Feather name="x" size={20} color="#FFF" />
             </Pressable>
           </Animated.View>
 
@@ -212,8 +212,9 @@ const styles = StyleSheet.create({
   controlsBar: {
     position: "absolute",
     left: 16,
+    right: 16,
     flexDirection: "row",
-    gap: 12,
+    justifyContent: "space-between",
     zIndex: 100,
   },
   controlBtn: {
