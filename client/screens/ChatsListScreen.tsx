@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator, Platform, FlatList } from "react-native";
+import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator, Platform, FlatList, Text } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -29,7 +29,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing } from "@/constants/theme";
-import { apiRequest, getImageUrl } from "@/lib/query-client";
+import { apiRequest, getApiUrl, getImageUrl } from "@/lib/query-client";
 import { fetchAndCacheChats } from "@/lib/sync";
 import * as Database from "@/lib/database";
 import { useRefresh } from "@/contexts/RefreshContext";
@@ -73,6 +73,15 @@ interface ChatWithDetails extends Chat {
   members?: User[];
   lastMessage?: string;
   unreadCount?: number;
+}
+
+interface MiniAppItem {
+  id: string;
+  name: string;
+  emoji: string;
+  url: string;
+  description?: string;
+  isVerified: boolean;
 }
 
 const SWIPE_ACTION_WIDTH = 72;
@@ -294,18 +303,20 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-type ChatFilter = "all" | "inbox" | "groups";
+type ChatFilter = "all" | "inbox" | "groups" | "apps";
 
 function FilterTabs({ 
   activeFilter, 
   onFilterChange, 
   hasGroups, 
+  hasMiniApps,
   language, 
   theme 
 }: { 
   activeFilter: ChatFilter; 
   onFilterChange: (f: ChatFilter) => void; 
   hasGroups: boolean;
+  hasMiniApps?: boolean;
   language: string; 
   theme: any; 
 }) {
@@ -316,6 +327,9 @@ function FilterTabs({
   ];
   if (hasGroups) {
     filters.push({ key: "groups", label: t("Groups", "Группы") });
+  }
+  if (hasMiniApps) {
+    filters.push({ key: "apps", label: t("Apps", "Приложения") });
   }
 
   return (
@@ -356,12 +370,14 @@ function CompactFilterTabs({
   activeFilter,
   onFilterChange,
   hasGroups,
+  hasMiniApps,
   language,
   theme,
 }: {
   activeFilter: ChatFilter;
   onFilterChange: (f: ChatFilter) => void;
   hasGroups: boolean;
+  hasMiniApps?: boolean;
   language: string;
   theme: any;
 }) {
@@ -372,6 +388,9 @@ function CompactFilterTabs({
   ];
   if (hasGroups) {
     filters.push({ key: "groups", label: t("Groups", "Группы"), short: t("Grp", "Гр") });
+  }
+  if (hasMiniApps) {
+    filters.push({ key: "apps", label: t("Apps", "Прил."), short: t("Apps", "Прил.") });
   }
 
   return (
@@ -458,36 +477,6 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
-  // Removed redundant helper function
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: language === "ru" ? "Чаты" : "Chats",
-      headerRight: () => (
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              navigation.navigate("CreateGroupChat");
-            }}
-            style={{ padding: Spacing.sm }}
-          >
-            <Feather name="users" size={20} color={theme.text} />
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setShowSettingsModal(true);
-            }}
-            style={{ padding: Spacing.sm, marginRight: Spacing.sm }}
-          >
-            <Feather name="edit" size={20} color={theme.text} />
-          </Pressable>
-        </View>
-      ),
-    });
-  }, [navigation, theme.text, language]);
-
   const { data: chatsData = [], isLoading } = useQuery<ChatWithDetails[]>({
     queryKey: ["/api/users", user?.id, "chats"],
     queryFn: async () => {
@@ -512,6 +501,17 @@ export default function ChatsListScreen({ navigation }: Props) {
       return response.json();
     },
     enabled: !!user?.id,
+  });
+
+  const { data: miniAppsData = [] } = useQuery<MiniAppItem[]>({
+    queryKey: ["/api/mini-apps"],
+    queryFn: async () => {
+      const url = new URL("/api/mini-apps", getApiUrl());
+      const response = await fetch(url.toString(), { credentials: "include" });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 30000,
   });
 
   const saveChatSettingsMutation = useMutation({
@@ -715,6 +715,45 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   const hasGroups = useMemo(() => sortedChats.some(c => c.isGroup === true), [sortedChats]);
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: tabsHidden && chatFilterTabsEnabled && sortedChats.length > 0
+        ? () => (
+            <CompactFilterTabs
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+              hasGroups={hasGroups}
+              hasMiniApps={true}
+              language={language}
+              theme={theme}
+            />
+          )
+        : (language === "ru" ? "Чаты" : "Chats"),
+      headerRight: () => (
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              navigation.navigate("CreateGroupChat");
+            }}
+            style={{ padding: Spacing.sm }}
+          >
+            <Feather name="users" size={20} color={theme.text} />
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowSettingsModal(true);
+            }}
+            style={{ padding: Spacing.sm, marginRight: Spacing.sm }}
+          >
+            <Feather name="edit" size={20} color={theme.text} />
+          </Pressable>
+        </View>
+      ),
+    });
+  }, [navigation, theme.text, language, tabsHidden, chatFilterTabsEnabled, sortedChats.length, activeFilter, hasGroups, theme]);
+
   const filteredChats = useMemo(() => {
     if (activeFilter === "inbox") return sortedChats.filter(c => !c.isGroup);
     if (activeFilter === "groups") return sortedChats.filter(c => c.isGroup === true);
@@ -760,56 +799,95 @@ export default function ChatsListScreen({ navigation }: Props) {
     [navigation, allChatSettings, language, user?.id, handleSwipeOpen]
   );
 
+  const renderMiniAppRow = useCallback(
+    ({ item }: { item: MiniAppItem }) => (
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          navigation.navigate("MiniAppViewer", { appId: item.id, appName: item.name, appUrl: item.url, appEmoji: item.emoji });
+        }}
+        style={[styles.miniAppRow, { backgroundColor: theme.cardBackground }]}
+      >
+        <Text style={styles.miniAppEmoji}>{item.emoji || "🌐"}</Text>
+        <View style={styles.miniAppInfo}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ThemedText type="body" style={{ fontWeight: "600" }} numberOfLines={1}>{item.name}</ThemedText>
+            {item.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
+          </View>
+        </View>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            navigation.navigate("MiniAppViewer", { appId: item.id, appName: item.name, appUrl: item.url, appEmoji: item.emoji });
+          }}
+          style={[styles.openBtn, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
+        >
+          <ThemedText type="caption" style={{ fontWeight: "600", fontSize: 12 }}>
+            {t("Open", "Открыть")}
+          </ThemedText>
+        </Pressable>
+      </Pressable>
+    ),
+    [navigation, theme, t]
+  );
+
+  const filterHeader = (sortedChats.length > 0 || activeFilter === "apps") && chatFilterTabsEnabled ? (
+    <FilterTabs
+      activeFilter={activeFilter}
+      onFilterChange={setActiveFilter}
+      hasGroups={hasGroups}
+      hasMiniApps={true}
+      language={language}
+      theme={theme}
+    />
+  ) : null;
+
   return (
     <ThemedView style={styles.container}>
-      <FlatList
-        data={filteredChats}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{
-          paddingTop: headerHeight + Spacing.xs,
-          paddingBottom: tabBarHeight + Spacing.lg,
-        }}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-        onScroll={(e) => {
-          const offset = e.nativeEvent.contentOffset.y;
-          if (chatFilterTabsEnabled && sortedChats.length > 0) {
-            const threshold = 28;
-            if (offset > threshold && !tabsHidden) setTabsHidden(true);
-            else if (offset <= threshold && tabsHidden) setTabsHidden(false);
+      {activeFilter === "apps" ? (
+        <FlatList
+          data={miniAppsData}
+          renderItem={renderMiniAppRow}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{
+            paddingTop: headerHeight + Spacing.xs,
+            paddingBottom: tabBarHeight + Spacing.lg,
+          }}
+          ListHeaderComponent={filterHeader}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center" }}>
+                {t("No mini apps yet", "Пока нет мини-приложений")}
+              </ThemedText>
+            </View>
           }
-        }}
-        scrollEventThrottle={16}
-        ListHeaderComponent={
-          sortedChats.length > 0 && chatFilterTabsEnabled ? (
-            <FilterTabs
-              activeFilter={activeFilter}
-              onFilterChange={setActiveFilter}
-              hasGroups={hasGroups}
-              language={language}
-              theme={theme}
-            />
-          ) : null
-        }
-        ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
-      />
+        />
+      ) : (
+        <FlatList
+          data={filteredChats}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{
+            paddingTop: headerHeight + Spacing.xs,
+            paddingBottom: tabBarHeight + Spacing.lg,
+          }}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+          onScroll={(e) => {
+            const offset = e.nativeEvent.contentOffset.y;
+            if (chatFilterTabsEnabled && sortedChats.length > 0) {
+              const threshold = 28;
+              if (offset > threshold && !tabsHidden) setTabsHidden(true);
+              else if (offset <= threshold && tabsHidden) setTabsHidden(false);
+            }
+          }}
+          scrollEventThrottle={16}
+          ListHeaderComponent={filterHeader}
+          ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
+        />
+      )}
 
-      {chatFilterTabsEnabled && tabsHidden && sortedChats.length > 0 ? (
-        <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
-          style={[styles.compactTabsContainer, { top: headerHeight - 6 }]}
-        >
-          <CompactFilterTabs
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-            hasGroups={hasGroups}
-            language={language}
-            theme={theme}
-          />
-        </Animated.View>
-      ) : null}
+      
 
       <Modal
         visible={showEditGroupModal}
@@ -1399,5 +1477,29 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: Spacing.md,
     zIndex: 100,
+  },
+  miniAppRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    marginHorizontal: Spacing.sm,
+    marginVertical: 2,
+    borderRadius: 14,
+  },
+  miniAppEmoji: {
+    fontSize: 28,
+    width: 44,
+    textAlign: "center",
+  },
+  miniAppInfo: {
+    flex: 1,
+    marginLeft: Spacing.sm,
+  },
+  openBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
   },
 });
