@@ -343,19 +343,20 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               </Pressable>
             ) : null}
             <View style={{ flex: 1 }} />
-            <Pressable
-              onPress={() => { setMenuVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-              style={styles.floatingBtn}
-            >
-              <BlurView intensity={60} tint="dark" style={styles.floatingBtnBlur}>
-                <Feather name="more-vertical" size={18} color="#FFF" />
+            <View style={styles.floatingGroup}>
+              <BlurView intensity={60} tint="dark" style={styles.floatingGroupBlur}>
+                <Pressable
+                  onPress={() => { setMenuVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  style={styles.floatingGroupBtn}
+                >
+                  <Feather name="more-vertical" size={18} color="#FFF" />
+                </Pressable>
+                <View style={styles.floatingGroupDivider} />
+                <Pressable onPress={handleClose} style={styles.floatingGroupBtn}>
+                  <Feather name="x" size={20} color="#FFF" />
+                </Pressable>
               </BlurView>
-            </Pressable>
-            <Pressable onPress={handleClose} style={[styles.floatingBtn, { marginLeft: 8 }]}>
-              <BlurView intensity={60} tint="dark" style={styles.floatingBtnBlur}>
-                <Feather name="x" size={20} color="#FFF" />
-              </BlurView>
-            </Pressable>
+            </View>
           </View>
 
       <Animated.View style={[styles.splashOverlay, { backgroundColor: theme.backgroundRoot }, splashAnimStyle]}>
@@ -386,61 +387,63 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
         onRequestClose={() => setMenuVisible(false)}
       >
         <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
-          <View style={[styles.menuSheet, { backgroundColor: isDark ? '#1E2D42' : '#FFFFFF', paddingBottom: insets.bottom + 12 }]}>
-            <View style={styles.menuSheetHandle} />
+          <View style={[styles.menuSheet, { paddingBottom: insets.bottom + 12 }]}>
+            <BlurView intensity={90} tint="dark" style={styles.menuSheetBlur}>
+              <View style={styles.menuSheetHandle} />
 
-            <View style={styles.menuAppInfo}>
-              <Text style={{ fontSize: 28 }}>{displayEmoji}</Text>
-              <View style={{ marginLeft: 12, flex: 1 }}>
-                <Text style={[styles.menuAppName, { color: theme.text }]}>{appName}</Text>
+              <View style={styles.menuAppInfo}>
+                <Text style={{ fontSize: 28 }}>{displayEmoji}</Text>
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <Text style={[styles.menuAppName, { color: "#FFF" }]}>{appName}</Text>
+                </View>
               </View>
-            </View>
 
-            <View style={[styles.menuDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />
+              <View style={[styles.menuDivider, { backgroundColor: 'rgba(255,255,255,0.1)' }]} />
 
-            <Pressable style={styles.menuItem} onPress={handleReload}>
-              <View style={[styles.menuIconBg, { backgroundColor: isDark ? 'rgba(52,120,246,0.15)' : 'rgba(52,120,246,0.1)' }]}>
-                <Feather name="refresh-cw" size={18} color="#3478F6" />
-              </View>
-              <Text style={[styles.menuText, { color: theme.text }]}>
-                {isDark ? "Обновить" : "Reload"}
-              </Text>
-            </Pressable>
+              <Pressable style={styles.menuItem} onPress={handleReload}>
+                <View style={[styles.menuIconBg, { backgroundColor: 'rgba(52,120,246,0.2)' }]}>
+                  <Feather name="refresh-cw" size={18} color="#5AC8FA" />
+                </View>
+                <Text style={[styles.menuText, { color: "#FFF" }]}>
+                  {isDark ? "Обновить" : "Reload"}
+                </Text>
+              </Pressable>
 
-            <Pressable style={styles.menuItem} onPress={handleCopyLink}>
-              <View style={[styles.menuIconBg, { backgroundColor: isDark ? 'rgba(76,217,100,0.15)' : 'rgba(76,217,100,0.1)' }]}>
-                <Feather name="copy" size={18} color="#4CD964" />
-              </View>
-              <Text style={[styles.menuText, { color: theme.text }]}>
-                {isDark ? "Копировать ссылку" : "Copy Link"}
-              </Text>
-            </Pressable>
+              <Pressable style={styles.menuItem} onPress={handleCopyLink}>
+                <View style={[styles.menuIconBg, { backgroundColor: 'rgba(76,217,100,0.2)' }]}>
+                  <Feather name="copy" size={18} color="#4CD964" />
+                </View>
+                <Text style={[styles.menuText, { color: "#FFF" }]}>
+                  {isDark ? "Копировать ссылку" : "Copy Link"}
+                </Text>
+              </Pressable>
 
-            <Pressable style={styles.menuItem} onPress={handleShare}>
-              <View style={[styles.menuIconBg, { backgroundColor: isDark ? 'rgba(255,149,0,0.15)' : 'rgba(255,149,0,0.1)' }]}>
-                <Feather name="share" size={18} color="#FF9500" />
-              </View>
-              <Text style={[styles.menuText, { color: theme.text }]}>
-                {isDark ? "Поделиться" : "Share"}
-              </Text>
-            </Pressable>
+              <Pressable style={styles.menuItem} onPress={handleShare}>
+                <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255,149,0,0.2)' }]}>
+                  <Feather name="share" size={18} color="#FF9F0A" />
+                </View>
+                <Text style={[styles.menuText, { color: "#FFF" }]}>
+                  {isDark ? "Поделиться" : "Share"}
+                </Text>
+              </Pressable>
 
-            <Pressable style={styles.menuItem} onPress={handleOpenInBrowser}>
-              <View style={[styles.menuIconBg, { backgroundColor: isDark ? 'rgba(142,155,173,0.15)' : 'rgba(142,155,173,0.1)' }]}>
-                <Feather name="external-link" size={18} color={theme.textSecondary} />
-              </View>
-              <Text style={[styles.menuText, { color: theme.text }]}>
-                {isDark ? "Открыть в браузере" : "Open in Browser"}
-              </Text>
-            </Pressable>
+              <Pressable style={styles.menuItem} onPress={handleOpenInBrowser}>
+                <View style={[styles.menuIconBg, { backgroundColor: 'rgba(142,155,173,0.2)' }]}>
+                  <Feather name="external-link" size={18} color="#8E9BAD" />
+                </View>
+                <Text style={[styles.menuText, { color: "#FFF" }]}>
+                  {isDark ? "Открыть в браузере" : "Open in Browser"}
+                </Text>
+              </Pressable>
 
-            <View style={[styles.menuDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', marginTop: 4 }]} />
+              <View style={[styles.menuDivider, { backgroundColor: 'rgba(255,255,255,0.1)', marginTop: 4 }]} />
 
-            <Pressable style={styles.menuItem} onPress={() => setMenuVisible(false)}>
-              <Text style={[styles.menuCancelText, { color: theme.textSecondary }]}>
-                {isDark ? "Отмена" : "Cancel"}
-              </Text>
-            </Pressable>
+              <Pressable style={styles.menuItem} onPress={() => setMenuVisible(false)}>
+                <Text style={[styles.menuCancelText, { color: 'rgba(255,255,255,0.5)' }]}>
+                  {isDark ? "Отмена" : "Cancel"}
+                </Text>
+              </Pressable>
+            </BlurView>
           </View>
         </Pressable>
       </Modal>
@@ -482,6 +485,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.35)",
     overflow: "hidden",
+  },
+  floatingGroup: {
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  floatingGroupBlur: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.35)",
+    borderRadius: 20,
+    overflow: "hidden",
+    paddingHorizontal: 4,
+  },
+  floatingGroupBtn: {
+    width: 36,
+    height: 36,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  floatingGroupDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 20,
+    backgroundColor: "rgba(255,255,255,0.25)",
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -533,7 +559,11 @@ const styles = StyleSheet.create({
   menuSheet: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    overflow: "hidden",
+  },
+  menuSheetBlur: {
     paddingTop: 8,
+    backgroundColor: "rgba(15,25,45,0.65)",
   },
   menuSheetHandle: {
     width: 36,
