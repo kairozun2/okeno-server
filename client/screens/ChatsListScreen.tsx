@@ -4,7 +4,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
@@ -350,6 +350,66 @@ function FilterTabs({
   );
 }
 
+function CompactFilterTabs({
+  activeFilter,
+  onFilterChange,
+  hasGroups,
+  language,
+  theme,
+}: {
+  activeFilter: ChatFilter;
+  onFilterChange: (f: ChatFilter) => void;
+  hasGroups: boolean;
+  language: string;
+  theme: any;
+}) {
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+  const filters: { key: ChatFilter; label: string; short: string }[] = [
+    { key: "all", label: t("All", "Все"), short: t("All", "Все") },
+    { key: "inbox", label: t("Inbox", "Входящие"), short: t("DM", "ЛС") },
+  ];
+  if (hasGroups) {
+    filters.push({ key: "groups", label: t("Groups", "Группы"), short: t("Grp", "Гр") });
+  }
+
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      {filters.map((f, index) => (
+        <Pressable
+          key={f.key}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onFilterChange(f.key);
+          }}
+          style={{
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 12,
+            backgroundColor: activeFilter === f.key
+              ? (theme.link || "#3478F6")
+              : theme.backgroundSecondary,
+            marginLeft: index > 0 ? -4 : 0,
+            zIndex: activeFilter === f.key ? 10 : filters.length - index,
+            borderWidth: 1.5,
+            borderColor: activeFilter === f.key ? (theme.link || "#3478F6") : theme.backgroundSecondary,
+          }}
+        >
+          <ThemedText
+            type="caption"
+            style={{
+              color: activeFilter === f.key ? "#fff" : theme.textSecondary,
+              fontWeight: "700",
+              fontSize: 11,
+            }}
+          >
+            {f.short}
+          </ThemedText>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 export default function ChatsListScreen({ navigation }: Props) {
   const { theme, language, chatFilterTabsEnabled } = useTheme();
   const { user } = useAuth();
@@ -371,6 +431,8 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [editGroupEmoji, setEditGroupEmoji] = useState("");
   const [addMemberSearch, setAddMemberSearch] = useState("");
   const [showAddMemberSection, setShowAddMemberSection] = useState(false);
+  const [tabsHidden, setTabsHidden] = useState(false);
+  const scrollY = useSharedValue(0);
 
   const swipeCloseRef = useRef<Record<string, () => void>>({});
   const openSwipeIdRef = useRef<string | null>(null);
@@ -708,6 +770,15 @@ export default function ChatsListScreen({ navigation }: Props) {
         }}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        onScroll={(e) => {
+          const offset = e.nativeEvent.contentOffset.y;
+          if (chatFilterTabsEnabled && sortedChats.length > 0) {
+            const threshold = 28;
+            if (offset > threshold && !tabsHidden) setTabsHidden(true);
+            else if (offset <= threshold && tabsHidden) setTabsHidden(false);
+          }
+        }}
+        scrollEventThrottle={16}
         ListHeaderComponent={
           sortedChats.length > 0 && chatFilterTabsEnabled ? (
             <FilterTabs
@@ -721,6 +792,22 @@ export default function ChatsListScreen({ navigation }: Props) {
         }
         ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
       />
+
+      {chatFilterTabsEnabled && tabsHidden && sortedChats.length > 0 ? (
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(150)}
+          style={[styles.compactTabsContainer, { top: headerHeight - 6 }]}
+        >
+          <CompactFilterTabs
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            hasGroups={hasGroups}
+            language={language}
+            theme={theme}
+          />
+        </Animated.View>
+      ) : null}
 
       <Modal
         visible={showEditGroupModal}
@@ -1305,5 +1392,10 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     backgroundColor: "#fff",
+  },
+  compactTabsContainer: {
+    position: "absolute",
+    left: Spacing.md,
+    zIndex: 100,
   },
 });

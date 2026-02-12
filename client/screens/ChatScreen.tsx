@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import { useAudioPlayer, useAudioPlayerStatus, useAudioRecorder, RecordingPresets, AudioModule } from 'expo-audio';
-import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking, Dimensions, Keyboard, LayoutAnimation } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, FlatList, Platform, ImageBackground, Modal, ActionSheetIOS, Linking, Dimensions, Keyboard, LayoutAnimation, ScrollView } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -494,6 +494,9 @@ export default function ChatScreen({ route, navigation }: Props) {
   const recordingTimer = useRef<NodeJS.Timeout | null>(null);
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [showMessageSearch, setShowMessageSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<TextInput>(null);
 
   const REACTION_EMOJIS = ["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟"];
 
@@ -741,6 +744,22 @@ export default function ChatScreen({ route, navigation }: Props) {
   });
 
   const messages = data?.pages.flat() || [];
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim() || !showMessageSearch) return [];
+    const q = searchQuery.toLowerCase();
+    return messages.filter(m => m.content && m.content.toLowerCase().includes(q));
+  }, [searchQuery, messages, showMessageSearch]);
+
+  const scrollToSearchResult = useCallback((messageId: string) => {
+    const idx = messages.findIndex(m => m.id === messageId);
+    if (idx >= 0 && flatListRef.current) {
+      flatListRef.current.scrollToIndex({ index: idx, animated: true, viewPosition: 0.5 });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setShowMessageSearch(false);
+      setSearchQuery("");
+    }
+  }, [messages]);
 
   const sendMutation = useMutation({
     mutationFn: async ({ content, replyToId, imageUrl, voiceUrl, voiceDuration }: { content: string; replyToId?: string | null; imageUrl?: string | null; voiceUrl?: string | null; voiceDuration?: number | null }) => {
@@ -1131,31 +1150,75 @@ export default function ChatScreen({ route, navigation }: Props) {
             ) : null}
           </View>
 
-          <Pressable
-            onPress={() => {
-              if (isGroupChat && chatId) {
-                navigation.navigate("GroupChatInfo", { chatId, groupName: displayName, groupEmoji: displayEmoji });
-              } else if (!isGroupChat && otherUserId) {
-                navigation.navigate("UserProfile", { userId: otherUserId });
-              }
-            }}
-            style={styles.userInfo}
-          >
-            {Platform.OS === 'ios' && (
-              <BlurView
-                intensity={45}
-                tint={isDark ? "dark" : "light"}
-                style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
+          {showMessageSearch ? (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(150)}
+              style={styles.searchContainer}
+            >
+              {Platform.OS === 'ios' && (
+                <BlurView
+                  intensity={45}
+                  tint={isDark ? "dark" : "light"}
+                  style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
+                />
+              )}
+              <Feather name="search" size={16} color={theme.textSecondary} style={{ marginLeft: 10 }} />
+              <TextInput
+                ref={searchInputRef}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder={t("Search messages...", "Поиск сообщений...")}
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.searchInput, { color: theme.text }]}
+                autoFocus
+                returnKeyType="search"
+                onSubmitEditing={() => {
+                  if (searchResults.length > 0) {
+                    scrollToSearchResult(searchResults[0].id);
+                  }
+                }}
               />
-            )}
-            <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end' }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
-                {!isGroupChat && userData?.isVerified ? <VerifiedBadge size={14} /> : null}
+              <Pressable
+                onPress={() => { setShowMessageSearch(false); setSearchQuery(""); }}
+                hitSlop={8}
+                style={{ padding: 6 }}
+              >
+                <Feather name="x" size={16} color={theme.textSecondary} />
+              </Pressable>
+            </Animated.View>
+          ) : (
+            <Pressable
+              onPress={() => {
+                if (isGroupChat && chatId) {
+                  navigation.navigate("GroupChatInfo", { chatId, groupName: displayName, groupEmoji: displayEmoji });
+                } else if (!isGroupChat && otherUserId) {
+                  navigation.navigate("UserProfile", { userId: otherUserId });
+                }
+              }}
+              onLongPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setShowMessageSearch(true);
+              }}
+              delayLongPress={400}
+              style={styles.userInfo}
+            >
+              {Platform.OS === 'ios' && (
+                <BlurView
+                  intensity={45}
+                  tint={isDark ? "dark" : "light"}
+                  style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
+                />
+              )}
+              <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end' }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
+                  {!isGroupChat && userData?.isVerified ? <VerifiedBadge size={14} /> : null}
+                </View>
               </View>
-            </View>
-            <Avatar emoji={displayEmoji} size={32} />
-          </Pressable>
+              <Avatar emoji={displayEmoji} size={32} />
+            </Pressable>
+          )}
         </View>
 
         <LinearGradient
@@ -1175,6 +1238,53 @@ export default function ChatScreen({ route, navigation }: Props) {
             pointerEvents: 'none',
           }}
         />
+
+        {showMessageSearch && searchQuery.trim().length > 0 ? (
+          <Animated.View
+            entering={FadeIn.duration(150)}
+            exiting={FadeOut.duration(100)}
+            style={[styles.searchResultsOverlay, { top: chatFullscreen ? insets.top + 52 : 48 }]}
+          >
+            <BlurView
+              intensity={90}
+              tint={isDark ? "dark" : "light"}
+              style={[StyleSheet.absoluteFill, { borderRadius: 14 }]}
+            />
+            <ScrollView
+              style={{ maxHeight: 200 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {searchResults.length === 0 ? (
+                <View style={{ padding: Spacing.md, alignItems: 'center' }}>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                    {t("No messages found", "Сообщения не найдены")}
+                  </ThemedText>
+                </View>
+              ) : searchResults.slice(0, 15).map((msg, idx) => (
+                <Pressable
+                  key={msg.id}
+                  onPress={() => scrollToSearchResult(msg.id)}
+                  style={({ pressed }) => [
+                    styles.searchResultItem,
+                    {
+                      borderBottomColor: theme.border,
+                      borderBottomWidth: idx < Math.min(searchResults.length, 15) - 1 ? StyleSheet.hairlineWidth : 0,
+                      opacity: pressed ? 0.6 : 1,
+                    },
+                  ]}
+                >
+                  <ThemedText type="small" numberOfLines={2} style={{ color: theme.text }}>
+                    {msg.content}
+                  </ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2, fontSize: 11 }}>
+                    {format(new Date(msg.createdAt), "d MMM, HH:mm")}
+                  </ThemedText>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Animated.View>
+        ) : null}
 
         <FlatList
           ref={flatListRef}
@@ -1560,6 +1670,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 38,
+    borderRadius: 19,
+    overflow: 'hidden',
+    paddingRight: 4,
+    minWidth: 180,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    height: 38,
+  },
+  searchResultsOverlay: {
+    position: 'absolute',
+    left: Spacing.md,
+    right: Spacing.md,
+    borderRadius: 14,
+    overflow: 'hidden',
+    zIndex: 200,
+  },
+  searchResultItem: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   messageBubble: {
     maxWidth: "80%",
