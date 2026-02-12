@@ -30,6 +30,7 @@ import CreateGroupChatScreen from "@/screens/CreateGroupChatScreen";
 import GroupChatInfoScreen from "@/screens/GroupChatInfoScreen";
 import CallScreen from "@/screens/CallScreen";
 import NotificationSettingsScreen from "@/screens/NotificationSettingsScreen";
+import SupportScreen from "@/screens/SupportScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -64,6 +65,7 @@ export type RootStackParamList = {
   GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string };
   CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string };
   NotificationSettings: undefined;
+  Support: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -258,7 +260,17 @@ export default function RootStackNavigator() {
             component={NotificationSettingsScreen}
             options={({ navigation }) => ({
               ...modalOptions,
-              headerTitle: language === "ru" ? "Уведомления" : "Notifications",
+              headerTitle: language === "ru" ? "Уведомления и звук" : "Notifications & Sound",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
+          />
+          <Stack.Screen
+            name="Support"
+            component={SupportScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: language === "ru" ? "Помощь и поддержка" : "Help & Support",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               headerShadowVisible: false,
             })}

@@ -13,7 +13,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NotificationPreferences } from "@/lib/settings-store";
 
 export default function NotificationSettingsScreen() {
-  const { theme, isDark, hapticsEnabled, language } = useTheme();
+  const { theme, isDark, hapticsEnabled, toggleHaptics, language } = useTheme();
   const insets = useSafeAreaInsets();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
   const notifications = useSettingsStore((s) => s.notifications);
@@ -70,7 +70,7 @@ export default function NotificationSettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.delay(100)} style={styles.section}>
-          <ThemedText type="caption" style={styles.sectionTitle}>
+          <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
             {t("PUSH NOTIFICATIONS", "PUSH-УВЕДОМЛЕНИЯ")}
           </ThemedText>
           <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
@@ -84,7 +84,7 @@ export default function NotificationSettingsScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <ThemedText type="body" style={{ fontWeight: '500' }}>{item.title}</ThemedText>
-                      <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>{item.subtitle}</ThemedText>
+                      <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 1 }}>{item.subtitle}</ThemedText>
                     </View>
                   </View>
                   <Switch
@@ -99,12 +99,37 @@ export default function NotificationSettingsScreen() {
           </View>
         </Animated.View>
 
-        <ThemedText type="caption" style={styles.footerText}>
-          {t(
-            "Push notifications only work on physical devices with Expo Go or a native build.",
-            "Push-уведомления работают только на физических устройствах с Expo Go или нативной сборкой."
-          )}
-        </ThemedText>
+        <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
+          <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            {t("SOUND & FEEDBACK", "ЗВУК И ОТКЛИК")}
+          </ThemedText>
+          <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
+            <View style={styles.row}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
+                  <Feather name="smartphone" size={16} color={theme.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <ThemedText type="body" style={{ fontWeight: '500' }}>{t("Haptic Feedback", "Виброотклик")}</ThemedText>
+                  <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 1 }}>
+                    {t("Vibration on interactions", "Вибрация при взаимодействии")}
+                  </ThemedText>
+                </View>
+              </View>
+              <Switch
+                value={hapticsEnabled}
+                onValueChange={async () => {
+                  await toggleHaptics();
+                  if (!hapticsEnabled) {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  }
+                }}
+                trackColor={{ false: isDark ? '#39393D' : '#D1D1D6', true: theme.accent }}
+                thumbColor={Platform.OS === 'android' ? '#fff' : undefined}
+              />
+            </View>
+          </View>
+        </Animated.View>
       </ScrollView>
     </ThemedView>
   );
@@ -115,12 +140,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   sectionTitle: {
     marginBottom: Spacing.sm,
     marginLeft: Spacing.sm,
     opacity: 0.6,
+    fontSize: 12,
   },
   card: {
     borderRadius: BorderRadius.lg,
@@ -131,10 +157,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: 8,
   },
   divider: {
-    height: 1,
+    height: StyleSheet.hairlineWidth,
     marginVertical: 2,
   },
   iconCircle: {
@@ -143,10 +169,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  footerText: {
-    marginHorizontal: Spacing.sm,
-    textAlign: 'center',
-    opacity: 0.5,
   },
 });

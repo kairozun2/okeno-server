@@ -776,12 +776,12 @@ export async function registerRoutes(app: express.Express) {
           const members = await storage.getGroupChatMembers(chat.id);
           for (const member of members) {
             if (member.userId !== messageData.senderId) {
-              sendNewMessageNotification(member.userId, sender.username, sender.emoji, messageData.content, chat.id);
+              sendNewMessageNotification(member.userId, sender.username, sender.emoji, messageData.content, chat.id, true);
             }
           }
         } else {
           const recipientId = chat.user1Id === messageData.senderId ? chat.user2Id : chat.user1Id;
-          sendNewMessageNotification(recipientId, sender.username, sender.emoji, messageData.content, chat.id);
+          sendNewMessageNotification(recipientId, sender.username, sender.emoji, messageData.content, chat.id, false);
         }
       }
       

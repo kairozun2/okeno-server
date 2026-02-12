@@ -247,12 +247,12 @@ export default function SettingsScreen({ navigation }: Props) {
     },
 
     {
-      title: t("NOTIFICATIONS", "УВЕДОМЛЕНИЯ"),
+      title: t("NOTIFICATIONS & SOUND", "УВЕДОМЛЕНИЯ И ЗВУК"),
       items: [
         {
-          icon: "bell",
-          title: t("Notifications", "Уведомления"),
-          subtitle: t("Messages, likes, calls", "Сообщения, лайки, звонки"),
+          customIcon: SETTINGS_ICONS.haptics,
+          title: t("Notifications & Sound", "Уведомления и звук"),
+          subtitle: t("Push, haptics, sounds", "Push, виброотклик, звуки"),
           onPress: () => navigation.navigate("NotificationSettings" as any),
         },
       ],
@@ -303,22 +303,6 @@ export default function SettingsScreen({ navigation }: Props) {
       ],
     },
     {
-      title: t("SOUND & FEEDBACK", "ЗВУК И ОТКЛИК"),
-      items: [
-        {
-          customIcon: SETTINGS_ICONS.haptics,
-          title: t("Haptic Feedback", "Виброотклик"),
-          subtitle: hapticsEnabled ? t("On", "Вкл") : t("Off", "Выкл"),
-          onPress: async () => {
-            await toggleHaptics();
-            if (!hapticsEnabled) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            }
-          },
-        },
-      ],
-    },
-    {
       title: t("CHAT MANAGEMENT", "УПРАВЛЕНИЕ ЧАТАМИ"),
       items: [
         {
@@ -352,50 +336,13 @@ export default function SettingsScreen({ navigation }: Props) {
       ],
     },
     {
-      title: t("HELP & FEEDBACK", "ПОМОЩЬ И ОТЗЫВЫ"),
-      items: [
-        {
-          customIcon: SETTINGS_ICONS.help,
-          title: t("Help Center", "Центр помощи"),
-          subtitle: t("FAQs and instructions", "Часто задаваемые вопросы"),
-          onPress: () => {
-            Linking.openURL("https://skaisay.github.io/Okeno-help-center/");
-          },
-        },
-        {
-          customIcon: SETTINGS_ICONS.bug,
-          title: t("Report a Bug", "Сообщить об ошибке"),
-          subtitle: t("Help us improve", "Помогите нам стать лучше"),
-          onPress: () => {
-            Linking.openURL("mailto:messaconfirmation@gmail.com?subject=Bug Report - Okeno");
-          },
-        },
-      ],
-    },
-    {
       title: t("SUPPORT", "ПОДДЕРЖКА"),
       items: [
         {
           customIcon: SETTINGS_ICONS.support,
-          title: t("Contact Us", "Связаться с нами"),
-          subtitle: "messaconfirmation@gmail.com",
-          onPress: () => {
-            Linking.openURL("mailto:messaconfirmation@gmail.com");
-          },
-        },
-        {
-          customIcon: SETTINGS_ICONS.discord,
-          title: t("Our Discord", "Наш Discord"),
-          subtitle: "https://discord.gg/FRAZ6PBcH9",
-          onPress: () => {
-            Linking.openURL("https://discord.gg/FRAZ6PBcH9");
-          },
-        },
-        {
-          customIcon: SETTINGS_ICONS.privacy,
-          title: t("Terms of Use", "Условия использования"),
-          subtitle: t("User Agreement", "Пользовательское соглашение"),
-          onPress: () => navigation.navigate("PrivacyPolicy"),
+          title: t("Help & Support", "Помощь и поддержка"),
+          subtitle: t("FAQ, contact, legal", "FAQ, контакты, правовая информация"),
+          onPress: () => navigation.navigate("Support" as any),
         },
       ],
     },
