@@ -311,31 +311,9 @@ export default function SettingsScreen({ navigation }: Props) {
       items: [
         {
           customIcon: SETTINGS_ICONS.chat,
-          title: t("Quick Reaction", "Быстрая реакция"),
+          title: t("Chat Settings", "Настройки чатов"),
           subtitle: quickReactionEmoji,
           onPress: () => setShowReactionPicker(true),
-        },
-        {
-          customIcon: SETTINGS_ICONS.haptics,
-          title: t("Scroll Helper", "Помощник скролла"),
-          subtitle: scrollAssistEnabled ? t("On", "Вкл") : t("Off", "Выкл"),
-          onPress: async () => {
-            await toggleScrollAssist();
-            if (hapticsEnabled) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            }
-          },
-        },
-        {
-          customIcon: SETTINGS_ICONS.archiveBox,
-          title: t("Chat Tabs", "Вкладки чатов"),
-          subtitle: chatFilterTabsEnabled ? t("On", "Вкл") : t("Off", "Выкл"),
-          onPress: async () => {
-            await toggleChatFilterTabs();
-            if (hapticsEnabled) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            }
-          },
         },
       ],
     },
@@ -663,52 +641,88 @@ export default function SettingsScreen({ navigation }: Props) {
       <Modal
         visible={showReactionPicker}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent
         onRequestClose={() => setShowReactionPicker(false)}
       >
-        <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-            <ThemedText type="h3">{t("Quick Reaction", "Быстрая реакция")}</ThemedText>
-            <Pressable onPress={() => setShowReactionPicker(false)} hitSlop={8}>
-              <Feather name="x" size={24} color={theme.text} />
-            </Pressable>
-          </View>
-
-          <ScrollView contentContainerStyle={{ padding: Spacing.lg }}>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.md, textAlign: 'center' }}>
-              {t("Double-tap a message to react", "Нажмите дважды на сообщение для реакции")}
-            </ThemedText>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
-              {["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟", "👍", "❤️", "🔥", "😂", "😢"].map((emoji) => (
-                <Pressable
-                  key={emoji}
-                  onPress={() => {
-                    setQuickReactionEmoji(emoji);
-                    setShowReactionPicker(false);
-                    if (hapticsEnabled) {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    }
-                  }}
-                  style={({ pressed }) => [
-                    {
-                      width: 56,
-                      height: 56,
-                      borderRadius: 16,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) + '25' : theme.backgroundSecondary,
-                      borderWidth: quickReactionEmoji === emoji ? 2 : 0,
-                      borderColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) : 'transparent',
-                      opacity: pressed ? 0.7 : 1,
-                    },
-                  ]}
-                >
-                  <ThemedText style={{ fontSize: 26, lineHeight: 32, textAlign: 'center' }}>{emoji}</ThemedText>
-                </Pressable>
-              ))}
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowReactionPicker(false)}>
+          <Pressable onPress={() => {}} style={{ backgroundColor: theme.backgroundRoot, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + Spacing.md }}>
+            <View style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 4 }}>
+              <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: theme.textSecondary + '40' }} />
             </View>
-          </ScrollView>
-        </View>
+
+            <View style={{ paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm }}>
+              <ThemedText type="body" style={{ fontWeight: '600', marginBottom: Spacing.sm }}>
+                {t("Chat Settings", "Настройки чатов")}
+              </ThemedText>
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: Spacing.lg }}>
+                {["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟", "👍", "❤️", "🔥", "😂", "😢"].map((emoji) => (
+                  <Pressable
+                    key={emoji}
+                    onPress={() => {
+                      setQuickReactionEmoji(emoji);
+                      if (hapticsEnabled) {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      }
+                    }}
+                    style={({ pressed }) => [
+                      {
+                        width: 48,
+                        height: 48,
+                        borderRadius: 14,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) + '25' : theme.backgroundSecondary,
+                        borderWidth: quickReactionEmoji === emoji ? 2 : 0,
+                        borderColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) : 'transparent',
+                        opacity: pressed ? 0.7 : 1,
+                      },
+                    ]}
+                  >
+                    <ThemedText style={{ fontSize: 22, lineHeight: 28, textAlign: 'center' }}>{emoji}</ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+
+              <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
+                <Pressable
+                  onPress={async () => {
+                    await toggleScrollAssist();
+                    if (hapticsEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  }}
+                  style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border }}
+                >
+                  <View style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: theme.link + '20', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="arrow-down-circle" size={16} color={theme.link} />
+                  </View>
+                  <ThemedText type="body" style={{ flex: 1, marginLeft: Spacing.md }}>
+                    {t("Scroll Helper", "Помощник скролла")}
+                  </ThemedText>
+                  <View style={{ width: 44, height: 26, borderRadius: 13, backgroundColor: scrollAssistEnabled ? (theme.link || '#3478F6') : theme.textSecondary + '30', justifyContent: 'center', padding: 2 }}>
+                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff', alignSelf: scrollAssistEnabled ? 'flex-end' : 'flex-start' }} />
+                  </View>
+                </Pressable>
+                <Pressable
+                  onPress={async () => {
+                    await toggleChatFilterTabs();
+                    if (hapticsEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  }}
+                  style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.md }}
+                >
+                  <View style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: theme.link + '20', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="columns" size={16} color={theme.link} />
+                  </View>
+                  <ThemedText type="body" style={{ flex: 1, marginLeft: Spacing.md }}>
+                    {t("Chat Tabs", "Вкладки чатов")}
+                  </ThemedText>
+                  <View style={{ width: 44, height: 26, borderRadius: 13, backgroundColor: chatFilterTabsEnabled ? (theme.link || '#3478F6') : theme.textSecondary + '30', justifyContent: 'center', padding: 2 }}>
+                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff', alignSelf: chatFilterTabsEnabled ? 'flex-end' : 'flex-start' }} />
+                  </View>
+                </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       <Modal

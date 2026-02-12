@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Dimensions, FlatList, Linking, Platform } from "react-native";
+import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Dimensions, Linking, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
@@ -24,7 +24,7 @@ const PHOTO_SIZE = (SCREEN_WIDTH - Spacing.lg * 2 - 4) / 3;
 
 type Props = NativeStackScreenProps<RootStackParamList, "GroupChatInfo">;
 
-type MediaTab = "photos" | "voice" | "links";
+type InfoTab = "members" | "photos" | "voice" | "links";
 
 interface MediaMessage {
   id: string;
@@ -55,7 +55,7 @@ export default function GroupChatInfoScreen({ navigation, route }: Props) {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  const [activeTab, setActiveTab] = useState<MediaTab>("photos");
+  const [activeTab, setActiveTab] = useState<InfoTab>("members");
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -71,15 +71,16 @@ export default function GroupChatInfoScreen({ navigation, route }: Props) {
     staleTime: 30000,
   });
 
+  const mediaType = activeTab === "members" ? null : activeTab;
   const mediaQuery = useQuery<MediaMessage[]>({
-    queryKey: ["/api/chats", chatId, "media", activeTab],
+    queryKey: ["/api/chats", chatId, "media", mediaType],
     queryFn: async () => {
-      const url = new URL(`/api/chats/${chatId}/media?type=${activeTab}`, getApiUrl());
+      const url = new URL(`/api/chats/${chatId}/media?type=${mediaType}`, getApiUrl());
       const response = await fetch(url.toString(), { credentials: "include" });
       if (!response.ok) throw new Error("Failed");
       return response.json();
     },
-    enabled: !!chatId,
+    enabled: !!chatId && mediaType !== null,
     staleTime: 15000,
   });
 
@@ -115,148 +116,169 @@ export default function GroupChatInfoScreen({ navigation, route }: Props) {
     });
   }, [navigation, theme.text]);
 
-  const tabs: { key: MediaTab; label: string; icon: string }[] = [
+  const tabs: { key: InfoTab; label: string; icon: string }[] = [
+    { key: "members", label: t("Members", "Участники"), icon: "users" },
     { key: "photos", label: t("Photos", "Фото"), icon: "image" },
     { key: "voice", label: t("Voice", "Голосовые"), icon: "mic" },
     { key: "links", label: t("Links", "Ссылки"), icon: "link" },
   ];
 
-  const renderPhotoItem = useCallback(({ item }: { item: MediaMessage }) => {
-    if (!item.imageUrl) return null;
-    const imageUrl = getImageUrl(item.imageUrl);
-    if (!imageUrl) return null;
-    return (
-      <Pressable
-        style={{ width: PHOTO_SIZE, height: PHOTO_SIZE, borderRadius: 4, overflow: 'hidden', margin: 1 }}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        }}
-      >
-        <Image
-          source={{ uri: imageUrl }}
-          style={{ width: '100%', height: '100%' }}
-          contentFit="cover"
-          transition={200}
-        />
-      </Pressable>
-    );
-  }, []);
-
-  const renderVoiceItem = useCallback(({ item }: { item: MediaMessage }) => {
-    const sender = membersMap[item.senderId];
-    const duration = item.voiceDuration || 0;
-    const mins = Math.floor(duration / 60);
-    const secs = Math.floor(duration % 60);
-    return (
-      <View style={[styles.mediaRow, { borderBottomColor: theme.border }]}>
-        <View style={[styles.voiceIcon, { backgroundColor: theme.link + '20' }]}>
-          <Feather name="mic" size={18} color={theme.link} />
-        </View>
-        <View style={{ flex: 1, marginLeft: Spacing.md }}>
-          <ThemedText type="body" style={{ fontWeight: '500' }}>
-            {sender?.username || t("User", "Пользователь")}
-          </ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-            {`${mins}:${secs.toString().padStart(2, '0')}`} · {format(new Date(item.createdAt), "d MMM, HH:mm")}
-          </ThemedText>
-        </View>
-      </View>
-    );
-  }, [membersMap, theme]);
-
-  const renderLinkItem = useCallback(({ item }: { item: MediaMessage }) => {
-    const links = extractLinks(item.content);
-    const sender = membersMap[item.senderId];
-    return (
-      <View>
-        {links.map((link, i) => (
-          <Pressable
-            key={`${item.id}-${i}`}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              Linking.openURL(link);
-            }}
-            style={[styles.mediaRow, { borderBottomColor: theme.border }]}
-          >
-            <View style={[styles.voiceIcon, { backgroundColor: theme.link + '20' }]}>
-              <Feather name="external-link" size={18} color={theme.link} />
-            </View>
-            <View style={{ flex: 1, marginLeft: Spacing.md }}>
-              <ThemedText type="small" style={{ color: theme.link }} numberOfLines={1}>
-                {link}
-              </ThemedText>
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {sender?.username || t("User", "Пользователь")} · {format(new Date(item.createdAt), "d MMM, HH:mm")}
-              </ThemedText>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-    );
-  }, [membersMap, theme, extractLinks]);
-
   const media = mediaQuery.data || [];
+
+  const renderMembersContent = () => (
+    <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
+      {membersQuery.isLoading ? (
+        <View style={{ padding: Spacing.lg, alignItems: 'center' }}>
+          <ActivityIndicator size="small" color={theme.link} />
+        </View>
+      ) : (membersQuery.data || []).map((member, index) => {
+        const isLast = index === (membersQuery.data?.length || 0) - 1;
+        const isAdmin = member.role === "admin";
+        return (
+          <Pressable
+            key={member.id}
+            onPress={() => {
+              if (member.userId !== user?.id) {
+                navigation.navigate("UserProfile", { userId: member.userId });
+              }
+            }}
+            style={[styles.memberRow, { borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth, borderBottomColor: theme.border }]}
+          >
+            <Avatar emoji={member.user?.emoji || "🐸"} size={40} />
+            <View style={{ flex: 1, marginLeft: Spacing.md }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <ThemedText type="body" style={{ fontWeight: '500' }}>
+                  {member.user?.username || "User"}
+                </ThemedText>
+                {member.user?.isVerified ? <VerifiedBadge size={14} /> : null}
+              </View>
+              <ThemedText type="caption" style={{ color: isAdmin ? theme.link : theme.textSecondary }}>
+                {isAdmin ? t("Admin", "Админ") : t("Member", "Участник")}
+              </ThemedText>
+            </View>
+            <Feather name="chevron-right" size={16} color={theme.textSecondary} />
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+
+  const renderPhotosContent = () => {
+    if (mediaQuery.isLoading) return <View style={{ padding: Spacing.xl, alignItems: 'center' }}><ActivityIndicator size="small" color={theme.link} /></View>;
+    if (media.length === 0) return renderEmptyState("image", t("No photos yet", "Нет фотографий"));
+    return (
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        {media.map((item) => {
+          if (!item.imageUrl) return null;
+          const imageUrl = getImageUrl(item.imageUrl);
+          if (!imageUrl) return null;
+          return (
+            <Pressable
+              key={item.id}
+              style={{ width: PHOTO_SIZE, height: PHOTO_SIZE, borderRadius: 4, overflow: 'hidden', margin: 1 }}
+              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+            >
+              <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} />
+            </Pressable>
+          );
+        })}
+      </View>
+    );
+  };
+
+  const renderVoiceContent = () => {
+    if (mediaQuery.isLoading) return <View style={{ padding: Spacing.xl, alignItems: 'center' }}><ActivityIndicator size="small" color={theme.link} /></View>;
+    if (media.length === 0) return renderEmptyState("mic", t("No voice messages yet", "Нет голосовых сообщений"));
+    return (
+      <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
+        {media.map((item) => {
+          const sender = membersMap[item.senderId];
+          const duration = item.voiceDuration || 0;
+          const mins = Math.floor(duration / 60);
+          const secs = Math.floor(duration % 60);
+          return (
+            <View key={item.id} style={[styles.mediaRow, { borderBottomColor: theme.border }]}>
+              <View style={[styles.iconCircle, { backgroundColor: theme.link + '20' }]}>
+                <Feather name="mic" size={18} color={theme.link} />
+              </View>
+              <View style={{ flex: 1, marginLeft: Spacing.md }}>
+                <ThemedText type="body" style={{ fontWeight: '500' }}>
+                  {sender?.username || t("User", "Пользователь")}
+                </ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  {`${mins}:${secs.toString().padStart(2, '0')}`} · {format(new Date(item.createdAt), "d MMM, HH:mm")}
+                </ThemedText>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
+  const renderLinksContent = () => {
+    if (mediaQuery.isLoading) return <View style={{ padding: Spacing.xl, alignItems: 'center' }}><ActivityIndicator size="small" color={theme.link} /></View>;
+    if (media.length === 0) return renderEmptyState("link", t("No links yet", "Нет ссылок"));
+    return (
+      <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
+        {media.map((item) => {
+          const links = extractLinks(item.content);
+          const sender = membersMap[item.senderId];
+          return links.map((link, i) => (
+            <Pressable
+              key={`${item.id}-${i}`}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(link); }}
+              style={[styles.mediaRow, { borderBottomColor: theme.border }]}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: theme.link + '20' }]}>
+                <Feather name="external-link" size={18} color={theme.link} />
+              </View>
+              <View style={{ flex: 1, marginLeft: Spacing.md }}>
+                <ThemedText type="small" style={{ color: theme.link }} numberOfLines={1}>{link}</ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+                  {sender?.username || t("User", "Пользователь")} · {format(new Date(item.createdAt), "d MMM, HH:mm")}
+                </ThemedText>
+              </View>
+            </Pressable>
+          ));
+        })}
+      </View>
+    );
+  };
+
+  const renderEmptyState = (icon: string, text: string) => (
+    <View style={{ padding: Spacing.xl, alignItems: 'center' }}>
+      <Feather name={icon as any} size={28} color={theme.textSecondary} />
+      <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>{text}</ThemedText>
+    </View>
+  );
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "members": return renderMembersContent();
+      case "photos": return renderPhotosContent();
+      case "voice": return renderVoiceContent();
+      case "links": return renderLinksContent();
+    }
+  };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <ScrollView
-        contentContainerStyle={{ paddingTop: headerHeight + Spacing.md, paddingBottom: insets.bottom + Spacing.xl }}
+        contentContainerStyle={{ paddingTop: headerHeight + Spacing.sm, paddingBottom: insets.bottom + Spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.profileHeader}>
-          <View style={[styles.emojiContainer, { backgroundColor: theme.backgroundSecondary }]}>
-            <ThemedText style={styles.emojiText}>{groupEmoji || "🐸"}</ThemedText>
-          </View>
-          <ThemedText type="h2" style={{ marginTop: Spacing.md, textAlign: 'center' }}>
+          <ThemedText style={styles.emojiLarge}>{groupEmoji || "🐸"}</ThemedText>
+          <ThemedText type="h2" style={{ marginTop: Spacing.sm, textAlign: 'center' }}>
             {groupName || t("Group", "Группа")}
           </ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 4 }}>
+          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
             {membersQuery.data ? `${membersQuery.data.length} ${t("members", "участников")}` : ""}
           </ThemedText>
         </View>
 
-        <View style={{ paddingHorizontal: Spacing.lg, marginTop: Spacing.xl }}>
-          <ThemedText type="caption" style={{ color: theme.textSecondary, fontWeight: '600', marginBottom: Spacing.sm }}>
-            {t("MEMBERS", "УЧАСТНИКИ")}
-          </ThemedText>
-          <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
-            {membersQuery.isLoading ? (
-              <View style={{ padding: Spacing.lg, alignItems: 'center' }}>
-                <ActivityIndicator size="small" color={theme.link} />
-              </View>
-            ) : (membersQuery.data || []).map((member, index) => {
-              const isLast = index === (membersQuery.data?.length || 0) - 1;
-              const isAdmin = member.role === "admin";
-              return (
-                <Pressable
-                  key={member.id}
-                  onPress={() => {
-                    if (member.userId !== user?.id) {
-                      navigation.navigate("UserProfile", { userId: member.userId });
-                    }
-                  }}
-                  style={[styles.memberRow, { borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth, borderBottomColor: theme.border }]}
-                >
-                  <Avatar emoji={member.user?.emoji || "🐸"} size={40} />
-                  <View style={{ flex: 1, marginLeft: Spacing.md }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <ThemedText type="body" style={{ fontWeight: '500' }}>
-                        {member.user?.username || "User"}
-                      </ThemedText>
-                      {member.user?.isVerified ? <VerifiedBadge size={14} /> : null}
-                    </View>
-                    <ThemedText type="caption" style={{ color: isAdmin ? theme.link : theme.textSecondary }}>
-                      {isAdmin ? t("Admin", "Админ") : t("Member", "Участник")}
-                    </ThemedText>
-                  </View>
-                  <Feather name="chevron-right" size={16} color={theme.textSecondary} />
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={{ paddingHorizontal: Spacing.lg, marginTop: Spacing.xl }}>
+        <View style={{ paddingHorizontal: Spacing.lg, marginTop: Spacing.lg }}>
           <View style={{ flexDirection: 'row', backgroundColor: theme.backgroundSecondary, borderRadius: 10, padding: 3 }}>
             {tabs.map((tab) => (
               <Pressable
@@ -273,13 +295,14 @@ export default function GroupChatInfoScreen({ navigation, route }: Props) {
                   },
                 ]}
               >
-                <Feather name={tab.icon as any} size={14} color={activeTab === tab.key ? theme.text : theme.textSecondary} />
+                <Feather name={tab.icon as any} size={13} color={activeTab === tab.key ? theme.text : theme.textSecondary} />
                 <ThemedText
                   type="caption"
                   style={{
                     color: activeTab === tab.key ? theme.text : theme.textSecondary,
                     fontWeight: activeTab === tab.key ? '600' : '400',
-                    marginLeft: 4,
+                    marginLeft: 3,
+                    fontSize: 12,
                   }}
                 >
                   {tab.label}
@@ -289,44 +312,7 @@ export default function GroupChatInfoScreen({ navigation, route }: Props) {
           </View>
 
           <View style={{ marginTop: Spacing.md }}>
-            {mediaQuery.isLoading ? (
-              <View style={{ padding: Spacing.xl, alignItems: 'center' }}>
-                <ActivityIndicator size="small" color={theme.link} />
-              </View>
-            ) : media.length === 0 ? (
-              <View style={{ padding: Spacing.xl, alignItems: 'center' }}>
-                <Feather
-                  name={activeTab === "photos" ? "image" : activeTab === "voice" ? "mic" : "link"}
-                  size={32}
-                  color={theme.textSecondary}
-                />
-                <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-                  {activeTab === "photos" ? t("No photos yet", "Нет фотографий") :
-                   activeTab === "voice" ? t("No voice messages yet", "Нет голосовых сообщений") :
-                   t("No links yet", "Нет ссылок")}
-                </ThemedText>
-              </View>
-            ) : activeTab === "photos" ? (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                {media.map((item) => (
-                  <View key={item.id}>
-                    {renderPhotoItem({ item })}
-                  </View>
-                ))}
-              </View>
-            ) : activeTab === "voice" ? (
-              <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
-                {media.map((item) => (
-                  <View key={item.id}>{renderVoiceItem({ item })}</View>
-                ))}
-              </View>
-            ) : (
-              <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
-                {media.map((item) => (
-                  <View key={item.id}>{renderLinkItem({ item })}</View>
-                ))}
-              </View>
-            )}
+            {renderTabContent()}
           </View>
         </View>
       </ScrollView>
@@ -342,17 +328,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
   },
-  emojiContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'visible',
-  },
-  emojiText: {
-    fontSize: 48,
-    lineHeight: 58,
+  emojiLarge: {
+    fontSize: 56,
+    lineHeight: 66,
     textAlign: 'center',
   },
   memberRow: {
@@ -373,7 +351,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  voiceIcon: {
+  iconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
