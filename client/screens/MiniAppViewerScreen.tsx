@@ -71,14 +71,14 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
   const injectedJS = `
     (function() {
-      var lastY = 0;
-      var scrolling = false;
-      var timer = null;
+      var scrollTimer = null;
+      var throttled = false;
       window.addEventListener('scroll', function() {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll' }));
-      }, { passive: true });
-      document.addEventListener('touchmove', function() {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll' }));
+        if (!throttled) {
+          throttled = true;
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll' }));
+          setTimeout(function() { throttled = false; }, 300);
+        }
       }, { passive: true });
     })();
     true;
@@ -168,6 +168,12 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               scrollEnabled
               bounces
               allowsBackForwardNavigationGestures
+              overScrollMode="always"
+              decelerationRate="normal"
+              showsVerticalScrollIndicator
+              showsHorizontalScrollIndicator={false}
+              contentMode="mobile"
+              setSupportMultipleWindows={false}
             />
           )}
 
