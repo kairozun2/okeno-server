@@ -27,7 +27,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest, getImageUrl, getApiUrl } from "@/lib/query-client";
+import { apiRequest, getImageUrl, getApiUrl, getShareUrl } from "@/lib/query-client";
 import { fetchAndCacheFeed } from "@/lib/sync";
 import * as Database from "@/lib/database";
 import { useIsOnline } from "@/hooks/useNetworkStatus";
@@ -146,8 +146,7 @@ function PostCard({
   const handleShare = async () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const domain = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
-      const shareUrl = `https://${domain}/post/${post.id}`;
+      const shareUrl = getShareUrl(`/post/${post.id}`);
       await Share.share({
         message: `Check out this moment on Okeno: ${shareUrl}`,
       });

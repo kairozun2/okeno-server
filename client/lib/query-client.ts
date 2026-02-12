@@ -20,6 +20,20 @@ export function getApiUrl(): string {
   return `https://${cleanHost}`;
 }
 
+const PRODUCTION_DOMAIN = "okeno.app";
+
+export function getShareDomain(): string {
+  const envDomain = process.env.EXPO_PUBLIC_DOMAIN;
+  if (envDomain && !envDomain.includes("replit") && !envDomain.includes("localhost")) {
+    return envDomain.replace(/^https?:\/\//, '').replace(/:.*$/, '');
+  }
+  return PRODUCTION_DOMAIN;
+}
+
+export function getShareUrl(path: string): string {
+  return `https://${getShareDomain()}${path.startsWith('/') ? path : '/' + path}`;
+}
+
 export function getImageUrl(path: string | null | undefined): string {
   if (!path) {
     return "";

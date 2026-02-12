@@ -14,7 +14,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest, getImageUrl } from "@/lib/query-client";
+import { apiRequest, getImageUrl, getShareUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -281,8 +281,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
     
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const domain = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
-      const shareUrl = `https://${domain}/u/${profileUser.username}`;
+      const shareUrl = getShareUrl(`/u/${profileUser.username}`);
       
       await Share.share({
         message: `Check out ${profileUser.username}'s profile on Okeno: ${shareUrl}`,

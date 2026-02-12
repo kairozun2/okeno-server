@@ -26,7 +26,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest, getImageUrl } from "@/lib/query-client";
+import { apiRequest, getImageUrl, getShareUrl } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -373,8 +373,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   const handleShare = async () => {
     if (!post) return;
     try {
-      const domain = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
-      const shareUrl = `https://${domain}/post/${post.id}`;
+      const shareUrl = getShareUrl(`/post/${post.id}`);
       await Share.share({
         message: `${t("Check out this post on Okeno!", "Посмотрите этот пост в Okeno!")} ${shareUrl}`,
       });

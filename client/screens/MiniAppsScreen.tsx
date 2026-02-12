@@ -13,7 +13,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { getApiUrl } from "@/lib/query-client";
+import { getApiUrl, getShareUrl } from "@/lib/query-client";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -151,9 +151,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
 
   const handleShare = async (app: MiniApp) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const domain = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
-    const protocol = domain.includes("localhost") ? "http" : "https";
-    const appLink = `${protocol}://${domain}/mini-app/${app.id}`;
+    const appLink = getShareUrl(`/mini-app/${app.id}`);
     try {
       if (Platform.OS === "web") {
         await Clipboard.setStringAsync(appLink);
