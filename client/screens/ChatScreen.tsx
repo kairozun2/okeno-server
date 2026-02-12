@@ -175,6 +175,7 @@ function MessageBubble({
   senderName?: string;
   senderEmoji?: string;
   onMiniAppPress?: (appId: string) => void;
+  miniApps?: { id: string; name: string; emoji: string; url: string; isVerified: boolean }[];
 }) {
   const { theme, isDark } = useTheme();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
@@ -220,36 +221,64 @@ function MessageBubble({
     }
   }, []);
 
+  const renderMiniAppCard = (appId: string, displayText: string, appInfo?: { emoji: string; name: string; isVerified?: boolean }) => (
+    <Pressable
+      onPress={() => onMiniAppPress?.(appId)}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingVertical: 4,
+      }}
+    >
+      {appInfo ? (
+        <ThemedText style={{ fontSize: 22 }}>{appInfo.emoji}</ThemedText>
+      ) : null}
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <ThemedText type="body" style={{ color: theme.text, fontWeight: '600', fontSize: 15 }}>
+            {appInfo?.name || displayText || t("Mini App", "Мини-приложение")}
+          </ThemedText>
+          {appInfo?.isVerified ? <VerifiedBadge size={12} /> : null}
+        </View>
+        {displayText && appInfo ? (
+          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 1 }} numberOfLines={1}>
+            {displayText}
+          </ThemedText>
+        ) : null}
+      </View>
+      <View style={{
+        backgroundColor: 'rgba(52,120,246,0.15)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+      }}>
+        <ThemedText type="caption" style={{ color: '#3478F6', fontWeight: '700', fontSize: 12 }}>
+          {t("Open", "Открыть")}
+        </ThemedText>
+      </View>
+    </Pressable>
+  );
+
   const renderContent = (content: string, isOwn: boolean) => {
     const miniAppMatch = content.match(/\/miniapp:([a-f0-9-]+)/i);
     if (miniAppMatch) {
       const appId = miniAppMatch[1];
       const displayText = content.replace(/\n?\/miniapp:[a-f0-9-]+/i, '').trim();
-      return (
-        <Pressable
-          onPress={() => onMiniAppPress?.(appId)}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 8,
-            paddingVertical: 2,
-          }}
-        >
-          <ThemedText style={{ fontSize: displayText ? 16 : 14, color: theme.text }}>
-            {displayText || t("Open Mini App", "Открыть мини-приложение")}
-          </ThemedText>
-          <View style={{
-            backgroundColor: 'rgba(52,120,246,0.15)',
-            paddingHorizontal: 8,
-            paddingVertical: 3,
-            borderRadius: 10,
-          }}>
-            <ThemedText type="caption" style={{ color: '#3478F6', fontWeight: '600', fontSize: 11 }}>
-              {t("Open", "Открыть")}
-            </ThemedText>
-          </View>
-        </Pressable>
-      );
+      const appInfo = miniApps?.find(a => a.id === appId);
+      return renderMiniAppCard(appId, displayText, appInfo);
+    }
+
+    if (miniApps && miniApps.length > 0) {
+      const contentTrimmed = content.trim();
+      const matchedApp = miniApps.find(app => {
+        const normalizedUrl = app.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        const normalizedContent = contentTrimmed.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        return normalizedContent === normalizedUrl || contentTrimmed === app.url;
+      });
+      if (matchedApp) {
+        return renderMiniAppCard(matchedApp.id, '', matchedApp);
+      }
     }
 
     const codeBlockRegex = /```[\s\S]*?```/g;
@@ -1204,10 +1233,11 @@ export default function ChatScreen({ route, navigation }: Props) {
           senderName={senderInfo?.username}
           senderEmoji={senderInfo?.emoji}
           onMiniAppPress={handleMiniAppPress}
+          miniApps={miniAppsForCommand}
         />
       );
     },
-    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply, handleImagePreview, isGroupChat, membersMap, handleDoubleTap, handleMiniAppPress]
+    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply, handleImagePreview, isGroupChat, membersMap, handleDoubleTap, handleMiniAppPress, miniAppsForCommand]
   );
 
   const chatContent = (
