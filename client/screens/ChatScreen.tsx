@@ -1122,6 +1122,25 @@ export default function ChatScreen({ route, navigation }: Props) {
             <Feather name={chatFullscreen ? "arrow-left" : "x"} size={20} color={theme.text} />
           </Pressable>
 
+          {!isGroupChat ? (
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate("CallScreen" as any, { userId: otherUserId, displayName, displayEmoji });
+              }}
+              style={styles.headerButton}
+            >
+              {Platform.OS === 'ios' && (
+                <BlurView
+                  intensity={45}
+                  tint={isDark ? "dark" : "light"}
+                  style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
+                />
+              )}
+              <Feather name="phone" size={18} color={theme.accent} />
+            </Pressable>
+          ) : null}
+
           <View style={[styles.headerCenter, { backgroundColor: 'transparent' }]} pointerEvents="none">
             {!isGroupChat && isOtherUserTyping ? (
               <Animated.View 

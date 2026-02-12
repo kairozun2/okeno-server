@@ -28,6 +28,7 @@ import DebugConsoleScreen from "@/screens/DebugConsoleScreen";
 import ThemeSelectionScreen from "@/screens/ThemeSelectionScreen";
 import CreateGroupChatScreen from "@/screens/CreateGroupChatScreen";
 import GroupChatInfoScreen from "@/screens/GroupChatInfoScreen";
+import CallScreen from "@/screens/CallScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -60,6 +61,7 @@ export type RootStackParamList = {
   ThemeSelection: undefined;
   CreateGroupChat: undefined;
   GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string };
+  CallScreen: { userId?: string; displayName?: string; displayEmoji?: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -344,6 +346,16 @@ export default function RootStackNavigator() {
               ...screenOptions,
               headerTitle: "",
             })}
+          />
+          <Stack.Screen
+            name="CallScreen"
+            component={CallScreen}
+            options={{
+              headerShown: false,
+              presentation: "fullScreenModal",
+              animation: "slide_from_bottom",
+              gestureEnabled: true,
+            }}
           />
         </>
       ) : (
