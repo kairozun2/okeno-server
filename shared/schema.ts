@@ -75,6 +75,7 @@ export const chats = pgTable("chats", {
   isGroup: boolean("is_group").default(false).notNull(),
   name: text("name"),
   groupEmoji: text("group_emoji"),
+  backgroundImage: text("background_image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
+import React, { useState, useCallback, useMemo, useLayoutEffect, useRef } from "react";
 import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator, Platform, FlatList } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -83,6 +83,8 @@ function ChatItem({
   allChatSettings,
   language,
   currentUserId,
+  onSwipeOpen,
+  closeRef,
 }: {
   chat: ChatWithDetails;
   onPress: () => void;
@@ -91,6 +93,8 @@ function ChatItem({
   allChatSettings: ChatSettings[];
   language: string;
   currentUserId?: string;
+  onSwipeOpen: (chatId: string) => void;
+  closeRef: React.MutableRefObject<Record<string, () => void>>;
 }) {
   const { theme } = useTheme();
 
@@ -108,8 +112,23 @@ function ChatItem({
   const translateX = useSharedValue(0);
   const contextX = useSharedValue(0);
 
+  const closeSwipe = useCallback(() => {
+    translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+  }, []);
+
+  React.useEffect(() => {
+    closeRef.current[chat.id] = closeSwipe;
+    return () => {
+      delete closeRef.current[chat.id];
+    };
+  }, [chat.id, closeSwipe, closeRef]);
+
   const triggerHaptic = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const notifySwipeOpen = () => {
+    onSwipeOpen(chat.id);
   };
 
   const panGesture = Gesture.Pan()
@@ -132,6 +151,7 @@ function ChatItem({
       if (event.translationX < -40) {
         translateX.value = withSpring(-maxSwipe, { damping: 20, stiffness: 200 });
         runOnJS(triggerHaptic)();
+        runOnJS(notifySwipeOpen)();
       } else {
         translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
       }
@@ -289,6 +309,17 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
   const [editGroupName, setEditGroupName] = useState("");
   const [editGroupEmoji, setEditGroupEmoji] = useState("");
+
+  const swipeCloseRef = useRef<Record<string, () => void>>({});
+  const openSwipeIdRef = useRef<string | null>(null);
+
+  const handleSwipeOpen = useCallback((chatId: string) => {
+    if (openSwipeIdRef.current && openSwipeIdRef.current !== chatId) {
+      const closeFn = swipeCloseRef.current[openSwipeIdRef.current];
+      if (closeFn) closeFn();
+    }
+    openSwipeIdRef.current = chatId;
+  }, []);
 
   const presetBackgrounds = [
     "/uploads/bg-preset-1.png",
@@ -451,7 +482,7 @@ export default function ChatsListScreen({ navigation }: Props) {
     setBackgroundImage(existing?.backgroundImage || null);
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     if (!selectedChat?.otherUser?.id) return;
     saveChatSettingsMutation.mutate({
       otherUserId: selectedChat.otherUser.id,
@@ -459,6 +490,10 @@ export default function ChatsListScreen({ navigation }: Props) {
       backgroundImage,
       isGlobal,
     });
+    try {
+      await apiRequest("PATCH", `/api/chats/${selectedChat.id}/background`, { backgroundImage });
+      queryClient.invalidateQueries({ queryKey: ["/api/chats", selectedChat.id, "info"] });
+    } catch {}
   };
 
   const handleCloseModal = () => {
@@ -514,10 +549,12 @@ export default function ChatsListScreen({ navigation }: Props) {
           }}
           onDelete={() => handleDeleteChat(item)}
           onEditGroup={isGroupAdmin ? () => handleEditGroup(item) : undefined}
+          onSwipeOpen={handleSwipeOpen}
+          closeRef={swipeCloseRef}
         />
       );
     },
-    [navigation, allChatSettings, language, user?.id]
+    [navigation, allChatSettings, language, user?.id, handleSwipeOpen]
   );
 
   return (

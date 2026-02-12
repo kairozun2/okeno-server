@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -64,15 +64,18 @@ function CreatePostButton({ iconOnly = false }: { iconOnly?: boolean }) {
 function SearchButton() {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const lastPress = useRef(0);
+
+  const handlePress = useCallback(() => {
+    const now = Date.now();
+    if (now - lastPress.current < 500) return;
+    lastPress.current = now;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.navigate("UserSearch");
+  }, [navigation]);
 
   return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        navigation.navigate("UserSearch");
-      }}
-      style={styles.headerButton}
-    >
+    <Pressable onPress={handlePress} style={styles.headerButton}>
       <Feather name="search" size={20} color={theme.text} />
     </Pressable>
   );
@@ -81,15 +84,18 @@ function SearchButton() {
 function NotificationsButton() {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const lastPress = useRef(0);
+
+  const handlePress = useCallback(() => {
+    const now = Date.now();
+    if (now - lastPress.current < 500) return;
+    lastPress.current = now;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.navigate("Notifications");
+  }, [navigation]);
 
   return (
-    <Pressable
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        navigation.navigate("Notifications");
-      }}
-      style={styles.headerButton}
-    >
+    <Pressable onPress={handlePress} style={styles.headerButton}>
       <Feather name="bell" size={20} color={theme.text} />
     </Pressable>
   );

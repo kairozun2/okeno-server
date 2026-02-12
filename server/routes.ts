@@ -656,15 +656,40 @@ export async function registerRoutes(app: express.Express) {
 
   app.patch("/api/group-chats/:id", async (req, res) => {
     try {
-      const { name, groupEmoji } = req.body;
+      const { name, groupEmoji, backgroundImage } = req.body;
       const [updated] = await db.update(chats).set({
         ...(name !== undefined ? { name } : {}),
         ...(groupEmoji !== undefined ? { groupEmoji } : {}),
+        ...(backgroundImage !== undefined ? { backgroundImage } : {}),
       }).where(eq(chats.id, req.params.id)).returning();
       res.json(updated);
     } catch (error) {
       console.error("Update group chat error:", error);
       res.status(500).json({ error: "Failed to update group chat" });
+    }
+  });
+
+  app.patch("/api/chats/:id/background", async (req, res) => {
+    try {
+      const { backgroundImage } = req.body;
+      const [updated] = await db.update(chats).set({
+        backgroundImage: backgroundImage || null,
+      }).where(eq(chats.id, req.params.id)).returning();
+      res.json(updated);
+    } catch (error) {
+      console.error("Update chat background error:", error);
+      res.status(500).json({ error: "Failed to update chat background" });
+    }
+  });
+
+  app.get("/api/chats/:id", async (req, res) => {
+    try {
+      const [chat] = await db.select().from(chats).where(eq(chats.id, req.params.id));
+      if (!chat) return res.status(404).json({ error: "Chat not found" });
+      res.json(chat);
+    } catch (error) {
+      console.error("Get chat error:", error);
+      res.status(500).json({ error: "Failed to get chat" });
     }
   });
 

@@ -234,15 +234,21 @@ function MessageBubble({
     );
   };
 
+  const hasReactions = (message as any).reactions && (message as any).reactions.length > 0;
+
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View style={[{ zIndex: isSelected ? 1001 : 1, width: '100%' }, animatedStyle]}>
+        <View style={[
+          styles.messageBubble,
+          isOwn ? styles.ownMessage : styles.otherMessage,
+          { marginBottom: hasReactions ? 14 : 0 },
+        ]}>
         <Pressable 
           onLongPress={() => onLongPress(message)}
           delayLongPress={150}
           style={({ pressed }) => [
-            styles.messageBubble,
-            isOwn ? styles.ownMessage : styles.otherMessage,
+            styles.messageInner,
             { 
               backgroundColor: isOwn 
                 ? "transparent"
@@ -254,9 +260,11 @@ function MessageBubble({
               shadowOpacity: isOwn ? 0.08 : (isSelected ? 0.3 : 0),
               shadowRadius: isOwn ? 4 : 8,
               elevation: isOwn ? 2 : (isSelected ? 10 : 0),
-              overflow: isOwn ? 'hidden' : undefined,
+              overflow: 'hidden',
               borderWidth: isOwn ? 1 : 0,
               borderColor: isOwn ? (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)') : 'transparent',
+              borderBottomRightRadius: isOwn ? Spacing.xs : undefined,
+              borderBottomLeftRadius: !isOwn ? Spacing.xs : undefined,
             },
           ]}
         >
@@ -319,24 +327,6 @@ function MessageBubble({
           ) : null}
           {message.content ? renderContent(typeof message.content === 'string' ? message.content : "", isOwn) : null}
           
-          {(message as any).reactions && (message as any).reactions.length > 0 && (
-            <View 
-              pointerEvents="none"
-              style={[
-                styles.reactionsBadge,
-                { 
-                  backgroundColor: 'transparent',
-                  right: isOwn ? -10 : undefined,
-                  left: !isOwn ? -10 : undefined,
-                }
-              ]}
-            >
-              {(message as any).reactions.map((r: any, idx: number) => (
-                <ThemedText key={idx} style={{ fontSize: 13, lineHeight: 18 }}>{r.emoji}</ThemedText>
-              ))}
-            </View>
-          )}
-
           <View style={styles.messageFooter}>
             {message.isEdited ? (
               <ThemedText
@@ -375,6 +365,24 @@ function MessageBubble({
             </View>
           </View>
         </Pressable>
+          {hasReactions ? (
+            <View 
+              pointerEvents="none"
+              style={[
+                styles.reactionsBadge,
+                { 
+                  backgroundColor: 'transparent',
+                  right: isOwn ? 4 : undefined,
+                  left: !isOwn ? 4 : undefined,
+                }
+              ]}
+            >
+              {(message as any).reactions.map((r: any, idx: number) => (
+                <ThemedText key={idx} style={{ fontSize: 14, lineHeight: 20 }}>{r.emoji}</ThemedText>
+              ))}
+            </View>
+          ) : null}
+        </View>
       </Animated.View>
     </GestureDetector>
   );
@@ -588,7 +596,18 @@ export default function ChatScreen({ route, navigation }: Props) {
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 
-  const { data: groupMembersData } = useQuery<{ id: string; username: string; emoji: string }[]>({
+  const { data: chatData } = useQuery<any>({
+    queryKey: ["/api/chats", chatId, "info"],
+    queryFn: async () => {
+      const url = new URL(`/api/chats/${chatId}`, getApiUrl());
+      const response = await fetch(url.toString(), { credentials: "include" });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    staleTime: 30000,
+  });
+
+  const { data: groupMembersData } = useQuery<any[]>({
     queryKey: ["/api/group-chats", chatId, "members"],
     queryFn: async () => {
       const url = new URL(`/api/group-chats/${chatId}/members`, getApiUrl());
@@ -604,7 +623,12 @@ export default function ChatScreen({ route, navigation }: Props) {
     const map: Record<string, { username: string; emoji: string }> = {};
     if (groupMembersData) {
       groupMembersData.forEach((m) => {
-        map[m.id] = { username: m.username, emoji: m.emoji };
+        const userId = m.userId || m.id;
+        const username = m.user?.username || m.username || "";
+        const emoji = m.user?.emoji || m.emoji || "🐸";
+        if (userId) {
+          map[userId] = { username, emoji };
+        }
       });
     }
     return map;
@@ -612,7 +636,7 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const displayName = isGroupChat ? (groupName || t("Group", "Группа")) : (chatSettings?.nickname || userData?.username || identity.name || t("User", "Пользователь"));
   const displayEmoji = isGroupChat ? (groupEmoji || "🐸") : (userData?.emoji || identity.emoji || "🐸");
-  const rawBackgroundImage = isGroupChat ? null : chatSettings?.backgroundImage;
+  const rawBackgroundImage = chatData?.backgroundImage || chatSettings?.backgroundImage || null;
   const backgroundImage = rawBackgroundImage && !rawBackgroundImage.startsWith("file://") && !rawBackgroundImage.startsWith("blob:") ? rawBackgroundImage : null;
 
   const {
@@ -1394,18 +1418,19 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     maxWidth: "80%",
+    marginBottom: Spacing.sm,
+    position: 'relative',
+  },
+  messageInner: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
   },
   ownMessage: {
     alignSelf: "flex-end",
-    borderBottomRightRadius: Spacing.xs,
   },
   otherMessage: {
     alignSelf: "flex-start",
-    borderBottomLeftRadius: Spacing.xs,
   },
   replyContainer: {
     borderLeftWidth: 2,
