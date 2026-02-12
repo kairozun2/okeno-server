@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
-import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator, Platform, ActionSheetIOS } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -76,11 +76,13 @@ interface ChatWithDetails extends Chat {
 function ChatItem({
   chat,
   onPress,
+  onLongPress,
   allChatSettings,
   language,
 }: {
   chat: ChatWithDetails;
   onPress: () => void;
+  onLongPress: () => void;
   allChatSettings: ChatSettings[];
   language: string;
 }) {
@@ -100,6 +102,11 @@ function ChatItem({
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onPress();
         }}
+        onLongPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          onLongPress();
+        }}
+        delayLongPress={500}
         style={({ pressed }) => [
           styles.chatItem,
           {
@@ -191,6 +198,11 @@ export default function ChatsListScreen({ navigation }: Props) {
   const [nickname, setNickname] = useState("");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [isGlobal, setIsGlobal] = useState(false);
+  const [longPressChat, setLongPressChat] = useState<ChatWithDetails | null>(null);
+  const [showLongPressModal, setShowLongPressModal] = useState(false);
+  const [showEditGroupModal, setShowEditGroupModal] = useState(false);
+  const [editGroupName, setEditGroupName] = useState("");
+  const [editGroupEmoji, setEditGroupEmoji] = useState("");
 
   const presetBackgrounds = [
     "/uploads/bg-preset-1.png",
@@ -273,6 +285,70 @@ export default function ChatsListScreen({ navigation }: Props) {
       setBackgroundImage(null);
     },
   });
+
+  const deleteChatMutation = useMutation({
+    mutationFn: async (chatId: string) => {
+      await apiRequest("DELETE", `/api/chats/${chatId}`, null);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "chats"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+  });
+
+  const editGroupMutation = useMutation({
+    mutationFn: async ({ chatId, name, groupEmoji }: { chatId: string; name: string; groupEmoji: string }) => {
+      await apiRequest("PATCH", `/api/group-chats/${chatId}`, { name, groupEmoji });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "chats"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowEditGroupModal(false);
+      setLongPressChat(null);
+    },
+  });
+
+  const handleLongPress = useCallback((chat: ChatWithDetails) => {
+    setLongPressChat(chat);
+    
+    if (Platform.OS === 'ios') {
+      const isGroup = chat.isGroup === true;
+      const isGroupAdmin = isGroup && chat.user1Id === user?.id;
+      
+      const options: string[] = [];
+      
+      if (isGroupAdmin) {
+        options.push(language === 'ru' ? 'Редактировать группу' : 'Edit Group');
+      }
+      options.push(language === 'ru' ? 'Удалить чат' : 'Delete Chat');
+      options.push(language === 'ru' ? 'Отмена' : 'Cancel');
+      
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          destructiveButtonIndex: isGroupAdmin ? 1 : 0,
+          cancelButtonIndex: options.length - 1,
+        },
+        (buttonIndex) => {
+          if (isGroupAdmin) {
+            if (buttonIndex === 0) {
+              setEditGroupName(chat.name || '');
+              setEditGroupEmoji(chat.groupEmoji || '🐸');
+              setShowEditGroupModal(true);
+            } else if (buttonIndex === 1) {
+              deleteChatMutation.mutate(chat.id);
+            }
+          } else {
+            if (buttonIndex === 0) {
+              deleteChatMutation.mutate(chat.id);
+            }
+          }
+        }
+      );
+    } else {
+      setShowLongPressModal(true);
+    }
+  }, [user?.id, language]);
 
   const [isUploadingBackground, setIsUploadingBackground] = useState(false);
 
@@ -378,6 +454,7 @@ export default function ChatsListScreen({ navigation }: Props) {
               } as any);
             }
           }}
+          onLongPress={() => handleLongPress(item)}
         />
       );
     },
@@ -398,6 +475,118 @@ export default function ChatsListScreen({ navigation }: Props) {
         refreshing={refreshing}
         ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
       />
+
+      <Modal
+        visible={showLongPressModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLongPressModal(false)}
+      >
+        <Pressable 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+          onPress={() => setShowLongPressModal(false)}
+        >
+          <View style={{ backgroundColor: theme.backgroundRoot, borderTopLeftRadius: 16, borderTopRightRadius: 16, paddingBottom: insets.bottom + Spacing.md }}>
+            {longPressChat?.isGroup && longPressChat?.user1Id === user?.id ? (
+              <Pressable
+                onPress={() => {
+                  setShowLongPressModal(false);
+                  setEditGroupName(longPressChat?.name || '');
+                  setEditGroupEmoji(longPressChat?.groupEmoji || '🐸');
+                  setShowEditGroupModal(true);
+                }}
+                style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, gap: Spacing.md }}
+              >
+                <Feather name="edit-2" size={20} color={theme.text} />
+                <ThemedText type="body">{t("Edit Group", "Редактировать группу")}</ThemedText>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={() => {
+                setShowLongPressModal(false);
+                if (longPressChat) deleteChatMutation.mutate(longPressChat.id);
+              }}
+              style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, gap: Spacing.md }}
+            >
+              <Feather name="trash-2" size={20} color={theme.error} />
+              <ThemedText type="body" style={{ color: theme.error }}>{t("Delete Chat", "Удалить чат")}</ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={() => setShowLongPressModal(false)}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: Spacing.lg }}
+            >
+              <ThemedText type="body" style={{ color: theme.textSecondary }}>{t("Cancel", "Отмена")}</ThemedText>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showEditGroupModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowEditGroupModal(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top - 10 : Spacing.md }]}>
+            <Pressable onPress={() => setShowEditGroupModal(false)} style={styles.modalHeaderButton}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+            <ThemedText type="h3" style={styles.modalTitle}>
+              {t("Edit Group", "Редактировать группу")}
+            </ThemedText>
+            <Pressable 
+              onPress={() => {
+                if (longPressChat) {
+                  editGroupMutation.mutate({ chatId: longPressChat.id, name: editGroupName, groupEmoji: editGroupEmoji });
+                }
+              }}
+              style={styles.modalHeaderButton}
+              disabled={editGroupMutation.isPending}
+            >
+              <Feather name="check" size={24} color={theme.link} />
+            </Pressable>
+          </View>
+          
+          <ScrollView contentContainerStyle={{ padding: Spacing.lg }}>
+            <View style={{ alignItems: 'center', marginBottom: Spacing.xl }}>
+              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: theme.backgroundSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                <ThemedText style={{ fontSize: 40 }}>{editGroupEmoji}</ThemedText>
+              </View>
+            </View>
+            
+            <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.sm, fontWeight: '500' }}>
+              {t("Group Name", "Название группы")}
+            </ThemedText>
+            <TextInput
+              value={editGroupName}
+              onChangeText={setEditGroupName}
+              placeholder={t("Enter group name...", "Введите название группы...")}
+              placeholderTextColor={theme.textSecondary}
+              style={[
+                styles.nicknameInput,
+                { backgroundColor: theme.backgroundSecondary, color: theme.text, borderColor: theme.border },
+              ]}
+              maxLength={50}
+            />
+            
+            <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.sm, marginTop: Spacing.xl, fontWeight: '500' }}>
+              {t("Group Emoji", "Эмодзи группы")}
+            </ThemedText>
+            <TextInput
+              value={editGroupEmoji}
+              onChangeText={(text) => setEditGroupEmoji(text.slice(-2))}
+              placeholder="🐸"
+              placeholderTextColor={theme.textSecondary}
+              style={[
+                styles.nicknameInput,
+                { backgroundColor: theme.backgroundSecondary, color: theme.text, borderColor: theme.border, fontSize: 32, textAlign: 'center' },
+              ]}
+              maxLength={4}
+            />
+          </ScrollView>
+        </View>
+      </Modal>
 
       <Modal
         visible={showSettingsModal}

@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import express, { type Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema, chats, groupChatMembers } from "@shared/schema";
+import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema, chats, groupChatMembers, messages } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -665,6 +665,19 @@ export async function registerRoutes(app: express.Express) {
     } catch (error) {
       console.error("Update group chat error:", error);
       res.status(500).json({ error: "Failed to update group chat" });
+    }
+  });
+
+  app.delete("/api/chats/:id", async (req, res) => {
+    try {
+      const chatId = req.params.id;
+      await db.delete(messages).where(eq(messages.chatId, chatId));
+      await db.delete(groupChatMembers).where(eq(groupChatMembers.chatId, chatId));
+      await db.delete(chats).where(eq(chats.id, chatId));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete chat error:", error);
+      res.status(500).json({ error: "Failed to delete chat" });
     }
   });
 
