@@ -67,6 +67,7 @@ interface ChatWithDetails extends Chat {
   isGroup?: boolean;
   name?: string;
   groupEmoji?: string;
+  backgroundImage?: string | null;
   otherUser?: User;
   members?: User[];
   lastMessage?: string;
@@ -291,12 +292,71 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
+type ChatFilter = "all" | "inbox" | "groups";
+
+function FilterTabs({ 
+  activeFilter, 
+  onFilterChange, 
+  hasGroups, 
+  language, 
+  theme 
+}: { 
+  activeFilter: ChatFilter; 
+  onFilterChange: (f: ChatFilter) => void; 
+  hasGroups: boolean;
+  language: string; 
+  theme: any; 
+}) {
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+  const filters: { key: ChatFilter; label: string }[] = [
+    { key: "all", label: t("All", "Все") },
+    { key: "inbox", label: t("Inbox", "Входящие") },
+  ];
+  if (hasGroups) {
+    filters.push({ key: "groups", label: t("Groups", "Группы") });
+  }
+
+  return (
+    <View style={{ flexDirection: "row", paddingHorizontal: Spacing.md, paddingVertical: 6, gap: 8 }}>
+      {filters.map((f) => (
+        <Pressable
+          key={f.key}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onFilterChange(f.key);
+          }}
+          style={{
+            paddingHorizontal: 14,
+            paddingVertical: 6,
+            borderRadius: 16,
+            backgroundColor: activeFilter === f.key
+              ? (theme.link || "#3478F6")
+              : theme.backgroundSecondary,
+          }}
+        >
+          <ThemedText
+            type="caption"
+            style={{
+              color: activeFilter === f.key ? "#fff" : theme.textSecondary,
+              fontWeight: "600",
+              fontSize: 13,
+            }}
+          >
+            {f.label}
+          </ThemedText>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 export default function ChatsListScreen({ navigation }: Props) {
   const { theme, language } = useTheme();
   const { user } = useAuth();
   const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
+  const [activeFilter, setActiveFilter] = useState<ChatFilter>("all");
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
   const { setChatsRefreshing } = useRefresh();
@@ -477,23 +537,40 @@ export default function ChatsListScreen({ navigation }: Props) {
 
   const handleSelectChat = (chat: ChatWithDetails) => {
     setSelectedChat(chat);
-    const existing = allChatSettings.find(s => s.otherUserId === chat.otherUser?.id);
-    setNickname(existing?.nickname || "");
-    setBackgroundImage(existing?.backgroundImage || null);
+    if (chat.isGroup) {
+      setNickname("");
+      setBackgroundImage(chat.backgroundImage || null);
+    } else {
+      const existing = allChatSettings.find(s => s.otherUserId === chat.otherUser?.id);
+      setNickname(existing?.nickname || "");
+      setBackgroundImage(existing?.backgroundImage || null);
+    }
   };
 
   const handleSaveSettings = async () => {
-    if (!selectedChat?.otherUser?.id) return;
-    saveChatSettingsMutation.mutate({
-      otherUserId: selectedChat.otherUser.id,
-      nickname: nickname || null,
-      backgroundImage,
-      isGlobal,
-    });
-    try {
-      await apiRequest("PATCH", `/api/chats/${selectedChat.id}/background`, { backgroundImage });
-      queryClient.invalidateQueries({ queryKey: ["/api/chats", selectedChat.id, "info"] });
-    } catch {}
+    if (!selectedChat) return;
+    if (selectedChat.isGroup) {
+      try {
+        await apiRequest("PATCH", `/api/chats/${selectedChat.id}/background`, { backgroundImage });
+        queryClient.invalidateQueries({ queryKey: ["/api/chats", selectedChat.id, "info"] });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setShowSettingsModal(false);
+        setSelectedChat(null);
+        setBackgroundImage(null);
+      } catch {}
+    } else {
+      if (!selectedChat.otherUser?.id) return;
+      saveChatSettingsMutation.mutate({
+        otherUserId: selectedChat.otherUser.id,
+        nickname: nickname || null,
+        backgroundImage,
+        isGlobal,
+      });
+      try {
+        await apiRequest("PATCH", `/api/chats/${selectedChat.id}/background`, { backgroundImage });
+        queryClient.invalidateQueries({ queryKey: ["/api/chats", selectedChat.id, "info"] });
+      } catch {}
+    }
   };
 
   const handleCloseModal = () => {
@@ -517,6 +594,14 @@ export default function ChatsListScreen({ navigation }: Props) {
       new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
   }, [chatsData]);
+
+  const hasGroups = useMemo(() => sortedChats.some(c => c.isGroup === true), [sortedChats]);
+
+  const filteredChats = useMemo(() => {
+    if (activeFilter === "inbox") return sortedChats.filter(c => !c.isGroup);
+    if (activeFilter === "groups") return sortedChats.filter(c => c.isGroup === true);
+    return sortedChats;
+  }, [sortedChats, activeFilter]);
 
   const renderItem = useCallback(
     ({ item }: { item: ChatWithDetails }) => {
@@ -560,7 +645,7 @@ export default function ChatsListScreen({ navigation }: Props) {
   return (
     <ThemedView style={styles.container}>
       <FlatList
-        data={sortedChats}
+        data={filteredChats}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
@@ -569,6 +654,17 @@ export default function ChatsListScreen({ navigation }: Props) {
         }}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        ListHeaderComponent={
+          sortedChats.length > 0 ? (
+            <FilterTabs
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+              hasGroups={hasGroups}
+              language={language}
+              theme={theme}
+            />
+          ) : null
+        }
         ListEmptyComponent={!isLoading ? <EmptyChats /> : null}
       />
 
@@ -676,12 +772,13 @@ export default function ChatsListScreen({ navigation }: Props) {
               contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
             >
               <View style={styles.selectedUserHeader}>
-                <Avatar emoji={selectedChat.otherUser?.emoji || "🐸"} size={48} />
+                <Avatar emoji={selectedChat.isGroup ? (selectedChat.groupEmoji || "🐸") : (selectedChat.otherUser?.emoji || "🐸")} size={48} />
                 <ThemedText type="h3" style={{ marginTop: Spacing.sm }} truncate maxLength={20}>
-                  {selectedChat.otherUser?.username}
+                  {selectedChat.isGroup ? (selectedChat.name || t("Group", "Группа")) : selectedChat.otherUser?.username}
                 </ThemedText>
               </View>
 
+              {selectedChat.isGroup ? null : (
               <View style={styles.settingSection}>
                 <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
                   {t("Chat Nickname", "Никнейм в чате")}
@@ -705,6 +802,7 @@ export default function ChatsListScreen({ navigation }: Props) {
                   {t("This nickname is only visible to you", "Этот никнейм виден только вам")}
                 </ThemedText>
               </View>
+              )}
 
               <View style={styles.settingSection}>
                 <ThemedText type="body" style={[styles.settingLabel, { color: theme.textSecondary }]}>
@@ -796,13 +894,13 @@ export default function ChatsListScreen({ navigation }: Props) {
                     { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" },
                   ]}
                 >
-                  <Avatar emoji={chat.otherUser?.emoji || "🐸"} size={44} />
+                  <Avatar emoji={chat.isGroup ? (chat.groupEmoji || "🐸") : (chat.otherUser?.emoji || "🐸")} size={44} />
                   <View style={styles.chatSelectInfo}>
                     <ThemedText type="body" style={{ fontWeight: "500" }} truncate maxLength={15}>
-                      {chat.otherUser?.username || "User"}
+                      {chat.isGroup ? (chat.name || t("Group", "Группа")) : (chat.otherUser?.username || "User")}
                     </ThemedText>
                     <ThemedText type="caption" style={{ color: theme.textSecondary }} truncate maxLength={20}>
-                      @{chat.otherUser?.username}
+                      {chat.isGroup ? t("Group chat", "Групповой чат") : `@${chat.otherUser?.username}`}
                     </ThemedText>
                   </View>
                   <Feather name="chevron-right" size={20} color={theme.textSecondary} />

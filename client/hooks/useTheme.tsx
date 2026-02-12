@@ -12,10 +12,14 @@ type ThemeContextType = {
   language: "en" | "ru";
   hapticsEnabled: boolean;
   chatFullscreen: boolean;
+  quickReactionEmoji: string;
+  scrollAssistEnabled: boolean;
   setAccentColor: (color: string | null) => Promise<void>;
   setLanguage: (lang: "en" | "ru") => Promise<void>;
   toggleHaptics: () => Promise<void>;
   toggleChatFullscreen: () => Promise<void>;
+  setQuickReactionEmoji: (emoji: string) => Promise<void>;
+  toggleScrollAssist: () => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -24,6 +28,8 @@ const THEME_ACCENT_KEY = "theme_accent_color";
 const THEME_LANGUAGE_KEY = "theme_language";
 const THEME_HAPTICS_KEY = "theme_haptics_enabled";
 const THEME_CHAT_FULLSCREEN_KEY = "theme_chat_fullscreen";
+const THEME_QUICK_REACTION_KEY = "theme_quick_reaction_emoji";
+const THEME_SCROLL_ASSIST_KEY = "theme_scroll_assist_enabled";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const themeKey = useSettingsStore(s => s.theme);
@@ -33,21 +39,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<"en" | "ru">("ru");
   const [hapticsEnabled, setHapticsEnabled] = useState<boolean>(true);
   const [chatFullscreen, setChatFullscreen] = useState<boolean>(false);
+  const [quickReactionEmoji, setQuickReactionState] = useState<string>("💕");
+  const [scrollAssistEnabled, setScrollAssistEnabled] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadSettings() {
       try {
-        const [savedAccent, savedLang, savedHaptics, savedChatFullscreen] = await Promise.all([
+        const [savedAccent, savedLang, savedHaptics, savedChatFullscreen, savedQuickReaction, savedScrollAssist] = await Promise.all([
           AsyncStorage.getItem(THEME_ACCENT_KEY),
           AsyncStorage.getItem(THEME_LANGUAGE_KEY),
           AsyncStorage.getItem(THEME_HAPTICS_KEY),
           AsyncStorage.getItem(THEME_CHAT_FULLSCREEN_KEY),
+          AsyncStorage.getItem(THEME_QUICK_REACTION_KEY),
+          AsyncStorage.getItem(THEME_SCROLL_ASSIST_KEY),
         ]);
         if (savedAccent) setAccentState(savedAccent);
         if (savedLang) setLanguageState(savedLang as "en" | "ru");
         if (savedHaptics !== null) setHapticsEnabled(savedHaptics === "true");
         if (savedChatFullscreen !== null) setChatFullscreen(savedChatFullscreen === "true");
+        if (savedQuickReaction) setQuickReactionState(savedQuickReaction);
+        if (savedScrollAssist !== null) setScrollAssistEnabled(savedScrollAssist === "true");
       } catch {
         // Silent fail - use defaults
       } finally {
@@ -99,6 +111,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setQuickReactionEmoji = async (emoji: string) => {
+    try {
+      await AsyncStorage.setItem(THEME_QUICK_REACTION_KEY, emoji);
+      setQuickReactionState(emoji);
+    } catch {
+      // Silent fail
+    }
+  };
+
+  const toggleScrollAssist = async () => {
+    try {
+      const newState = !scrollAssistEnabled;
+      await AsyncStorage.setItem(THEME_SCROLL_ASSIST_KEY, newState.toString());
+      setScrollAssistEnabled(newState);
+    } catch {
+      // Silent fail
+    }
+  };
+
   const isDark = colorScheme === "dark";
   
   // Use colors from our new theme system
@@ -121,7 +152,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   if (isLoading) return null;
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, hapticsEnabled, chatFullscreen, setAccentColor, setLanguage, toggleHaptics, toggleChatFullscreen }}>
+    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, hapticsEnabled, chatFullscreen, quickReactionEmoji, scrollAssistEnabled, setAccentColor, setLanguage, toggleHaptics, toggleChatFullscreen, setQuickReactionEmoji, toggleScrollAssist }}>
       {children}
     </ThemeContext.Provider>
   );

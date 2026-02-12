@@ -127,10 +127,33 @@ function VoiceMessagePlayer({
   );
 }
 
+function CodeBlock({ code, theme, isDark }: { code: string; theme: any; isDark: boolean }) {
+  return (
+    <View style={{
+      backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.06)',
+      borderRadius: 8,
+      padding: 10,
+      marginVertical: 4,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+    }}>
+      <ThemedText style={{
+        fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+        fontSize: 13,
+        lineHeight: 18,
+        color: isDark ? '#e6e6e6' : '#1a1a1a',
+      }}>
+        {code.trim()}
+      </ThemedText>
+    </View>
+  );
+}
+
 function MessageBubble({
   message,
   isOwn,
   onLongPress,
+  onDoubleTap,
   replyMessage,
   language,
   isSelected,
@@ -142,6 +165,7 @@ function MessageBubble({
   message: Message;
   isOwn: boolean;
   onLongPress: (msg: Message) => void;
+  onDoubleTap: (msg: Message) => void;
   replyMessage?: Message | null;
   language: string;
   isSelected: boolean;
@@ -152,6 +176,7 @@ function MessageBubble({
 }) {
   const { theme, isDark } = useTheme();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+  const lastTapRef = useRef(0);
 
   const translateX = useSharedValue(0);
 
@@ -194,26 +219,69 @@ function MessageBubble({
   }, []);
 
   const renderContent = (content: string, isOwn: boolean) => {
+    const codeBlockRegex = /```[\s\S]*?```/g;
+    const codeBlocks = content.match(codeBlockRegex);
+
+    if (codeBlocks) {
+      const segments = content.split(codeBlockRegex);
+      const result: React.ReactNode[] = [];
+      segments.forEach((segment, i) => {
+        if (segment.trim()) {
+          result.push(<React.Fragment key={`t${i}`}>{renderTextWithLinks(segment, isOwn)}</React.Fragment>);
+        }
+        if (codeBlocks[i]) {
+          const codeContent = codeBlocks[i].replace(/^```\w*\n?/, '').replace(/\n?```$/, '');
+          result.push(<CodeBlock key={`c${i}`} code={codeContent} theme={theme} isDark={isDark} />);
+        }
+      });
+      return <View>{result}</View>;
+    }
+
+    const inlineCodeRegex = /`[^`]+`/g;
+    const inlineCodes = content.match(inlineCodeRegex);
+    if (inlineCodes) {
+      const parts = content.split(inlineCodeRegex);
+      return (
+        <ThemedText type="body" style={{ color: theme.text }}>
+          {parts.map((part, i) => (
+            <React.Fragment key={i}>
+              {part}
+              {inlineCodes[i] ? (
+                <ThemedText style={{
+                  fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+                  fontSize: 13,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                  color: theme.text,
+                  paddingHorizontal: 4,
+                  borderRadius: 3,
+                }}>
+                  {inlineCodes[i].replace(/`/g, '')}
+                </ThemedText>
+              ) : null}
+            </React.Fragment>
+          ))}
+        </ThemedText>
+      );
+    }
+
+    return renderTextWithLinks(content, isOwn);
+  };
+
+  const renderTextWithLinks = (content: string, isOwn: boolean) => {
     const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,})/g;
     const parts = content.split(urlRegex);
     const matches = content.match(urlRegex);
 
     if (!matches) {
       return (
-        <ThemedText
-          type="body"
-          style={{ color: theme.text }}
-        >
+        <ThemedText type="body" style={{ color: theme.text }}>
           {content}
         </ThemedText>
       );
     }
 
     return (
-      <ThemedText
-        type="body"
-        style={{ color: theme.text }}
-      >
+      <ThemedText type="body" style={{ color: theme.text }}>
         {parts.map((part, i) => {
           if (part === undefined) return null;
           if (matches.includes(part)) {
@@ -246,6 +314,15 @@ function MessageBubble({
         ]}>
         <Pressable 
           onLongPress={() => onLongPress(message)}
+          onPress={() => {
+            const now = Date.now();
+            if (now - lastTapRef.current < 300) {
+              onDoubleTap(message);
+              lastTapRef.current = 0;
+            } else {
+              lastTapRef.current = now;
+            }
+          }}
           delayLongPress={150}
           style={({ pressed }) => [
             styles.messageInner,
@@ -392,7 +469,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Chat">;
 
 export default function ChatScreen({ route, navigation }: Props) {
   const { chatId, otherUserName, otherUserUsername, otherUserEmoji, otherUserId, isGroupChat, groupName, groupEmoji } = route.params;
-  const { theme, isDark, language, hapticsEnabled, chatFullscreen } = useTheme();
+  const { theme, isDark, language, hapticsEnabled, chatFullscreen, quickReactionEmoji, scrollAssistEnabled } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -489,6 +566,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   }));
   const flatListRef = useRef<FlatList>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [showScrollDown, setShowScrollDown] = useState(false);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -906,8 +984,30 @@ export default function ChatScreen({ route, navigation }: Props) {
     setShowActionModal(false);
   }, []);
 
+  const handleDoubleTap = useCallback(async (msg: Message) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      queryClient.setQueryData(["/api/chats", chatId, "messages"], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: Message[]) =>
+            page.map((m: Message) => {
+              if (m.id === msg.id) {
+                const currentReactions = (m as any).reactions || [];
+                const otherReactions = currentReactions.filter((r: any) => r.userId !== user?.id);
+                return { ...m, reactions: [...otherReactions, { emoji: quickReactionEmoji, userId: user?.id }] };
+              }
+              return m;
+            })
+          ),
+        };
+      });
+      await apiRequest("POST", `/api/messages/${msg.id}/reactions`, { emoji: quickReactionEmoji, userId: user?.id });
+    } catch {}
+  }, [chatId, user?.id, quickReactionEmoji, queryClient]);
+
   const handleLongPress = (msg: Message) => {
-    // Immediate haptic and modal state update
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedMessage(msg);
     setShowActionModal(true);
@@ -967,6 +1067,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           message={item}
           isOwn={item.senderId === user?.id}
           onLongPress={() => handleLongPress(item)}
+          onDoubleTap={handleDoubleTap}
           replyMessage={getReplyMessage(item.replyToId)}
           language={language}
           isSelected={selectedMessage?.id === item.id && showActionModal}
@@ -977,7 +1078,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         />
       );
     },
-    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply, handleImagePreview, isGroupChat, membersMap]
+    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply, handleImagePreview, isGroupChat, membersMap, handleDoubleTap]
   );
 
   const chatContent = (
@@ -1092,7 +1193,28 @@ export default function ChatScreen({ route, navigation }: Props) {
           maxToRenderPerBatch={10}
           initialNumToRender={15}
           windowSize={21}
+          onScroll={(e) => {
+            const offset = e.nativeEvent.contentOffset.y;
+            if (offset > 300 && !showScrollDown) setShowScrollDown(true);
+            else if (offset <= 300 && showScrollDown) setShowScrollDown(false);
+          }}
+          scrollEventThrottle={200}
         />
+
+        {scrollAssistEnabled && showScrollDown ? (
+          <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)}>
+            <Pressable
+              onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+              style={[styles.scrollDownButton, {
+                bottom: 90 + insets.bottom,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+                borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+              }]}
+            >
+              <Feather name="chevron-down" size={20} color={theme.text} />
+            </Pressable>
+          </Animated.View>
+        ) : null}
 
         <View style={[styles.inputContainer, { backgroundColor: 'transparent' }]}>
           {(replyTo || editingMessage) ? (
@@ -1416,9 +1538,20 @@ const styles = StyleSheet.create({
   messagesList: {
     paddingHorizontal: Spacing.md,
   },
+  scrollDownButton: {
+    position: 'absolute',
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    zIndex: 50,
+  },
   messageBubble: {
     maxWidth: "80%",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
     position: 'relative',
   },
   messageInner: {

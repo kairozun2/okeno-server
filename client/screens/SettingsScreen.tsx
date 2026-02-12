@@ -132,7 +132,7 @@ function SettingRow({ item, isLast }: SettingRowProps) {
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 
 export default function SettingsScreen({ navigation }: Props) {
-  const { theme, accentColor, setAccentColor, language, setLanguage, hapticsEnabled, toggleHaptics, chatFullscreen, toggleChatFullscreen } = useTheme();
+  const { theme, accentColor, setAccentColor, language, setLanguage, hapticsEnabled, toggleHaptics, chatFullscreen, toggleChatFullscreen, quickReactionEmoji, scrollAssistEnabled, setQuickReactionEmoji, toggleScrollAssist } = useTheme();
   const currentThemeKey = useSettingsStore(s => s.theme);
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
@@ -145,6 +145,7 @@ export default function SettingsScreen({ navigation }: Props) {
   const [isIdVisible, setIsIdVisible] = useState(false);
   const [deletePin, setDeletePin] = useState("");
   const [debugTapCount, setDebugTapCount] = useState(0);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -299,6 +300,28 @@ export default function SettingsScreen({ navigation }: Props) {
           onPress: async () => {
             await toggleHaptics();
             if (!hapticsEnabled) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }
+          },
+        },
+      ],
+    },
+    {
+      title: t("CHAT MANAGEMENT", "УПРАВЛЕНИЕ ЧАТАМИ"),
+      items: [
+        {
+          customIcon: SETTINGS_ICONS.chat,
+          title: t("Quick Reaction", "Быстрая реакция"),
+          subtitle: quickReactionEmoji,
+          onPress: () => setShowReactionPicker(true),
+        },
+        {
+          customIcon: SETTINGS_ICONS.haptics,
+          title: t("Scroll Helper", "Помощник скролла"),
+          subtitle: scrollAssistEnabled ? t("On", "Вкл") : t("Off", "Выкл"),
+          onPress: async () => {
+            await toggleScrollAssist();
+            if (hapticsEnabled) {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             }
           },
@@ -627,6 +650,48 @@ export default function SettingsScreen({ navigation }: Props) {
       </Modal>
 
       <Modal
+        visible={showReactionPicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowReactionPicker(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <ThemedText type="h3">{t("Quick Reaction", "Быстрая реакция")}</ThemedText>
+            <Pressable onPress={() => setShowReactionPicker(false)} hitSlop={8}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.colorPickerContent}>
+            <View style={styles.emojiGrid}>
+              {["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟", "👍", "❤️", "🔥", "😂", "😢"].map((emoji) => (
+                <Pressable
+                  key={emoji}
+                  onPress={() => {
+                    setQuickReactionEmoji(emoji);
+                    setShowReactionPicker(false);
+                    if (hapticsEnabled) {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    }
+                  }}
+                  style={({ pressed }) => [
+                    styles.emojiItem,
+                    {
+                      backgroundColor: quickReactionEmoji === emoji ? theme.accent : theme.cardBackground,
+                      opacity: pressed ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      <Modal
         visible={showColorPicker}
         animationType="slide"
         presentationStyle="pageSheet"
@@ -795,6 +860,22 @@ const styles = StyleSheet.create({
   },
   idActionButton: {
     padding: Spacing.xs,
+  },
+  emojiGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: Spacing.md,
+  },
+  emojiItem: {
+    width: "22%",
+    aspectRatio: 1,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emojiText: {
+    fontSize: 28,
   },
 });
 
