@@ -132,7 +132,7 @@ function SettingRow({ item, isLast }: SettingRowProps) {
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 
 export default function SettingsScreen({ navigation }: Props) {
-  const { theme, accentColor, setAccentColor, language, setLanguage, hapticsEnabled, toggleHaptics, chatFullscreen, toggleChatFullscreen, quickReactionEmoji, scrollAssistEnabled, setQuickReactionEmoji, toggleScrollAssist } = useTheme();
+  const { theme, accentColor, setAccentColor, language, setLanguage, hapticsEnabled, toggleHaptics, chatFullscreen, toggleChatFullscreen, quickReactionEmoji, scrollAssistEnabled, chatFilterTabsEnabled, setQuickReactionEmoji, toggleScrollAssist, toggleChatFilterTabs } = useTheme();
   const currentThemeKey = useSettingsStore(s => s.theme);
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
@@ -321,6 +321,17 @@ export default function SettingsScreen({ navigation }: Props) {
           subtitle: scrollAssistEnabled ? t("On", "Вкл") : t("Off", "Выкл"),
           onPress: async () => {
             await toggleScrollAssist();
+            if (hapticsEnabled) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }
+          },
+        },
+        {
+          customIcon: SETTINGS_ICONS.archiveBox,
+          title: t("Chat Tabs", "Вкладки чатов"),
+          subtitle: chatFilterTabsEnabled ? t("On", "Вкл") : t("Off", "Выкл"),
+          onPress: async () => {
+            await toggleChatFilterTabs();
             if (hapticsEnabled) {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             }
@@ -864,18 +875,21 @@ const styles = StyleSheet.create({
   emojiGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "center",
     gap: Spacing.md,
   },
   emojiItem: {
-    width: "22%",
-    aspectRatio: 1,
-    borderRadius: 999,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "visible",
   },
   emojiText: {
-    fontSize: 28,
+    fontSize: 30,
+    lineHeight: 38,
+    textAlign: "center",
   },
 });
 

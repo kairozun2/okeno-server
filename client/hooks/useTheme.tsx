@@ -14,12 +14,14 @@ type ThemeContextType = {
   chatFullscreen: boolean;
   quickReactionEmoji: string;
   scrollAssistEnabled: boolean;
+  chatFilterTabsEnabled: boolean;
   setAccentColor: (color: string | null) => Promise<void>;
   setLanguage: (lang: "en" | "ru") => Promise<void>;
   toggleHaptics: () => Promise<void>;
   toggleChatFullscreen: () => Promise<void>;
   setQuickReactionEmoji: (emoji: string) => Promise<void>;
   toggleScrollAssist: () => Promise<void>;
+  toggleChatFilterTabs: () => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -30,6 +32,7 @@ const THEME_HAPTICS_KEY = "theme_haptics_enabled";
 const THEME_CHAT_FULLSCREEN_KEY = "theme_chat_fullscreen";
 const THEME_QUICK_REACTION_KEY = "theme_quick_reaction_emoji";
 const THEME_SCROLL_ASSIST_KEY = "theme_scroll_assist_enabled";
+const THEME_CHAT_FILTER_TABS_KEY = "theme_chat_filter_tabs_enabled";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const themeKey = useSettingsStore(s => s.theme);
@@ -41,18 +44,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [chatFullscreen, setChatFullscreen] = useState<boolean>(false);
   const [quickReactionEmoji, setQuickReactionState] = useState<string>("💕");
   const [scrollAssistEnabled, setScrollAssistEnabled] = useState<boolean>(true);
+  const [chatFilterTabsEnabled, setChatFilterTabsEnabled] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadSettings() {
       try {
-        const [savedAccent, savedLang, savedHaptics, savedChatFullscreen, savedQuickReaction, savedScrollAssist] = await Promise.all([
+        const [savedAccent, savedLang, savedHaptics, savedChatFullscreen, savedQuickReaction, savedScrollAssist, savedChatFilterTabs] = await Promise.all([
           AsyncStorage.getItem(THEME_ACCENT_KEY),
           AsyncStorage.getItem(THEME_LANGUAGE_KEY),
           AsyncStorage.getItem(THEME_HAPTICS_KEY),
           AsyncStorage.getItem(THEME_CHAT_FULLSCREEN_KEY),
           AsyncStorage.getItem(THEME_QUICK_REACTION_KEY),
           AsyncStorage.getItem(THEME_SCROLL_ASSIST_KEY),
+          AsyncStorage.getItem(THEME_CHAT_FILTER_TABS_KEY),
         ]);
         if (savedAccent) setAccentState(savedAccent);
         if (savedLang) setLanguageState(savedLang as "en" | "ru");
@@ -60,6 +65,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (savedChatFullscreen !== null) setChatFullscreen(savedChatFullscreen === "true");
         if (savedQuickReaction) setQuickReactionState(savedQuickReaction);
         if (savedScrollAssist !== null) setScrollAssistEnabled(savedScrollAssist === "true");
+        if (savedChatFilterTabs !== null) setChatFilterTabsEnabled(savedChatFilterTabs === "true");
       } catch {
         // Silent fail - use defaults
       } finally {
@@ -130,6 +136,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const toggleChatFilterTabs = async () => {
+    try {
+      const newState = !chatFilterTabsEnabled;
+      await AsyncStorage.setItem(THEME_CHAT_FILTER_TABS_KEY, newState.toString());
+      setChatFilterTabsEnabled(newState);
+    } catch {
+      // Silent fail
+    }
+  };
+
   const isDark = colorScheme === "dark";
   
   // Use colors from our new theme system
@@ -152,7 +168,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   if (isLoading) return null;
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, hapticsEnabled, chatFullscreen, quickReactionEmoji, scrollAssistEnabled, setAccentColor, setLanguage, toggleHaptics, toggleChatFullscreen, setQuickReactionEmoji, toggleScrollAssist }}>
+    <ThemeContext.Provider value={{ theme, isDark, accentColor, language, hapticsEnabled, chatFullscreen, quickReactionEmoji, scrollAssistEnabled, chatFilterTabsEnabled, setAccentColor, setLanguage, toggleHaptics, toggleChatFullscreen, setQuickReactionEmoji, toggleScrollAssist, toggleChatFilterTabs }}>
       {children}
     </ThemeContext.Provider>
   );
