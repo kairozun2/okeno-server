@@ -716,21 +716,9 @@ export default function ChatsListScreen({ navigation }: Props) {
   const hasGroups = useMemo(() => sortedChats.some(c => c.isGroup === true), [sortedChats]);
 
   useLayoutEffect(() => {
-    const showCompactTabs = tabsHidden && chatFilterTabsEnabled && sortedChats.length > 0;
     navigation.setOptions({
-      headerTitleAlign: showCompactTabs ? 'left' : undefined,
-      headerTitle: showCompactTabs
-        ? () => (
-            <CompactFilterTabs
-              activeFilter={activeFilter}
-              onFilterChange={setActiveFilter}
-              hasGroups={hasGroups}
-              hasMiniApps={true}
-              language={language}
-              theme={theme}
-            />
-          )
-        : (language === "ru" ? "Чаты" : "Chats"),
+      headerTitleAlign: undefined,
+      headerTitle: (language === "ru" ? "Чаты" : "Chats"),
       headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable
@@ -754,7 +742,7 @@ export default function ChatsListScreen({ navigation }: Props) {
         </View>
       ),
     });
-  }, [navigation, theme.text, language, tabsHidden, chatFilterTabsEnabled, sortedChats.length, activeFilter, hasGroups, theme]);
+  }, [navigation, theme.text, language, theme]);
 
   const filteredChats = useMemo(() => {
     if (activeFilter === "inbox") return sortedChats.filter(c => !c.isGroup);
@@ -875,14 +863,6 @@ export default function ChatsListScreen({ navigation }: Props) {
           }}
           onRefresh={onRefresh}
           refreshing={refreshing}
-          onScroll={(e) => {
-            const offset = e.nativeEvent.contentOffset.y;
-            if (chatFilterTabsEnabled && sortedChats.length > 0) {
-              const threshold = 28;
-              if (offset > threshold && !tabsHidden) setTabsHidden(true);
-              else if (offset <= threshold && tabsHidden) setTabsHidden(false);
-            }
-          }}
           scrollEventThrottle={16}
           ListHeaderComponent={filterHeader}
           ListEmptyComponent={!isLoading ? <EmptyChats /> : null}

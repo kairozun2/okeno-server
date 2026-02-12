@@ -228,26 +228,19 @@ function MessageBubble({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        paddingVertical: 4,
+        paddingVertical: 6,
+        paddingHorizontal: 2,
+        gap: 6,
       }}
     >
       {appInfo ? (
-        <ThemedText style={{ fontSize: 22 }}>{appInfo.emoji}</ThemedText>
+        <ThemedText style={{ fontSize: 20 }}>{appInfo.emoji}</ThemedText>
       ) : null}
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <ThemedText type="body" style={{ color: theme.text, fontWeight: '600', fontSize: 15 }}>
-            {appInfo?.name || displayText || t("Mini App", "Мини-приложение")}
-          </ThemedText>
-          {appInfo?.isVerified ? <VerifiedBadge size={12} /> : null}
-        </View>
-        {displayText && appInfo ? (
-          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 1 }} numberOfLines={1}>
-            {displayText}
-          </ThemedText>
-        ) : null}
-      </View>
+      <ThemedText type="body" style={{ color: theme.text, fontWeight: '600', fontSize: 14 }} numberOfLines={1}>
+        {appInfo?.name || displayText || t("Mini App", "Мини-приложение")}
+      </ThemedText>
+      {appInfo?.isVerified ? <VerifiedBadge size={12} /> : null}
+      <View style={{ flex: 1 }} />
       <View style={{
         backgroundColor: 'rgba(52,120,246,0.15)',
         paddingHorizontal: 10,

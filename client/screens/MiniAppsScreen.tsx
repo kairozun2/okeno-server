@@ -317,7 +317,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
 
           <ScrollView style={styles.formContainer} contentContainerStyle={{ padding: Spacing.md }}>
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>{t("Emoji", "Эмодзи")}</ThemedText>
-            <View style={styles.emojiGrid}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.emojiStrip} contentContainerStyle={styles.emojiStripContent}>
               {EMOJI_OPTIONS.map((emoji) => (
                 <Pressable
                   key={emoji}
@@ -330,7 +330,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
                   <Text style={{ fontSize: 26 }}>{emoji}</Text>
                 </Pressable>
               ))}
-            </View>
+            </ScrollView>
 
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.xs, marginTop: Spacing.lg }}>{t("Name", "Название")} *</ThemedText>
             <TextInput
@@ -440,14 +440,16 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
   },
   formContainer: { flex: 1 },
-  emojiGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.sm,
+  emojiStrip: {
+    flexGrow: 0,
+  },
+  emojiStripContent: {
+    gap: Spacing.xs,
+    paddingVertical: 2,
   },
   emojiOption: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
