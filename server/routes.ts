@@ -900,6 +900,27 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
+  app.post("/api/call/decline", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (userId) {
+        const call = activeCalls.get(userId);
+        if (call) {
+          call.status = "declined";
+          setTimeout(() => {
+            const c = activeCalls.get(userId);
+            if (c && c.status === "declined") {
+              activeCalls.delete(userId);
+            }
+          }, 5000);
+        }
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.json({ success: true });
+    }
+  });
+
   app.post("/api/call/end", async (req, res) => {
     try {
       const { recipientId } = req.body;

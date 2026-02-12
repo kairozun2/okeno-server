@@ -5,6 +5,7 @@ import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { useAudioPlayer } from "expo-audio";
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withDelay } from "react-native-reanimated";
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
@@ -14,6 +15,7 @@ import { apiRequest, getApiUrl } from "@/lib/query-client";
 import { Spacing } from "@/constants/theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const dialingSource = require("../../assets/audio/dialing.wav");
 
 export default function CallScreen({ route, navigation }: any) {
   const { userId, displayName, displayEmoji, chatId, isIncoming } = route.params || {};
@@ -21,12 +23,13 @@ export default function CallScreen({ route, navigation }: any) {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
-  const [callState, setCallState] = useState<"connecting" | "ringing" | "connected" | "unavailable">(isIncoming ? "connected" : "connecting");
+  const [callState, setCallState] = useState<"connecting" | "ringing" | "connected" | "declined" | "unavailable">(isIncoming ? "connected" : "connecting");
   const [elapsed, setElapsed] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(false);
   const missedCallSentRef = useRef(false);
   const connectedTimeRef = useRef(0);
+  const dialingPlayer = useAudioPlayer(isIncoming ? null : dialingSource);
 
   const pulse1 = useSharedValue(1);
   const pulse2 = useSharedValue(1);
@@ -87,16 +90,23 @@ export default function CallScreen({ route, navigation }: any) {
       }).catch(() => {});
     }
 
+    try {
+      if (dialingPlayer) {
+        dialingPlayer.loop = true;
+        dialingPlayer.volume = 0.5;
+      }
+    } catch {}
+
     const timer = setTimeout(() => {
       setCallState("ringing");
+      try { if (dialingPlayer) dialingPlayer.play(); } catch {}
     }, 2000);
 
     const unavailableTimer = setTimeout(() => {
-      setCallState(prev => prev === "connected" ? prev : "unavailable");
-      if (callState !== "connected") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      }
-    }, 25000);
+      setCallState(prev => (prev === "connected" || prev === "declined") ? prev : "unavailable");
+      try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }, 30000);
 
     const statusPoll = setInterval(async () => {
       try {
@@ -108,8 +118,17 @@ export default function CallScreen({ route, navigation }: any) {
         if (data.status === "answered") {
           setCallState("connected");
           connectedTimeRef.current = Date.now();
+          try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           clearTimeout(unavailableTimer);
+          clearInterval(statusPoll);
+        } else if (data.status === "declined") {
+          setCallState("declined");
+          try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          clearTimeout(unavailableTimer);
+          clearInterval(statusPoll);
+        } else if (!data.exists) {
           clearInterval(statusPoll);
         }
       } catch {}
@@ -119,6 +138,7 @@ export default function CallScreen({ route, navigation }: any) {
       clearTimeout(timer);
       clearTimeout(unavailableTimer);
       clearInterval(statusPoll);
+      try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
       if (userId) {
         apiRequest("POST", "/api/call/end", { recipientId: userId }).catch(() => {});
       }
@@ -173,6 +193,8 @@ export default function CallScreen({ route, navigation }: any) {
     ? t("Ringing...", "Звоним...")
     : callState === "connected"
     ? t("Connected", "На связи")
+    : callState === "declined"
+    ? t("Declined", "Отклонено")
     : t("Didn't answer", "Не ответил");
 
   return (
@@ -224,7 +246,7 @@ export default function CallScreen({ route, navigation }: any) {
 
         <Animated.View entering={FadeIn.duration(500)} key={callState}>
           <ThemedText type="body" style={[styles.statusText, { 
-            color: callState === "unavailable" ? '#FF6B6B' : theme.accent 
+            color: (callState === "unavailable" || callState === "declined") ? '#FF6B6B' : callState === "connected" ? '#34C759' : theme.accent 
           }]}>
             {statusText}
           </ThemedText>
@@ -235,7 +257,7 @@ export default function CallScreen({ route, navigation }: any) {
         </ThemedText>
       </View>
 
-      {callState === "unavailable" ? (
+      {callState === "unavailable" || callState === "declined" ? (
         <Animated.View entering={FadeIn.duration(300)} style={styles.unavailableHint}>
           {Platform.OS === 'ios' ? (
             <BlurView
@@ -250,11 +272,22 @@ export default function CallScreen({ route, navigation }: any) {
               missedCallSentRef.current = false;
               setCallState("connecting");
               setElapsed(0);
-              setTimeout(() => setCallState("ringing"), 2000);
+              if (chatId && userId && user?.id) {
+                apiRequest("POST", "/api/call", {
+                  callerId: user.id,
+                  recipientId: userId,
+                  chatId,
+                }).catch(() => {});
+              }
               setTimeout(() => {
-                setCallState("unavailable");
+                setCallState("ringing");
+                try { if (dialingPlayer) dialingPlayer.play(); } catch {}
+              }, 2000);
+              setTimeout(() => {
+                setCallState(prev => (prev === "connected" || prev === "declined") ? prev : "unavailable");
+                try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-              }, 25000);
+              }, 30000);
             }}
             style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.sm }}
           >

@@ -453,8 +453,7 @@ export default function RootStackNavigator() {
             component={IncomingCallScreen}
             options={{
               headerShown: false,
-              presentation: "fullScreenModal",
-              animation: "slide_from_bottom",
+              animation: "fade",
               gestureEnabled: false,
             }}
           />

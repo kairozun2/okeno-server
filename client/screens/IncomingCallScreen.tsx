@@ -5,6 +5,7 @@ import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { useAudioPlayer } from "expo-audio";
 import Animated, { FadeIn, SlideInDown, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withDelay } from "react-native-reanimated";
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
@@ -12,6 +13,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/query-client";
 import { Spacing } from "@/constants/theme";
+
+const ringtoneSource = require("../../assets/audio/ringtone.wav");
 
 export default function IncomingCallScreen({ route, navigation }: any) {
   const { callerId, callerName, callerEmoji, chatId } = route.params || {};
@@ -21,10 +24,22 @@ export default function IncomingCallScreen({ route, navigation }: any) {
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const answeredRef = useRef(false);
+  const ringtonePlayer = useAudioPlayer(ringtoneSource);
 
   const pulse1 = useSharedValue(1);
   const pulse2 = useSharedValue(1);
   const pulse3 = useSharedValue(1);
+
+  useEffect(() => {
+    try {
+      ringtonePlayer.loop = true;
+      ringtonePlayer.volume = 0.8;
+      ringtonePlayer.play();
+    } catch {}
+    return () => {
+      try { ringtonePlayer.pause(); } catch {}
+    };
+  }, []);
 
   useEffect(() => {
     pulse1.value = withRepeat(
@@ -60,6 +75,7 @@ export default function IncomingCallScreen({ route, navigation }: any) {
   useEffect(() => {
     dismissTimerRef.current = setTimeout(() => {
       if (!answeredRef.current) {
+        try { ringtonePlayer.pause(); } catch {}
         navigation.goBack();
       }
     }, 25000);
@@ -86,6 +102,7 @@ export default function IncomingCallScreen({ route, navigation }: any) {
 
   const handleAccept = async () => {
     answeredRef.current = true;
+    try { ringtonePlayer.pause(); } catch {}
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await apiRequest("POST", "/api/call/answer", { userId: user?.id });
@@ -101,9 +118,10 @@ export default function IncomingCallScreen({ route, navigation }: any) {
 
   const handleDecline = async () => {
     answeredRef.current = true;
+    try { ringtonePlayer.pause(); } catch {}
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     try {
-      await apiRequest("POST", "/api/call/answer", { userId: user?.id });
+      await apiRequest("POST", "/api/call/decline", { userId: user?.id });
     } catch {}
     navigation.goBack();
   };

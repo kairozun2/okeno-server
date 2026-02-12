@@ -128,6 +128,24 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
         meta.content = 'width=device-width, initial-scale=1, maximum-scale=5';
         document.head.appendChild(meta);
       }
+
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'visible' }));
+        }
+      });
+
+      window.addEventListener('pageshow', function() {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'pageshow' }));
+      });
+
+      var origOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function() {
+        this.addEventListener('loadend', function() {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'xhr_done' }));
+        });
+        origOpen.apply(this, arguments);
+      };
     })();
     true;
   `;
@@ -137,6 +155,8 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === "scroll") {
         onScrollMessage();
+      } else if (data.type === "pageshow" || data.type === "visible") {
+        setIsLoading(false);
       }
     } catch (_) {}
   }, [onScrollMessage]);
@@ -235,14 +255,18 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               allowsLinkPreview={false}
               cacheEnabled
               cacheMode="LOAD_DEFAULT"
-              originWhitelist={["https://*", "http://*"]}
+              originWhitelist={["https://*", "http://*", "about:*", "data:*"]}
               onShouldStartLoadWithRequest={(request) => {
                 if (request.url.startsWith("http://") || request.url.startsWith("https://")) return true;
-                if (request.url.startsWith("tel:") || request.url.startsWith("mailto:")) {
+                if (request.url.startsWith("about:") || request.url.startsWith("data:") || request.url.startsWith("blob:")) return true;
+                if (request.url.startsWith("tel:") || request.url.startsWith("mailto:") || request.url.startsWith("sms:")) {
                   Linking.openURL(request.url).catch(() => {});
                   return false;
                 }
-                return false;
+                if (request.url.startsWith("intent:") || request.url.startsWith("market:")) {
+                  return false;
+                }
+                return true;
               }}
             />
           )}
