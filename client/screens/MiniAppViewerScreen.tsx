@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar, Text, Linking, Dimensions, Modal, Share } from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar, Text, Linking, Modal, Share } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
@@ -7,8 +7,7 @@ import type { WebViewNavigation } from "react-native-webview";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 import { BlurView } from "expo-blur";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, interpolate, runOnJS } from "react-native-reanimated";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -27,7 +26,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const [error, setError] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
-  const [currentTitle, setCurrentTitle] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
   const [copiedToast, setCopiedToast] = useState(false);
   const webViewRef = useRef<WebView>(null);
@@ -36,10 +34,8 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const splashScale = useSharedValue(0.9);
   const loadingProgress = useSharedValue(0);
   const toastOpacity = useSharedValue(0);
-  const swipeY = useSharedValue(0);
 
   const validUrl = appUrl.startsWith("http://") || appUrl.startsWith("https://") ? appUrl : `https://${appUrl}`;
-  const screenHeight = Dimensions.get("window").height;
 
   useEffect(() => {
     splashScale.value = withTiming(1, { duration: 400 });
@@ -66,16 +62,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
     transform: [{ translateY: interpolate(toastOpacity.value, [0, 1], [20, 0]) }],
   }));
 
-  const containerAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: swipeY.value }],
-    borderRadius: swipeY.value > 10 ? 16 : 0,
-    overflow: "hidden" as const,
-  }));
-
-  const backdropAnimStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(swipeY.value, [0, screenHeight * 0.3], [0, 0.5]),
-    backgroundColor: "#000",
-  }));
 
   const userAgent = Platform.OS === 'ios'
     ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
@@ -148,7 +134,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const handleNavigationStateChange = useCallback((navState: WebViewNavigation) => {
     setCanGoBack(navState.canGoBack);
     if (navState.url) setCurrentUrl(navState.url);
-    if (navState.title) setCurrentTitle(navState.title);
   }, []);
 
   const handleLoadProgress = useCallback(({ nativeEvent }: any) => {
@@ -211,27 +196,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
     setMenuVisible(false);
   }, [currentUrl, validUrl, appName]);
 
-  const closeSwipe = useCallback(() => {
-    navigation.goBack();
-  }, [navigation]);
-
-  const swipeGesture = Gesture.Pan()
-    .onUpdate((e) => {
-      if (e.translationY > 0) {
-        swipeY.value = e.translationY * 0.6;
-      }
-    })
-    .onEnd((e) => {
-      if (e.translationY > 100) {
-        swipeY.value = withTiming(screenHeight, { duration: 200 });
-        runOnJS(closeSwipe)();
-      } else {
-        swipeY.value = withSpring(0, { damping: 20, stiffness: 300 });
-      }
-    })
-    .activeOffsetY(15)
-    .failOffsetX([-15, 15]);
-
   const displayEmoji = appEmoji || "🌐";
 
   const getDomainFromUrl = (url: string) => {
@@ -268,19 +232,8 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000" }}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <StatusBar barStyle="light-content" />
-
-      {swipeY.value > 0 ? (
-        <Animated.View style={[StyleSheet.absoluteFill, backdropAnimStyle]} pointerEvents="none" />
-      ) : null}
-
-      <Animated.View style={[styles.container, { backgroundColor: theme.backgroundRoot }, containerAnimStyle]}>
-          <GestureDetector gesture={swipeGesture}>
-            <View style={[styles.swipeHandle, { paddingTop: insets.top }]}>
-              <View style={styles.swipeIndicator} />
-            </View>
-          </GestureDetector>
 
           <View style={[styles.progressBarContainer, { top: insets.top }]}>
             <Animated.View style={[styles.progressBar, { backgroundColor: theme.accent }, loadingBarStyle]} />
@@ -404,7 +357,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               </BlurView>
             </Pressable>
           </View>
-        </Animated.View>
 
       <Animated.View style={[styles.splashOverlay, { backgroundColor: theme.backgroundRoot }, splashAnimStyle]}>
         <View style={styles.splashContent}>
@@ -412,9 +364,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
             <Text style={{ fontSize: 44 }}>{displayEmoji}</Text>
           </View>
           <ThemedText type="h2" style={{ marginTop: Spacing.lg, textAlign: "center" }}>{appName}</ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-            {getDomainFromUrl(validUrl)}
-          </ThemedText>
           <ActivityIndicator color={theme.accent} style={{ marginTop: Spacing.xl }} />
         </View>
       </Animated.View>
@@ -444,7 +393,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               <Text style={{ fontSize: 28 }}>{displayEmoji}</Text>
               <View style={{ marginLeft: 12, flex: 1 }}>
                 <Text style={[styles.menuAppName, { color: theme.text }]}>{appName}</Text>
-                <Text style={[styles.menuAppDomain, { color: theme.textSecondary }]}>{getDomainFromUrl(currentUrl || validUrl)}</Text>
               </View>
             </View>
 
@@ -502,18 +450,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  swipeHandle: {
-    alignItems: "center",
-    paddingBottom: 6,
-    zIndex: 10,
-  },
-  swipeIndicator: {
-    width: 36,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: "rgba(255,255,255,0.3)",
-    marginTop: 8,
-  },
   progressBarContainer: {
     position: "absolute",
     left: 0,
@@ -614,10 +550,10 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   menuAppName: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "600",
   },
-  menuAppDomain: {
+  _menuAppDomain: {
     fontSize: 13,
     marginTop: 2,
   },
