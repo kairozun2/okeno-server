@@ -387,8 +387,8 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
         onRequestClose={() => setMenuVisible(false)}
       >
         <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
-          <View style={[styles.menuSheet, { paddingBottom: insets.bottom + 12 }]}>
-            <BlurView intensity={90} tint="dark" style={styles.menuSheetBlur}>
+          <View style={styles.menuSheet}>
+            <BlurView intensity={90} tint="dark" style={[styles.menuSheetBlur, { paddingBottom: insets.bottom + 12 }]}>
               <View style={styles.menuSheetHandle} />
 
               <View style={styles.menuAppInfo}>
