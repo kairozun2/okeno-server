@@ -125,9 +125,12 @@ export default function CacheSettingsScreen() {
       await queryClient.clear();
 
       if (Platform.OS !== 'web' && FileSystem.cacheDirectory) {
+        const protectedDirs = ['ExponentAsset', 'ExponentFont', 'fontFamily', 'expo-font', 'expo-asset'];
         const files = await FileSystem.readDirectoryAsync(FileSystem.cacheDirectory);
         await Promise.all(
-          files.map(file => FileSystem.deleteAsync(`${FileSystem.cacheDirectory}${file}`, { idempotent: true }))
+          files
+            .filter(file => !protectedDirs.some(dir => file.toLowerCase().includes(dir.toLowerCase())))
+            .map(file => FileSystem.deleteAsync(`${FileSystem.cacheDirectory}${file}`, { idempotent: true }))
         );
       }
 
