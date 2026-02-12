@@ -399,7 +399,7 @@ function MessageBubble({
         <View style={[
           styles.messageBubble,
           isOwn ? styles.ownMessage : styles.otherMessage,
-          { marginBottom: hasReactions ? 14 : 0 },
+          { marginBottom: hasReactions ? 14 : Spacing.xs },
         ]}>
         <Pressable 
           onLongPress={() => onLongPress(message)}
@@ -1706,44 +1706,48 @@ export default function ChatScreen({ route, navigation }: Props) {
                   </View>
                 )}
 
-                <View 
-                  style={[
-                    styles.actionSheetContent, 
-                    { backgroundColor: isDark ? "rgba(28,28,30,0.95)" : "rgba(255,255,255,0.95)" }
-                  ]}
-                >
+                <View style={[styles.actionSheetContent, { overflow: 'hidden' }]}>
+                  {Platform.OS === 'ios' ? (
+                    <BlurView
+                      intensity={80}
+                      tint={isDark ? "dark" : "light"}
+                      style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(28,28,30,0.6)' : 'rgba(255,255,255,0.6)' }]}
+                    />
+                  ) : (
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(28,28,30,0.92)' : 'rgba(255,255,255,0.92)' }]} />
+                  )}
                   <Pressable
-                    style={[styles.actionItem, { borderBottomColor: "rgba(255,255,255,0.1)" }]}
+                    style={[styles.actionItem, { borderBottomColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }]}
                     onPress={() => selectedMessage && handleReply(selectedMessage)}
                   >
-                    <ThemedText type="body" style={{ flex: 1, color: isDark ? "#fff" : "#000", fontSize: 17 }}>{t("Reply", "Ответить")}</ThemedText>
-                    <Feather name="corner-up-left" size={20} color={isDark ? "#fff" : "#000"} />
+                    <ThemedText type="body" style={{ flex: 1, color: isDark ? "#fff" : "#000", fontSize: 15 }}>{t("Reply", "Ответить")}</ThemedText>
+                    <Feather name="corner-up-left" size={18} color={isDark ? "#fff" : "#000"} />
                   </Pressable>
 
                   <Pressable
-                    style={[styles.actionItem, { borderBottomColor: "rgba(255,255,255,0.1)" }]}
+                    style={[styles.actionItem, { borderBottomColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }]}
                     onPress={() => selectedMessage && handleCopy(selectedMessage.content)}
                   >
-                    <ThemedText type="body" style={{ flex: 1, color: isDark ? "#fff" : "#000", fontSize: 17 }}>{t("Copy", "Скопировать")}</ThemedText>
-                    <Feather name="copy" size={20} color={isDark ? "#fff" : "#000"} />
+                    <ThemedText type="body" style={{ flex: 1, color: isDark ? "#fff" : "#000", fontSize: 15 }}>{t("Copy", "Скопировать")}</ThemedText>
+                    <Feather name="copy" size={18} color={isDark ? "#fff" : "#000"} />
                   </Pressable>
                   
                   {selectedMessage?.senderId === user?.id ? (
                     <>
                       <Pressable
-                        style={[styles.actionItem, { borderBottomColor: "rgba(255,255,255,0.1)" }]}
+                        style={[styles.actionItem, { borderBottomColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }]}
                         onPress={() => selectedMessage && handleEdit(selectedMessage)}
                       >
-                        <ThemedText type="body" style={{ flex: 1, color: isDark ? "#fff" : "#000", fontSize: 17 }}>{t("Edit", "Изменить")}</ThemedText>
-                        <Feather name="edit-2" size={20} color={isDark ? "#fff" : "#000"} />
+                        <ThemedText type="body" style={{ flex: 1, color: isDark ? "#fff" : "#000", fontSize: 15 }}>{t("Edit", "Изменить")}</ThemedText>
+                        <Feather name="edit-2" size={18} color={isDark ? "#fff" : "#000"} />
                       </Pressable>
                       
                       <Pressable
-                        style={[styles.actionItem, { borderBottomColor: "rgba(255,255,255,0.1)" }]}
+                        style={[styles.actionItem, { borderBottomColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }]}
                         onPress={() => selectedMessage && handleDelete(selectedMessage)}
                       >
-                        <ThemedText type="body" style={{ flex: 1, color: "#FF453A", fontSize: 17 }}>{t("Delete", "Удалить")}</ThemedText>
-                        <Feather name="trash-2" size={20} color="#FF453A" />
+                        <ThemedText type="body" style={{ flex: 1, color: "#FF453A", fontSize: 15 }}>{t("Delete", "Удалить")}</ThemedText>
+                        <Feather name="trash-2" size={18} color="#FF453A" />
                       </Pressable>
                     </>
                   ) : null}
@@ -2064,8 +2068,7 @@ const styles = StyleSheet.create({
   },
   actionSheetContent: {
     borderRadius: 14,
-    paddingVertical: Spacing.xs,
-    overflow: 'hidden',
+    paddingVertical: 2,
   },
   emojiButton: {
     width: 38,
@@ -2083,8 +2086,8 @@ const styles = StyleSheet.create({
   actionItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   miniAppSuggestions: {

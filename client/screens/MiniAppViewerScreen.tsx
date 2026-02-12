@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar, Text } from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar, Text, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
@@ -159,13 +159,20 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               onLoadStart={() => setIsLoading(true)}
               onLoadEnd={() => { setIsLoading(false); scheduleAutoHide(); }}
               onError={() => { setIsLoading(false); setError(true); }}
+              onHttpError={(syntheticEvent) => {
+                const { statusCode } = syntheticEvent.nativeEvent;
+                if (statusCode >= 500) { setIsLoading(false); setError(true); }
+              }}
               onMessage={handleWebViewMessage}
               injectedJavaScript={injectedJS}
               javaScriptEnabled
               domStorageEnabled
+              thirdPartyCookiesEnabled
+              sharedCookiesEnabled
               startInLoadingState={false}
               allowsInlineMediaPlayback
               mediaPlaybackRequiresUserAction={false}
+              allowsFullscreenVideo
               scrollEnabled
               bounces
               allowsBackForwardNavigationGestures
@@ -175,6 +182,19 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               showsHorizontalScrollIndicator={false}
               contentMode="mobile"
               setSupportMultipleWindows={false}
+              mixedContentMode="compatibility"
+              allowsLinkPreview={false}
+              cacheEnabled
+              cacheMode="LOAD_DEFAULT"
+              originWhitelist={["https://*", "http://*"]}
+              onShouldStartLoadWithRequest={(request) => {
+                if (request.url.startsWith("http://") || request.url.startsWith("https://")) return true;
+                if (request.url.startsWith("tel:") || request.url.startsWith("mailto:")) {
+                  Linking.openURL(request.url).catch(() => {});
+                  return false;
+                }
+                return false;
+              }}
             />
           )}
 
