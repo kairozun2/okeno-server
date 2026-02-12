@@ -84,29 +84,35 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   const { data: post } = useQuery<Post>({
     queryKey: ["/api/posts", postId],
+    staleTime: 30000,
   });
 
   const { data: postUser } = useQuery<User>({
     queryKey: ["/api/users", post?.userId],
     enabled: !!post?.userId,
+    staleTime: 60000,
   });
 
   const { data: likesData } = useQuery<{ count: number }>({
     queryKey: ["/api/posts", postId, "likes"],
+    staleTime: 10000,
   });
 
   const { data: commentsData } = useQuery<{ count: number }>({
     queryKey: ["/api/posts", postId, "comments", "count"],
+    staleTime: 10000,
   });
 
   const { data: likedData } = useQuery<{ liked: boolean }>({
     queryKey: ["/api/posts", postId, "likes", currentUser?.id],
     enabled: !!currentUser?.id,
+    staleTime: 10000,
   });
 
   const { data: savedData } = useQuery<{ saved: boolean }>({
     queryKey: ["/api/posts", postId, "saves", currentUser?.id],
     enabled: !!currentUser?.id,
+    staleTime: 10000,
   });
 
   const likeMutation = useMutation({
