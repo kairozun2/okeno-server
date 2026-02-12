@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar, Text, Linking, Modal, Share } from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar, Text, Linking, Modal, Share, Alert, TextInput, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
@@ -8,18 +8,30 @@ import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 import { BlurView } from "expo-blur";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from "react-native-reanimated";
+import { useMutation } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing } from "@/constants/theme";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiRequest } from "@/lib/query-client";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type Props = NativeStackScreenProps<RootStackParamList, "MiniAppViewer">;
 
+const REPORT_CATEGORIES = [
+  { id: "spam", en: "Spam", ru: "Спам" },
+  { id: "inappropriate", en: "Inappropriate content", ru: "Неприемлемый контент" },
+  { id: "scam", en: "Scam / Fraud", ru: "Мошенничество" },
+  { id: "malware", en: "Malware / Phishing", ru: "Вредоносное ПО" },
+  { id: "other", en: "Other", ru: "Другое" },
+];
+
 export default function MiniAppViewerScreen({ navigation, route }: Props) {
-  const { appName, appUrl, appEmoji } = route.params;
+  const { appName, appUrl, appEmoji, appId } = route.params;
   const { theme, isDark, language } = useTheme();
+  const { user } = useAuth();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +41,32 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const [currentUrl, setCurrentUrl] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
   const [copiedToast, setCopiedToast] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportCategory, setReportCategory] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("");
+
+  const reportMutation = useMutation({
+    mutationFn: async () => {
+      const categoryLabel = REPORT_CATEGORIES.find(c => c.id === reportCategory);
+      const reason = categoryLabel
+        ? `[Mini App: ${appName}] ${categoryLabel.en}: ${reportReason}`.trim()
+        : `[Mini App: ${appName}] ${reportReason}`;
+      await apiRequest("POST", "/api/reports", {
+        reporterId: user?.id,
+        reason,
+      });
+    },
+    onSuccess: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        t("Report sent", "Жалоба отправлена"),
+        t("We will review your report within 24 hours.", "Мы рассмотрим вашу жалобу в течение 24 часов.")
+      );
+      setShowReportModal(false);
+      setReportReason("");
+      setReportCategory(null);
+    },
+  });
   const webViewRef = useRef<WebView>(null);
 
   const splashOpacity = useSharedValue(1);
@@ -439,11 +477,104 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
               <View style={[styles.menuDivider, { backgroundColor: 'rgba(255,255,255,0.1)', marginTop: 4 }]} />
 
+              <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); setTimeout(() => setShowReportModal(true), 300); }}>
+                <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255,59,48,0.2)' }]}>
+                  <Feather name="flag" size={18} color="#FF3B30" />
+                </View>
+                <Text style={[styles.menuText, { color: "#FF3B30" }]}>
+                  {t("Report", "Пожаловаться")}
+                </Text>
+              </Pressable>
+
+              <View style={[styles.menuDivider, { backgroundColor: 'rgba(255,255,255,0.1)', marginTop: 4 }]} />
+
               <Pressable style={styles.menuItem} onPress={() => setMenuVisible(false)}>
                 <Text style={[styles.menuCancelText, { color: 'rgba(255,255,255,0.5)' }]}>
                   {t("Cancel", "Отмена")}
                 </Text>
               </Pressable>
+            </BlurView>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showReportModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <Pressable style={styles.menuOverlay} onPress={() => setShowReportModal(false)}>
+          <View style={styles.reportContainer} onStartShouldSetResponder={() => true}>
+            <BlurView intensity={120} tint="dark" style={styles.reportContent}>
+              <View style={styles.reportHeader}>
+                <Text style={{ fontSize: 24 }}>{displayEmoji}</Text>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={[styles.menuAppName, { color: "#FFF" }]}>{appName}</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 }}>
+                    {t("Report this mini app", "Пожаловаться на мини-приложение")}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={[styles.menuDivider, { backgroundColor: 'rgba(255,255,255,0.1)' }]} />
+
+              <ScrollView style={{ maxHeight: 200 }}>
+                {REPORT_CATEGORIES.map((cat) => (
+                  <Pressable
+                    key={cat.id}
+                    style={[
+                      styles.reportCategoryItem,
+                      reportCategory === cat.id && { backgroundColor: 'rgba(255,59,48,0.15)' },
+                    ]}
+                    onPress={() => setReportCategory(cat.id)}
+                  >
+                    <View style={[styles.reportRadio, reportCategory === cat.id && styles.reportRadioSelected]}>
+                      {reportCategory === cat.id ? <View style={styles.reportRadioDot} /> : null}
+                    </View>
+                    <Text style={{ color: "#FFF", fontSize: 15 }}>
+                      {language === "ru" ? cat.ru : cat.en}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              <TextInput
+                style={[styles.reportInput, { borderColor: 'rgba(255,255,255,0.15)', color: "#FFF" }]}
+                placeholder={t("Additional details (optional)", "Подробности (необязательно)")}
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                value={reportReason}
+                onChangeText={setReportReason}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                <Pressable
+                  style={[styles.reportBtn, { backgroundColor: 'rgba(255,255,255,0.1)', flex: 1 }]}
+                  onPress={() => { setShowReportModal(false); setReportCategory(null); setReportReason(""); }}
+                >
+                  <Text style={{ color: 'rgba(255,255,255,0.6)', fontWeight: '600', fontSize: 15 }}>
+                    {t("Cancel", "Отмена")}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.reportBtn, { backgroundColor: reportCategory ? '#FF3B30' : 'rgba(255,59,48,0.3)', flex: 1 }]}
+                  onPress={() => {
+                    if (!reportCategory) {
+                      Alert.alert(t("Error", "Ошибка"), t("Select a reason", "Выберите причину"));
+                      return;
+                    }
+                    reportMutation.mutate();
+                  }}
+                  disabled={reportMutation.isPending}
+                >
+                  <Text style={{ color: "#FFF", fontWeight: '600', fontSize: 15 }}>
+                    {reportMutation.isPending ? t("Sending...", "Отправка...") : t("Send", "Отправить")}
+                  </Text>
+                </Pressable>
+              </View>
             </BlurView>
           </View>
         </Pressable>
@@ -634,5 +765,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     marginLeft: 8,
+  },
+  reportContainer: {
+    marginHorizontal: 16,
+    marginBottom: 30,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  reportContent: {
+    padding: 20,
+    backgroundColor: "rgba(15,25,45,0.65)",
+  },
+  reportHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  reportCategoryItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  reportRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.3)",
+    marginRight: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reportRadioSelected: {
+    borderColor: "#FF3B30",
+  },
+  reportRadioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#FF3B30",
+  },
+  reportInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+    fontSize: 14,
+    minHeight: 70,
+  },
+  reportBtn: {
+    paddingVertical: 13,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
