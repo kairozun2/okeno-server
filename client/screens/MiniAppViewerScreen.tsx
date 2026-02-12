@@ -31,7 +31,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [copiedToast, setCopiedToast] = useState(false);
   const webViewRef = useRef<WebView>(null);
-  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const splashOpacity = useSharedValue(1);
   const splashScale = useSharedValue(0.9);
@@ -40,7 +39,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const swipeY = useSharedValue(0);
 
   const validUrl = appUrl.startsWith("http://") || appUrl.startsWith("https://") ? appUrl : `https://${appUrl}`;
-  const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
 
   useEffect(() => {
@@ -49,10 +47,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
     const timer = setTimeout(() => {
       splashOpacity.value = withTiming(0, { duration: 400 });
     }, 2500);
-    return () => {
-      clearTimeout(timer);
-      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   const loadingBarStyle = useAnimatedStyle(() => ({
@@ -140,8 +135,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const handleWebViewMessage = useCallback((event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === "scroll") {
-      } else if (data.type === "pageshow" || data.type === "visible") {
+      if (data.type === "pageshow" || data.type === "visible") {
         setIsLoading(false);
       } else if (data.type === "close") {
         navigation.goBack();
@@ -282,45 +276,15 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
       ) : null}
 
       <Animated.View style={[styles.container, { backgroundColor: theme.backgroundRoot }, containerAnimStyle]}>
-
           <GestureDetector gesture={swipeGesture}>
-            <View style={[styles.header, { paddingTop: insets.top, backgroundColor: isDark ? '#1A2438' : '#F8F8F8', borderBottomColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)' }]}>
-              <View style={styles.headerContent}>
-                <View style={styles.headerLeft}>
-                  {canGoBack ? (
-                    <Pressable onPress={goBack} style={styles.headerBtn} hitSlop={8}>
-                      <Feather name="chevron-left" size={24} color={theme.accent} />
-                    </Pressable>
-                  ) : null}
-                </View>
-
-                <View style={styles.headerCenter}>
-                  <View style={styles.headerTitleRow}>
-                    <Text style={{ fontSize: 16 }}>{displayEmoji}</Text>
-                    <ThemedText type="body" style={{ color: theme.text, fontWeight: '600', marginLeft: 6, fontSize: 16 }} numberOfLines={1}>
-                      {appName}
-                    </ThemedText>
-                  </View>
-                  <ThemedText type="caption" style={{ color: theme.textSecondary, fontSize: 11, marginTop: 1 }} numberOfLines={1}>
-                    {getDomainFromUrl(currentUrl || validUrl)}
-                  </ThemedText>
-                </View>
-
-                <View style={styles.headerRight}>
-                  <Pressable onPress={() => { setMenuVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }} style={styles.headerBtn} hitSlop={8}>
-                    <Feather name="more-vertical" size={20} color={theme.textSecondary} />
-                  </Pressable>
-                  <Pressable onPress={handleClose} style={[styles.headerBtn, { marginLeft: 4 }]} hitSlop={8}>
-                    <Feather name="x" size={22} color={theme.textSecondary} />
-                  </Pressable>
-                </View>
-              </View>
-
-              <View style={styles.progressBarContainer}>
-                <Animated.View style={[styles.progressBar, { backgroundColor: theme.accent }, loadingBarStyle]} />
-              </View>
+            <View style={[styles.swipeHandle, { paddingTop: insets.top }]}>
+              <View style={styles.swipeIndicator} />
             </View>
           </GestureDetector>
+
+          <View style={[styles.progressBarContainer, { top: insets.top }]}>
+            <Animated.View style={[styles.progressBar, { backgroundColor: theme.accent }, loadingBarStyle]} />
+          </View>
 
           {error ? (
             <View style={styles.errorContainer}>
@@ -409,13 +373,37 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
           )}
 
           {isLoading && isInitialLoad && !error ? (
-            <View style={[styles.loadingOverlay, { backgroundColor: theme.backgroundRoot, top: insets.top + 52 }]}>
+            <View style={[styles.loadingOverlay, { backgroundColor: theme.backgroundRoot }]}>
               <ActivityIndicator size="large" color={theme.accent} />
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
                 {isDark ? "Загрузка..." : "Loading..."}
               </ThemedText>
             </View>
           ) : null}
+
+          <View style={[styles.floatingControls, { top: insets.top + 8 }]} pointerEvents="box-none">
+            {canGoBack ? (
+              <Pressable onPress={goBack} style={styles.floatingBtn}>
+                <BlurView intensity={60} tint="dark" style={styles.floatingBtnBlur}>
+                  <Feather name="chevron-left" size={20} color="#FFF" />
+                </BlurView>
+              </Pressable>
+            ) : null}
+            <View style={{ flex: 1 }} />
+            <Pressable
+              onPress={() => { setMenuVisible(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+              style={styles.floatingBtn}
+            >
+              <BlurView intensity={60} tint="dark" style={styles.floatingBtnBlur}>
+                <Feather name="more-vertical" size={18} color="#FFF" />
+              </BlurView>
+            </Pressable>
+            <Pressable onPress={handleClose} style={[styles.floatingBtn, { marginLeft: 8 }]}>
+              <BlurView intensity={60} tint="dark" style={styles.floatingBtnBlur}>
+                <Feather name="x" size={20} color="#FFF" />
+              </BlurView>
+            </Pressable>
+          </View>
         </Animated.View>
 
       <Animated.View style={[styles.splashOverlay, { backgroundColor: theme.backgroundRoot }, splashAnimStyle]}>
@@ -449,32 +437,60 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
         onRequestClose={() => setMenuVisible(false)}
       >
         <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
-          <View style={[styles.menuContainer, { backgroundColor: isDark ? '#2A3548' : '#FFFFFF', top: insets.top + 44, right: 16 }]}>
+          <View style={[styles.menuSheet, { backgroundColor: isDark ? '#1E2D42' : '#FFFFFF', paddingBottom: insets.bottom + 12 }]}>
+            <View style={styles.menuSheetHandle} />
+
+            <View style={styles.menuAppInfo}>
+              <Text style={{ fontSize: 28 }}>{displayEmoji}</Text>
+              <View style={{ marginLeft: 12, flex: 1 }}>
+                <Text style={[styles.menuAppName, { color: theme.text }]}>{appName}</Text>
+                <Text style={[styles.menuAppDomain, { color: theme.textSecondary }]}>{getDomainFromUrl(currentUrl || validUrl)}</Text>
+              </View>
+            </View>
+
+            <View style={[styles.menuDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]} />
+
             <Pressable style={styles.menuItem} onPress={handleReload}>
-              <Feather name="refresh-cw" size={18} color={theme.text} />
+              <View style={[styles.menuIconBg, { backgroundColor: isDark ? 'rgba(52,120,246,0.15)' : 'rgba(52,120,246,0.1)' }]}>
+                <Feather name="refresh-cw" size={18} color="#3478F6" />
+              </View>
               <Text style={[styles.menuText, { color: theme.text }]}>
                 {isDark ? "Обновить" : "Reload"}
               </Text>
             </Pressable>
-            <View style={[styles.menuDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]} />
+
             <Pressable style={styles.menuItem} onPress={handleCopyLink}>
-              <Feather name="copy" size={18} color={theme.text} />
+              <View style={[styles.menuIconBg, { backgroundColor: isDark ? 'rgba(76,217,100,0.15)' : 'rgba(76,217,100,0.1)' }]}>
+                <Feather name="copy" size={18} color="#4CD964" />
+              </View>
               <Text style={[styles.menuText, { color: theme.text }]}>
                 {isDark ? "Копировать ссылку" : "Copy Link"}
               </Text>
             </Pressable>
-            <View style={[styles.menuDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]} />
+
             <Pressable style={styles.menuItem} onPress={handleShare}>
-              <Feather name="share" size={18} color={theme.text} />
+              <View style={[styles.menuIconBg, { backgroundColor: isDark ? 'rgba(255,149,0,0.15)' : 'rgba(255,149,0,0.1)' }]}>
+                <Feather name="share" size={18} color="#FF9500" />
+              </View>
               <Text style={[styles.menuText, { color: theme.text }]}>
                 {isDark ? "Поделиться" : "Share"}
               </Text>
             </Pressable>
-            <View style={[styles.menuDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }]} />
+
             <Pressable style={styles.menuItem} onPress={handleOpenInBrowser}>
-              <Feather name="external-link" size={18} color={theme.text} />
+              <View style={[styles.menuIconBg, { backgroundColor: isDark ? 'rgba(142,155,173,0.15)' : 'rgba(142,155,173,0.1)' }]}>
+                <Feather name="external-link" size={18} color={theme.textSecondary} />
+              </View>
               <Text style={[styles.menuText, { color: theme.text }]}>
                 {isDark ? "Открыть в браузере" : "Open in Browser"}
+              </Text>
+            </Pressable>
+
+            <View style={[styles.menuDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', marginTop: 4 }]} />
+
+            <Pressable style={styles.menuItem} onPress={() => setMenuVisible(false)}>
+              <Text style={[styles.menuCancelText, { color: theme.textSecondary }]}>
+                {isDark ? "Отмена" : "Cancel"}
               </Text>
             </Pressable>
           </View>
@@ -486,57 +502,56 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  headerContent: {
-    flexDirection: "row",
+  swipeHandle: {
     alignItems: "center",
-    height: 52,
-    paddingHorizontal: 8,
+    paddingBottom: 6,
+    zIndex: 10,
   },
-  headerLeft: {
-    width: 44,
-    justifyContent: "center",
-    alignItems: "flex-start",
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    width: 72,
-  },
-  headerBtn: {
+  swipeIndicator: {
     width: 36,
-    height: 36,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 18,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    marginTop: 8,
   },
   progressBarContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     height: 2,
+    zIndex: 15,
     backgroundColor: "transparent",
   },
   progressBar: {
     height: 2,
     borderRadius: 1,
   },
-  loadingOverlay: {
+  floatingControls: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
+    left: 12,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    zIndex: 20,
+  },
+  floatingBtn: {
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  floatingBtnBlur: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.35)",
+    overflow: "hidden",
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 5,
   },
   splashOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -576,38 +591,67 @@ const styles = StyleSheet.create({
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
   },
-  menuContainer: {
-    position: "absolute",
-    width: 220,
-    borderRadius: 14,
-    paddingVertical: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8,
+  menuSheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 8,
+  },
+  menuSheetHandle: {
+    width: 36,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "rgba(128,128,128,0.4)",
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  menuAppInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  menuAppName: {
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  menuAppDomain: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  menuDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: 20,
+    marginBottom: 4,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 13,
+  },
+  menuIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   menuText: {
-    fontSize: 15,
-    marginLeft: 12,
+    fontSize: 16,
+    marginLeft: 14,
   },
-  menuDivider: {
-    height: StyleSheet.hairlineWidth,
-    marginHorizontal: 16,
+  menuCancelText: {
+    fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
+    flex: 1,
   },
   toast: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
+    alignSelf: "center",
     zIndex: 300,
   },
   toastInner: {
