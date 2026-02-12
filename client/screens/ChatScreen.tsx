@@ -379,7 +379,25 @@ function MessageBubble({
             </View>
           ) : null}
           {message.imageUrl ? (
-            <Pressable onPress={() => onImagePress?.(message.imageUrl!)}>
+            <Pressable
+              onPress={() => {
+                const now = Date.now();
+                if (now - lastTapRef.current < 300) {
+                  onDoubleTap(message);
+                  lastTapRef.current = 0;
+                } else {
+                  lastTapRef.current = now;
+                  setTimeout(() => {
+                    if (lastTapRef.current !== 0) {
+                      onImagePress?.(message.imageUrl!);
+                      lastTapRef.current = 0;
+                    }
+                  }, 300);
+                }
+              }}
+              onLongPress={() => onLongPress(message)}
+              delayLongPress={150}
+            >
               <Image
                 source={{ uri: message.imageUrl }}
                 style={{ 
@@ -1122,25 +1140,6 @@ export default function ChatScreen({ route, navigation }: Props) {
             <Feather name={chatFullscreen ? "arrow-left" : "x"} size={20} color={theme.text} />
           </Pressable>
 
-          {!isGroupChat ? (
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigation.navigate("CallScreen" as any, { userId: otherUserId, displayName, displayEmoji });
-              }}
-              style={styles.headerButton}
-            >
-              {Platform.OS === 'ios' && (
-                <BlurView
-                  intensity={45}
-                  tint={isDark ? "dark" : "light"}
-                  style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
-                />
-              )}
-              <Feather name="phone" size={18} color={theme.accent} />
-            </Pressable>
-          ) : null}
-
           <View style={[styles.headerCenter, { backgroundColor: 'transparent' }]} pointerEvents="none">
             {!isGroupChat && isOtherUserTyping ? (
               <Animated.View 
@@ -1207,36 +1206,56 @@ export default function ChatScreen({ route, navigation }: Props) {
               </Pressable>
             </Animated.View>
           ) : (
-            <Pressable
-              onPress={() => {
-                if (isGroupChat && chatId) {
-                  navigation.navigate("GroupChatInfo", { chatId, groupName: displayName, groupEmoji: displayEmoji });
-                } else if (!isGroupChat && otherUserId) {
-                  navigation.navigate("UserProfile", { userId: otherUserId });
-                }
-              }}
-              onLongPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setShowMessageSearch(true);
-              }}
-              delayLongPress={400}
-              style={styles.userInfo}
-            >
-              {Platform.OS === 'ios' && (
-                <BlurView
-                  intensity={45}
-                  tint={isDark ? "dark" : "light"}
-                  style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
-                />
-              )}
-              <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end' }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                  <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
-                  {!isGroupChat && userData?.isVerified ? <VerifiedBadge size={14} /> : null}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {!isGroupChat ? (
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    navigation.navigate("CallScreen" as any, { userId: otherUserId, displayName, displayEmoji });
+                  }}
+                  style={styles.headerButton}
+                >
+                  {Platform.OS === 'ios' && (
+                    <BlurView
+                      intensity={45}
+                      tint={isDark ? "dark" : "light"}
+                      style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
+                    />
+                  )}
+                  <Feather name="phone" size={18} color={theme.accent} />
+                </Pressable>
+              ) : null}
+              <Pressable
+                onPress={() => {
+                  if (isGroupChat && chatId) {
+                    navigation.navigate("GroupChatInfo", { chatId, groupName: displayName, groupEmoji: displayEmoji });
+                  } else if (!isGroupChat && otherUserId) {
+                    navigation.navigate("UserProfile", { userId: otherUserId });
+                  }
+                }}
+                onLongPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setShowMessageSearch(true);
+                }}
+                delayLongPress={400}
+                style={styles.userInfo}
+              >
+                {Platform.OS === 'ios' && (
+                  <BlurView
+                    intensity={45}
+                    tint={isDark ? "dark" : "light"}
+                    style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
+                  />
+                )}
+                <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end' }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
+                    {!isGroupChat && userData?.isVerified ? <VerifiedBadge size={14} /> : null}
+                  </View>
                 </View>
-              </View>
-              <Avatar emoji={displayEmoji} size={32} />
-            </Pressable>
+                <Avatar emoji={displayEmoji} size={32} />
+              </Pressable>
+            </View>
           )}
         </View>
 
