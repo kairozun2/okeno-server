@@ -46,7 +46,8 @@ Core entities defined in Drizzle schema:
 ### Admin System
 - Main admin: User ID `36277fd7-5211-4715-9411-4401ea120d88`
 - Admin panel accessible via shield icon in profile header (only visible to admins)
-- Admins can: ban/unban users, verify/unverify users, grant/revoke admin rights
+- Admins can: ban/unban users, verify/unverify users, grant/revoke admin rights, verify groups and mini apps
+- Admin panel has 3 tabs: Users / Groups / Mini Apps
 - Verified users display a blue checkmark badge next to their username
 
 **Emergency Admin SQL** (run in database console if needed):
@@ -63,6 +64,17 @@ UPDATE users SET is_admin = true, is_verified = true WHERE id = 'USER_ID_HERE';
   - View and kick members (admin only)
   - Add new members from contacts (admin only) with search
 - API: `GET /api/chats/:id/media?type=photos|voice|links` - fetch shared media from a chat
+
+### Mini Apps System
+- Telegram-like mini apps: users create web apps by providing a URL, opened in WebView
+- Database: `miniApps` table (id, creatorId, name, description, url, emoji, isVerified, isPublished)
+- Users can create, edit, delete their own mini apps from Settings > Mini Apps
+- All published mini apps visible in the Mini Apps catalog
+- Admins can verify mini apps (blue checkmark) from admin panel
+- WebView viewer with reload button and error handling
+- API: `/api/mini-apps` (CRUD), `/api/mini-apps/my` (user's apps)
+- Admin API: `/api/admin/mini-apps` (list), `/api/admin/mini-apps/:id/verify` (verify)
+- Admin API: `/api/admin/groups` (list), `/api/admin/groups/:id/verify` (verify)
 
 ### Authentication Flow
 1. Register with username + 4-digit PIN → server assigns random emoji
