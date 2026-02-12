@@ -183,9 +183,9 @@ export default function RootStackNavigator() {
   }
 
   return (
-    <>
-    {isAuthenticated ? <IncomingCallPoller /> : null}
-    <Stack.Navigator screenOptions={screenOptions}>
+    <React.Fragment>
+      {isAuthenticated ? <IncomingCallPoller /> : null}
+      <Stack.Navigator screenOptions={screenOptions}>
       {isAuthenticated ? (
         <>
           <Stack.Screen
@@ -466,6 +466,6 @@ export default function RootStackNavigator() {
         />
       )}
     </Stack.Navigator>
-    </>
+    </React.Fragment>
   );
 }
