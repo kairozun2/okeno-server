@@ -213,10 +213,8 @@ export default function UserSearchScreen({ navigation }: Props) {
     staleTime: 60000,
   });
 
-  const filteredMiniApps = isMiniAppSearch
-    ? allMiniApps.filter(app => 
-        miniAppSearchTerm.length === 0 || app.name.toLowerCase().includes(miniAppSearchTerm)
-      )
+  const filteredMiniApps = isMiniAppSearch && miniAppSearchTerm.length >= 2
+    ? allMiniApps.filter(app => app.name.toLowerCase().includes(miniAppSearchTerm))
     : [];
 
   const handleMiniAppPress = useCallback((app: MiniApp) => {
