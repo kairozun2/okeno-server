@@ -23,7 +23,6 @@ interface AdminUser {
   isVerified: boolean;
   isBanned: boolean;
   createdAt: string;
-  avatarUrl: string | null;
 }
 
 interface AdminGroup {
@@ -174,7 +173,7 @@ export default function AdminPanelScreen({ navigation }: Props) {
 
   const renderUserItem = ({ item }: { item: AdminUser }) => (
     <Pressable onPress={() => handleUserAction(item)} style={[styles.listItem, { backgroundColor: theme.cardBackground }]}>
-      <Avatar emoji={item.emoji} size={44} imageUrl={item.avatarUrl || undefined} />
+      <Avatar emoji={item.emoji} size={44} />
       <View style={styles.itemInfo}>
         <View style={styles.nameRow}>
           <ThemedText type="body" style={{ fontWeight: "600" }}>@{item.username}</ThemedText>
@@ -216,8 +215,8 @@ export default function AdminPanelScreen({ navigation }: Props) {
 
   const renderMiniAppItem = ({ item }: { item: AdminMiniApp }) => (
     <View style={[styles.listItem, { backgroundColor: theme.cardBackground }]}>
-      <View style={styles.emojiCircle}>
-        <ThemedText style={{ fontSize: 22 }}>{item.emoji}</ThemedText>
+      <View style={[styles.appIconBox, { backgroundColor: "#3478F6" + "20" }]}>
+        <Feather name={(["play","music","bar-chart-2","shopping-cart","edit-3","pen-tool","tool","message-square","camera","map-pin","target","zap","globe","hash","book-open"].includes(item.emoji) ? item.emoji : "globe") as any} size={22} color="#3478F6" />
       </View>
       <View style={styles.itemInfo}>
         <View style={styles.nameRow}>
@@ -238,7 +237,14 @@ export default function AdminPanelScreen({ navigation }: Props) {
   );
 
   const isLoading = activeTab === "users" ? usersLoading : activeTab === "groups" ? groupsLoading : miniAppsLoading;
-  const listData = activeTab === "users" ? users : activeTab === "groups" ? groups : miniApps;
+  const listContentStyle = { paddingHorizontal: Spacing.md, paddingBottom: insets.bottom + Spacing.lg, paddingTop: Spacing.sm };
+  const emptyText = activeTab === "users" ? t("No users", "Нет пользователей") : activeTab === "groups" ? t("No groups", "Нет групп") : t("No mini apps", "Нет мини-приложений");
+  const EmptyList = () => (
+    <View style={styles.emptyState}>
+      <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center" }}>{emptyText}</ThemedText>
+    </View>
+  );
+  const Separator = () => <View style={{ height: Spacing.sm }} />;
 
   return (
     <ThemedView style={styles.container}>
@@ -272,20 +278,32 @@ export default function AdminPanelScreen({ navigation }: Props) {
 
       {isLoading ? (
         <View style={styles.loading}><ActivityIndicator color={theme.text} /></View>
+      ) : activeTab === "users" ? (
+        <FlatList
+          data={users}
+          keyExtractor={(item) => item.id}
+          renderItem={renderUserItem}
+          contentContainerStyle={listContentStyle}
+          ItemSeparatorComponent={Separator}
+          ListEmptyComponent={EmptyList}
+        />
+      ) : activeTab === "groups" ? (
+        <FlatList
+          data={groups}
+          keyExtractor={(item) => item.id}
+          renderItem={renderGroupItem}
+          contentContainerStyle={listContentStyle}
+          ItemSeparatorComponent={Separator}
+          ListEmptyComponent={EmptyList}
+        />
       ) : (
         <FlatList
-          data={listData as any[]}
+          data={miniApps}
           keyExtractor={(item) => item.id}
-          renderItem={activeTab === "users" ? renderUserItem : activeTab === "groups" ? renderGroupItem : renderMiniAppItem}
-          contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingBottom: insets.bottom + Spacing.lg, paddingTop: Spacing.sm }}
-          ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center" }}>
-                {activeTab === "users" ? t("No users", "Нет пользователей") : activeTab === "groups" ? t("No groups", "Нет групп") : t("No mini apps", "Нет мини-приложений")}
-              </ThemedText>
-            </View>
-          }
+          renderItem={renderMiniAppItem}
+          contentContainerStyle={listContentStyle}
+          ItemSeparatorComponent={Separator}
+          ListEmptyComponent={EmptyList}
         />
       )}
 
@@ -372,6 +390,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  appIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
   },
   badge: { width: 16, height: 16, borderRadius: 8, justifyContent: "center", alignItems: "center" },
   bannedBadge: { paddingHorizontal: Spacing.sm, paddingVertical: 2, borderRadius: BorderRadius.sm },

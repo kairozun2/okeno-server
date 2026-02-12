@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, TextInput, Modal, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, TextInput, Modal, ScrollView, Share, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
+import * as Clipboard from "expo-clipboard";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -30,7 +31,25 @@ interface MiniApp {
 
 type Props = NativeStackScreenProps<RootStackParamList, "MiniApps">;
 
-const EMOJI_OPTIONS = ["🎮", "🎵", "📊", "🛒", "📝", "🎨", "🔧", "💬", "📸", "🗺", "🎯", "⚡", "🌐", "🧮", "📚"];
+type IconName = "play" | "music" | "bar-chart-2" | "shopping-cart" | "edit-3" | "pen-tool" | "tool" | "message-square" | "camera" | "map-pin" | "target" | "zap" | "globe" | "hash" | "book-open";
+
+const ICON_OPTIONS: { name: IconName; label: string }[] = [
+  { name: "play", label: "Game" },
+  { name: "music", label: "Music" },
+  { name: "bar-chart-2", label: "Stats" },
+  { name: "shopping-cart", label: "Shop" },
+  { name: "edit-3", label: "Notes" },
+  { name: "pen-tool", label: "Art" },
+  { name: "tool", label: "Tool" },
+  { name: "message-square", label: "Chat" },
+  { name: "camera", label: "Photo" },
+  { name: "map-pin", label: "Map" },
+  { name: "target", label: "Focus" },
+  { name: "zap", label: "Fast" },
+  { name: "globe", label: "Web" },
+  { name: "hash", label: "Code" },
+  { name: "book-open", label: "Read" },
+];
 
 export default function MiniAppsScreen({ navigation }: Props) {
   const { theme, isDark, language } = useTheme();
@@ -43,7 +62,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [url, setUrl] = useState("");
-  const [emoji, setEmoji] = useState("🎮");
+  const [selectedIcon, setSelectedIcon] = useState<IconName>("globe");
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
   const headers = { "x-user-id": user?.id || "" };
@@ -122,16 +141,16 @@ export default function MiniAppsScreen({ navigation }: Props) {
     setName("");
     setDescription("");
     setUrl("");
-    setEmoji("🎮");
+    setSelectedIcon("globe");
   };
 
   const handleSubmit = () => {
     if (!name.trim() || !url.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (editingApp) {
-      updateMutation.mutate({ id: editingApp.id, data: { name: name.trim(), description: description.trim() || null, url: url.trim(), emoji } });
+      updateMutation.mutate({ id: editingApp.id, data: { name: name.trim(), description: description.trim() || null, url: url.trim(), emoji: selectedIcon } });
     } else {
-      createMutation.mutate({ name: name.trim(), description: description.trim(), url: url.trim(), emoji });
+      createMutation.mutate({ name: name.trim(), description: description.trim(), url: url.trim(), emoji: selectedIcon });
     }
   };
 
@@ -140,8 +159,31 @@ export default function MiniAppsScreen({ navigation }: Props) {
     setName(app.name);
     setDescription(app.description || "");
     setUrl(app.url);
-    setEmoji(app.emoji);
+    const found = ICON_OPTIONS.find(i => i.name === app.emoji);
+    setSelectedIcon(found ? app.emoji as IconName : "globe");
     setShowCreate(true);
+  };
+
+  const handleShare = async (app: MiniApp) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const shareUrl = app.url;
+    try {
+      if (Platform.OS === "web") {
+        await Clipboard.setStringAsync(shareUrl);
+      } else {
+        await Share.share({
+          message: `${app.name}\n${shareUrl}`,
+          url: shareUrl,
+        });
+      }
+    } catch (_e) {
+      await Clipboard.setStringAsync(shareUrl);
+    }
+  };
+
+  const getAppIcon = (iconKey: string): IconName => {
+    const found = ICON_OPTIONS.find(i => i.name === iconKey);
+    return found ? iconKey as IconName : "globe";
   };
 
   const renderAppItem = ({ item }: { item: MiniApp }) => (
@@ -152,8 +194,8 @@ export default function MiniAppsScreen({ navigation }: Props) {
       }}
       style={[styles.appCard, { backgroundColor: theme.cardBackground }]}
     >
-      <View style={styles.appEmoji}>
-        <ThemedText style={{ fontSize: 28 }}>{item.emoji}</ThemedText>
+      <View style={[styles.appIconBox, { backgroundColor: "#3478F6" + "20" }]}>
+        <Feather name={getAppIcon(item.emoji)} size={24} color="#3478F6" />
       </View>
       <View style={styles.appInfo}>
         <View style={styles.appNameRow}>
@@ -165,18 +207,21 @@ export default function MiniAppsScreen({ navigation }: Props) {
         ) : null}
         {item.creator ? (
           <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
-            {item.creator.emoji} @{item.creator.username}
+            @{item.creator.username}
           </ThemedText>
         ) : null}
       </View>
+      <Pressable onPress={() => handleShare(item)} hitSlop={8} style={styles.shareBtn}>
+        <Feather name="share" size={18} color={theme.textSecondary} />
+      </Pressable>
       <Feather name="chevron-right" size={20} color={theme.textSecondary} />
     </Pressable>
   );
 
   const renderMyAppItem = ({ item }: { item: MiniApp }) => (
     <View style={[styles.appCard, { backgroundColor: theme.cardBackground }]}>
-      <View style={styles.appEmoji}>
-        <ThemedText style={{ fontSize: 28 }}>{item.emoji}</ThemedText>
+      <View style={[styles.appIconBox, { backgroundColor: "#3478F6" + "20" }]}>
+        <Feather name={getAppIcon(item.emoji)} size={24} color="#3478F6" />
       </View>
       <View style={styles.appInfo}>
         <View style={styles.appNameRow}>
@@ -185,6 +230,9 @@ export default function MiniAppsScreen({ navigation }: Props) {
         </View>
         <ThemedText type="caption" style={{ color: theme.textSecondary }} numberOfLines={1}>{item.url}</ThemedText>
       </View>
+      <Pressable onPress={() => handleShare(item)} hitSlop={8} style={styles.iconBtn}>
+        <Feather name="share" size={16} color={theme.textSecondary} />
+      </Pressable>
       <Pressable onPress={() => openEdit(item)} style={styles.iconBtn}>
         <Feather name="edit-2" size={16} color={theme.textSecondary} />
       </Pressable>
@@ -230,8 +278,10 @@ export default function MiniAppsScreen({ navigation }: Props) {
             ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
             ListEmptyComponent={
               <View style={styles.emptyState}>
-                <ThemedText style={{ fontSize: 40, marginBottom: Spacing.md }}>🎮</ThemedText>
-                <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center" }}>
+                <View style={[styles.emptyIcon, { backgroundColor: theme.cardBackground }]}>
+                  <Feather name="grid" size={32} color={theme.textSecondary} />
+                </View>
+                <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}>
                   {t("You haven't created any mini apps yet", "У вас пока нет мини-приложений")}
                 </ThemedText>
               </View>
@@ -251,8 +301,10 @@ export default function MiniAppsScreen({ navigation }: Props) {
               ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <ThemedText style={{ fontSize: 40, marginBottom: Spacing.md }}>🎮</ThemedText>
-                  <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center" }}>
+                  <View style={[styles.emptyIcon, { backgroundColor: theme.cardBackground }]}>
+                    <Feather name="grid" size={32} color={theme.textSecondary} />
+                  </View>
+                  <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.md }}>
                     {t("No mini apps available yet", "Пока нет мини-приложений")}
                   </ThemedText>
                   <Pressable
@@ -286,19 +338,22 @@ export default function MiniAppsScreen({ navigation }: Props) {
 
           <ScrollView style={styles.formContainer} contentContainerStyle={{ padding: Spacing.md }}>
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>{t("Icon", "Иконка")}</ThemedText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.lg }}>
-              {EMOJI_OPTIONS.map((e) => (
+            <View style={styles.iconGrid}>
+              {ICON_OPTIONS.map((icon) => (
                 <Pressable
-                  key={e}
-                  onPress={() => { setEmoji(e); Haptics.selectionAsync(); }}
-                  style={[styles.emojiOption, emoji === e ? { backgroundColor: "#3478F6" + "30", borderColor: "#3478F6" } : { borderColor: theme.border }]}
+                  key={icon.name}
+                  onPress={() => { setSelectedIcon(icon.name); Haptics.selectionAsync(); }}
+                  style={[
+                    styles.iconOption,
+                    { borderColor: selectedIcon === icon.name ? "#3478F6" : theme.border, backgroundColor: selectedIcon === icon.name ? "#3478F6" + "20" : "transparent" },
+                  ]}
                 >
-                  <ThemedText style={{ fontSize: 24 }}>{e}</ThemedText>
+                  <Feather name={icon.name} size={22} color={selectedIcon === icon.name ? "#3478F6" : theme.textSecondary} />
                 </Pressable>
               ))}
-            </ScrollView>
+            </View>
 
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.xs }}>{t("Name", "Название")} *</ThemedText>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.xs, marginTop: Spacing.lg }}>{t("Name", "Название")} *</ThemedText>
             <TextInput
               value={name}
               onChangeText={setName}
@@ -361,17 +416,17 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
   },
-  appEmoji: {
+  appIconBox: {
     width: 48,
     height: 48,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.05)",
   },
   appInfo: { flex: 1 },
   appNameRow: { flexDirection: "row", alignItems: "center" },
   iconBtn: { padding: Spacing.sm },
+  shareBtn: { padding: Spacing.xs },
   createBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -385,7 +440,14 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     marginTop: Spacing.lg,
   },
-  emptyState: { paddingTop: 80, alignItems: "center" },
+  emptyState: { paddingTop: 80, alignItems: "center", paddingHorizontal: Spacing.xl },
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   modalContainer: { flex: 1 },
   modalHeader: {
     flexDirection: "row",
@@ -395,6 +457,19 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
   },
   formContainer: { flex: 1 },
+  iconGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+  },
+  iconOption: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+  },
   input: {
     borderWidth: 1,
     borderRadius: BorderRadius.md,
@@ -402,13 +477,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   textArea: { height: 80, textAlignVertical: "top" },
-  emojiOption: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    marginRight: Spacing.sm,
-  },
 });
