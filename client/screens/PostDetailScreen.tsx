@@ -543,19 +543,6 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 ) : null}
               </AnimatedPressable>
 
-              {!isOwner && (
-                <Pressable
-                  onPress={() => navigation.navigate("Comments", { postId })}
-                  style={styles.actionButton}
-                >
-                  <Feather name="message-circle" size={24} color={theme.textSecondary} />
-                  {commentsData && commentsData.count > 0 ? (
-                    <ThemedText type="small" style={[styles.actionCount, { color: theme.textSecondary }]}>
-                      {commentsData.count}
-                    </ThemedText>
-                  ) : null}
-                </Pressable>
-              )}
 
               <View style={{ flex: 1 }} />
 

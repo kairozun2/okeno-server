@@ -961,7 +961,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior="padding"
-          keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? -35 : 15) : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? -30 : 15) : 0}
         >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
@@ -1061,7 +1061,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           onEndReachedThreshold={0.5}
           contentContainerStyle={[
             styles.messagesList,
-            { paddingTop: 16, paddingBottom: insets.top + 110 },
+            { paddingTop: 16, paddingBottom: insets.top + 130 },
           ]}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
