@@ -1208,12 +1208,16 @@ export default function ChatScreen({ route, navigation }: Props) {
             <Pressable
               onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
               style={[styles.scrollDownButton, {
-                bottom: 70,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
-                borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                bottom: 56,
               }]}
             >
-              <Feather name="chevron-down" size={20} color={theme.text} />
+              <BlurView
+                intensity={80}
+                tint={isDark ? "dark" : "light"}
+                style={styles.scrollDownBlur}
+              >
+                <Feather name="chevron-down" size={18} color={theme.text} />
+              </BlurView>
             </Pressable>
           </Animated.View>
         ) : null}
@@ -1546,10 +1550,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    overflow: 'hidden',
+    zIndex: 50,
+  },
+  scrollDownBlur: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    zIndex: 50,
+    overflow: 'hidden',
   },
   messageBubble: {
     maxWidth: "80%",
