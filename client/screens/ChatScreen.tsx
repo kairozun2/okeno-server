@@ -1504,7 +1504,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             <Pressable
               onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
               style={[styles.scrollDownButton, {
-                bottom: 60,
+                bottom: 12,
               }]}
             >
               <BlurView

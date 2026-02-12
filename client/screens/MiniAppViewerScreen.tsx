@@ -19,7 +19,8 @@ type Props = NativeStackScreenProps<RootStackParamList, "MiniAppViewer">;
 
 export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const { appName, appUrl, appEmoji } = route.params;
-  const { theme, isDark } = useTheme();
+  const { theme, isDark, language } = useTheme();
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -223,7 +224,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
             style={[styles.retryBtn, { backgroundColor: "#3478F6", marginTop: Spacing.xl }]}
           >
             <ThemedText type="body" style={{ color: "#FFF" }}>
-              {isDark ? "Закрыть" : "Close"}
+              {t("Close", "Закрыть")}
             </ThemedText>
           </Pressable>
         </View>
@@ -243,7 +244,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
             <View style={styles.errorContainer}>
               <Feather name="wifi-off" size={48} color={theme.textSecondary} />
               <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: "center" }}>
-                {isDark ? "Не удалось загрузить приложение" : "Failed to load app"}
+                {t("Failed to load app", "Не удалось загрузить приложение")}
               </ThemedText>
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: "center" }}>
                 {getDomainFromUrl(validUrl)}
@@ -254,7 +255,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               >
                 <Feather name="refresh-cw" size={16} color="#FFF" style={{ marginRight: 8 }} />
                 <ThemedText type="body" style={{ color: "#FFF", fontWeight: '600' }}>
-                  {isDark ? "Повторить" : "Retry"}
+                  {t("Retry", "Повторить")}
                 </ThemedText>
               </Pressable>
             </View>
@@ -329,7 +330,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
             <View style={[styles.loadingOverlay, { backgroundColor: theme.backgroundRoot }]}>
               <ActivityIndicator size="large" color={theme.accent} />
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
-                {isDark ? "Загрузка..." : "Loading..."}
+                {t("Loading...", "Загрузка...")}
               </ThemedText>
             </View>
           ) : null}
@@ -374,7 +375,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
           <BlurView intensity={80} tint="dark" style={styles.toastInner}>
             <Feather name="check" size={16} color="#4CD964" />
             <Text style={styles.toastText}>
-              {isDark ? "Ссылка скопирована" : "Link copied"}
+              {t("Link copied", "Ссылка скопирована")}
             </Text>
           </BlurView>
         </Animated.View>
@@ -405,7 +406,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
                   <Feather name="refresh-cw" size={18} color="#5AC8FA" />
                 </View>
                 <Text style={[styles.menuText, { color: "#FFF" }]}>
-                  {isDark ? "Обновить" : "Reload"}
+                  {t("Reload", "Обновить")}
                 </Text>
               </Pressable>
 
@@ -414,7 +415,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
                   <Feather name="copy" size={18} color="#4CD964" />
                 </View>
                 <Text style={[styles.menuText, { color: "#FFF" }]}>
-                  {isDark ? "Копировать ссылку" : "Copy Link"}
+                  {t("Copy Link", "Копировать ссылку")}
                 </Text>
               </Pressable>
 
@@ -423,7 +424,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
                   <Feather name="share" size={18} color="#FF9F0A" />
                 </View>
                 <Text style={[styles.menuText, { color: "#FFF" }]}>
-                  {isDark ? "Поделиться" : "Share"}
+                  {t("Share", "Поделиться")}
                 </Text>
               </Pressable>
 
@@ -432,7 +433,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
                   <Feather name="external-link" size={18} color="#8E9BAD" />
                 </View>
                 <Text style={[styles.menuText, { color: "#FFF" }]}>
-                  {isDark ? "Открыть в браузере" : "Open in Browser"}
+                  {t("Open in Browser", "Открыть в браузере")}
                 </Text>
               </Pressable>
 
@@ -440,7 +441,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
               <Pressable style={styles.menuItem} onPress={() => setMenuVisible(false)}>
                 <Text style={[styles.menuCancelText, { color: 'rgba(255,255,255,0.5)' }]}>
-                  {isDark ? "Отмена" : "Cancel"}
+                  {t("Cancel", "Отмена")}
                 </Text>
               </Pressable>
             </BlurView>

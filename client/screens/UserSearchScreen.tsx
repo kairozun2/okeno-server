@@ -426,9 +426,10 @@ const styles = StyleSheet.create({
   userItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
+    marginBottom: 4,
   },
   userInfo: {
     flex: 1,
