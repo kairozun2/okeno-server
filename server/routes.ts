@@ -526,7 +526,7 @@ export async function registerRoutes(app: express.Express) {
   app.post("/api/posts/:id/comments", async (req, res) => {
     try {
       const commentData = insertCommentSchema.parse({ ...req.body, postId: req.params.id });
-      commentData.content = sanitizeString(commentData.content);
+      commentData.content = sanitizeString(commentData.content) || commentData.content;
       const comment = await storage.createComment(commentData);
       const user = await storage.getUser(comment.userId);
       
@@ -1197,7 +1197,7 @@ export async function registerRoutes(app: express.Express) {
       if (!reporterId || !reason) {
         return res.status(400).json({ error: "Reporter ID and reason required" });
       }
-      const sanitizedReason = sanitizeString(reason);
+      const sanitizedReason = sanitizeString(reason) || reason;
       const report = await storage.createReport({
         reporterId,
         reportedUserId,

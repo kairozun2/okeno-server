@@ -362,7 +362,7 @@ function setupRateLimiting(app: express.Application) {
 
     const ip = req.ip || req.socket.remoteAddress || "unknown";
     const isAuthEndpoint = req.path.startsWith("/api/auth/");
-    const limit = isAuthEndpoint ? 10 : 100;
+    const limit = isAuthEndpoint ? 10 : 600;
     const key = `${ip}:${isAuthEndpoint ? "auth" : "general"}`;
     const now = Date.now();
 
