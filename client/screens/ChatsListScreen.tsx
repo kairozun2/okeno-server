@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
-import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Pressable, Modal, TextInput, ScrollView, Dimensions, ActivityIndicator, Platform } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -247,7 +247,7 @@ export default function ChatsListScreen({ navigation }: Props) {
     },
     enabled: !!user?.id,
     staleTime: 5000,
-    refetchInterval: 10000,
+    refetchInterval: 3000,
   });
 
   const { data: allChatSettings = [] } = useQuery<ChatSettings[]>({
@@ -406,7 +406,7 @@ export default function ChatsListScreen({ navigation }: Props) {
         onRequestClose={handleCloseModal}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: Spacing.sm }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md }]}>
             <View style={styles.modalHeaderButton}>
               {selectedChat && (
                 <Pressable onPress={() => setSelectedChat(null)} style={styles.modalHeaderBackButton}>

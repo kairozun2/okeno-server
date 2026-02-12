@@ -119,7 +119,7 @@ export default function QRCodeScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: Spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md }]}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.closeButton}

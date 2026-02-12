@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, StyleSheet, Pressable, FlatList } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
@@ -226,7 +226,7 @@ export default function NotificationsScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: Spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md }]}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
           <Feather name="x" size={24} color={theme.text} />
         </Pressable>

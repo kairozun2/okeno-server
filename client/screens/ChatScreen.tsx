@@ -495,7 +495,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       return response.json();
     },
     enabled: !!otherUserId,
-    refetchInterval: 2500,
+    refetchInterval: 1500,
   });
 
   const isOtherUserTyping = typingData?.isTyping || false;
@@ -635,7 +635,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     },
     initialPageParam: 0,
     staleTime: 5000,
-    refetchInterval: 5000, 
+    refetchInterval: 1500, 
   });
 
   const messages = data?.pages.flat() || [];
@@ -691,6 +691,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/chats", chatId, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "chats"] });
     },
   });
 
@@ -956,11 +957,11 @@ export default function ChatScreen({ route, navigation }: Props) {
   );
 
   const chatContent = (
-    <View style={[styles.container, { backgroundColor: theme.backgroundRoot, flex: 1 }]}>
+    <View style={[styles.container, { backgroundColor: backgroundImage ? 'transparent' : theme.backgroundRoot, flex: 1 }]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior="padding"
-          keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? -50 : 10) : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? -42 : 15) : 0}
         >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable

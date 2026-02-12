@@ -145,7 +145,7 @@ export default function MainTabNavigator() {
       return response.json();
     },
     enabled: !!user?.id,
-    refetchInterval: 5000, // Poll every 5 seconds for stability and free tier
+    refetchInterval: 3000,
   });
 
   const unreadCount = unreadData?.count || 0;

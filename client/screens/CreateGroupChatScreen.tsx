@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { View, StyleSheet, Pressable, TextInput, ScrollView, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, ScrollView, ActivityIndicator, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -105,7 +105,7 @@ export default function CreateGroupChatScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: Spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md }]}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.headerButton}
