@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { User, getStoredAuth, storeAuth, register as authRegister, login as authLogin, logout as authLogout } from "@/lib/auth";
 import { getApiUrl } from "@/lib/query-client";
 import { registerForPushNotificationsAsync, unregisterPushNotifications } from "@/lib/push-notifications";
@@ -19,6 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,9 +98,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       pushTokenRef.current = null;
     }
     await authLogout(sessionId);
+    queryClient.clear();
     setUser(null);
     setSessionId(null);
-  }, [sessionId, user?.id]);
+  }, [sessionId, user?.id, queryClient]);
 
   const refreshUser = useCallback(async () => {
     if (!user?.id) return;
