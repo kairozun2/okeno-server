@@ -206,10 +206,19 @@ export async function performFullSync(userId: string): Promise<void> {
   if (!isOnline) return;
   
   try {
-    await Promise.all([
+    const [, chats] = await Promise.all([
       fetchAndCacheFeed(userId, 50, 0),
       fetchAndCacheChats(userId),
     ]);
+    
+    if (Array.isArray(chats) && chats.length > 0) {
+      const recentChats = chats.slice(0, 10);
+      await Promise.all(
+        recentChats.map((chat: any) => 
+          fetchAndCacheMessages(chat.id, 50).catch(() => {})
+        )
+      );
+    }
     
     await Database.setSyncMetadata('lastFullSync', new Date().toISOString());
     

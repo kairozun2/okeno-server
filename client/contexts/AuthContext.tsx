@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { User, getStoredAuth, storeAuth, register as authRegister, login as authLogin, logout as authLogout } from "@/lib/auth";
 import { getApiUrl } from "@/lib/query-client";
 import { registerForPushNotificationsAsync, unregisterPushNotifications } from "@/lib/push-notifications";
+import { performFullSync } from "@/lib/sync";
 
 interface AuthContextType {
   user: User | null;
@@ -32,6 +33,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       registerForPushNotificationsAsync(user.id).then((token) => {
         pushTokenRef.current = token;
       });
+    }
+    if (user?.id) {
+      performFullSync(user.id).catch(() => {});
     }
   }, [user?.id]);
 
