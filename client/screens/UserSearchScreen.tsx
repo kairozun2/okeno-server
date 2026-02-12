@@ -34,6 +34,15 @@ interface User {
   isVerified?: boolean;
 }
 
+interface MiniApp {
+  id: string;
+  name: string;
+  emoji: string;
+  url: string;
+  description?: string;
+  isVerified?: boolean;
+}
+
 const SEARCH_HISTORY_KEY = "@search_history";
 
 type Props = NativeStackScreenProps<RootStackParamList, "UserSearch">;
@@ -179,9 +188,12 @@ export default function UserSearchScreen({ navigation }: Props) {
     }
   };
 
+  const isMiniAppSearch = searchQuery.startsWith("/");
+  const miniAppSearchTerm = isMiniAppSearch ? searchQuery.slice(1).toLowerCase() : "";
+
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users/search", searchQuery],
-    enabled: searchQuery.length > 0,
+    enabled: searchQuery.length > 0 && !isMiniAppSearch,
     queryFn: async () => {
       const url = new URL(`/api/users/search?q=${encodeURIComponent(searchQuery)}`, getApiUrl());
       const response = await fetch(url.toString());
@@ -189,6 +201,34 @@ export default function UserSearchScreen({ navigation }: Props) {
       return response.json();
     },
   });
+
+  const { data: allMiniApps = [] } = useQuery<MiniApp[]>({
+    queryKey: ["/api/mini-apps"],
+    queryFn: async () => {
+      const url = new URL("/api/mini-apps", getApiUrl());
+      const response = await fetch(url.toString(), { credentials: "include" });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 60000,
+  });
+
+  const filteredMiniApps = isMiniAppSearch
+    ? allMiniApps.filter(app => 
+        miniAppSearchTerm.length === 0 || app.name.toLowerCase().includes(miniAppSearchTerm)
+      )
+    : [];
+
+  const handleMiniAppPress = useCallback((app: MiniApp) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Keyboard.dismiss();
+    (navigation as any).navigate("MiniAppViewer", {
+      appId: app.id,
+      appName: app.name,
+      appUrl: app.url,
+      appEmoji: app.emoji,
+    });
+  }, [navigation]);
 
   const handleUserPress = useCallback((user: User) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -236,7 +276,7 @@ export default function UserSearchScreen({ navigation }: Props) {
         <Feather name="search" size={18} color={theme.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
-          placeholder={t("Enter username...", "Введите имя...")}
+          placeholder={t("Username or / for apps...", "Имя или / для приложений...")}
           placeholderTextColor={theme.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -251,28 +291,95 @@ export default function UserSearchScreen({ navigation }: Props) {
         ) : null}
       </View>
 
-      <FlatList
-        data={searchQuery.length > 0 ? users : []}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: insets.bottom + Spacing.lg },
-        ]}
-        ListEmptyComponent={
-          !isLoading ? (
-            <EmptyResults 
-              query={searchQuery} 
-              history={history}
-              onClearHistory={clearHistory}
-              onSelectHistory={handleUserPress}
-              language={language}
-            />
-          ) : null
-        }
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      />
+      {isMiniAppSearch ? (
+        <FlatList
+          data={filteredMiniApps}
+          renderItem={({ item }) => (
+            <Animated.View entering={FadeIn}>
+              <Pressable
+                onPress={() => handleMiniAppPress(item)}
+                style={[
+                  styles.userItem,
+                  { backgroundColor: theme.backgroundDefault }
+                ]}
+              >
+                <View style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                  <ThemedText style={{ fontSize: 22 }}>{item.emoji}</ThemedText>
+                </View>
+                <View style={styles.userInfo}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <ThemedText type="body" style={[styles.username]}>{item.name}</ThemedText>
+                    {item.isVerified ? <VerifiedBadge size={14} /> : null}
+                  </View>
+                  {item.description ? (
+                    <ThemedText type="caption" style={{ color: theme.textSecondary }} numberOfLines={1}>
+                      {item.description}
+                    </ThemedText>
+                  ) : null}
+                </View>
+                <View style={{
+                  backgroundColor: 'rgba(52,120,246,0.12)',
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 12,
+                }}>
+                  <ThemedText type="caption" style={{ color: '#3478F6', fontWeight: '600', fontSize: 12 }}>
+                    {t("Open", "Открыть")}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            </Animated.View>
+          )}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: insets.bottom + Spacing.lg },
+          ]}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Feather name="grid" size={40} color={theme.textSecondary} />
+              <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: "center" }}>
+                {miniAppSearchTerm.length > 0
+                  ? t(`No apps found matching "${miniAppSearchTerm}"`, `Приложения "${miniAppSearchTerm}" не найдены`)
+                  : t("Type / followed by app name", "Введите / и название приложения")
+                }
+              </ThemedText>
+            </View>
+          }
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <FlatList
+          data={searchQuery.length > 0 ? users : []}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: insets.bottom + Spacing.lg },
+          ]}
+          ListEmptyComponent={
+            !isLoading ? (
+              <EmptyResults 
+                query={searchQuery} 
+                history={history}
+                onClearHistory={clearHistory}
+                onSelectHistory={handleUserPress}
+                language={language}
+              />
+            ) : null
+          }
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </ThemedView>
   );
 }

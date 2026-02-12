@@ -1519,7 +1519,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                   <ThemedText style={{ fontSize: 28 }}>{app.emoji}</ThemedText>
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                      <ThemedText type="defaultSemiBold" style={{ color: theme.text }}>{app.name}</ThemedText>
+                      <ThemedText type="body" style={{ color: theme.text, fontWeight: '600' }}>{app.name}</ThemedText>
                       {app.isVerified ? <VerifiedBadge size={14} /> : null}
                     </View>
                   </View>

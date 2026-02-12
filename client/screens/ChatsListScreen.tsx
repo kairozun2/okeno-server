@@ -394,7 +394,7 @@ function CompactFilterTabs({
   }
 
   return (
-    <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View style={{ flexDirection: "row", alignItems: "center", alignSelf: "flex-start" }}>
       {filters.map((f, index) => (
         <Pressable
           key={f.key}
@@ -716,8 +716,10 @@ export default function ChatsListScreen({ navigation }: Props) {
   const hasGroups = useMemo(() => sortedChats.some(c => c.isGroup === true), [sortedChats]);
 
   useLayoutEffect(() => {
+    const showCompactTabs = tabsHidden && chatFilterTabsEnabled && sortedChats.length > 0;
     navigation.setOptions({
-      headerTitle: tabsHidden && chatFilterTabsEnabled && sortedChats.length > 0
+      headerTitleAlign: showCompactTabs ? 'left' : undefined,
+      headerTitle: showCompactTabs
         ? () => (
             <CompactFilterTabs
               activeFilter={activeFilter}
