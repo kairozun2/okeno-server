@@ -301,7 +301,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
 
       <Modal visible={showCreate} transparent animationType="slide" onRequestClose={resetForm}>
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + Spacing.sm }]}>
+          <View style={[styles.modalHeader, { paddingTop: insets.top + 4 }]}>
             <Pressable onPress={resetForm}>
               <ThemedText type="body" style={{ color: "#3478F6" }}>{t("Cancel", "Отмена")}</ThemedText>
             </Pressable>
@@ -315,7 +315,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
             </Pressable>
           </View>
 
-          <ScrollView style={styles.formContainer} contentContainerStyle={{ padding: Spacing.md }}>
+          <ScrollView style={styles.formContainer} contentContainerStyle={{ padding: Spacing.md, paddingTop: Spacing.sm }}>
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>{t("Emoji", "Эмодзи")}</ThemedText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.emojiStrip} contentContainerStyle={styles.emojiStripContent}>
               {EMOJI_OPTIONS.map((emoji) => (
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   formContainer: { flex: 1 },
   emojiStrip: {

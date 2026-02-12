@@ -264,20 +264,19 @@ function MessageBubble({
     }
 
     if (miniApps && miniApps.length > 0) {
-      const lines = content.trim().split('\n');
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (!trimmedLine) continue;
-        const urlMatch = trimmedLine.match(/https?:\/\/\S+/);
-        const urlToCheck = urlMatch ? urlMatch[0] : trimmedLine;
-        const matchedApp = miniApps.find(app => {
-          const normalizedUrl = app.url.replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase();
-          const normalizedCheck = urlToCheck.replace(/^https?:\/\//, '').replace(/\/+$/, '').toLowerCase();
-          return normalizedCheck === normalizedUrl || normalizedCheck.startsWith(normalizedUrl + '/') || normalizedUrl.startsWith(normalizedCheck + '/');
-        });
-        if (matchedApp) {
-          return renderMiniAppCard(matchedApp.id, '', matchedApp);
-        }
+      const contentLower = content.trim().toLowerCase();
+      const normalize = (u: string) => u.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '').toLowerCase();
+      const matchedApp = miniApps.find(app => {
+        const normalizedUrl = normalize(app.url);
+        const normalizedContent = normalize(contentLower);
+        return normalizedContent === normalizedUrl
+          || normalizedContent.startsWith(normalizedUrl + '/')
+          || normalizedUrl.startsWith(normalizedContent + '/')
+          || contentLower.includes(app.url.toLowerCase())
+          || contentLower.includes(normalizedUrl);
+      });
+      if (matchedApp) {
+        return renderMiniAppCard(matchedApp.id, '', matchedApp);
       }
     }
 
@@ -620,7 +619,7 @@ export default function ChatScreen({ route, navigation }: Props) {
 
   const miniAppCommandActive = message.startsWith("/m ");
   const miniAppSearchTerm = miniAppCommandActive ? message.slice(3).toLowerCase().trim() : "";
-  const filteredMiniApps = miniAppCommandActive && miniAppSearchTerm.length >= 2
+  const filteredMiniApps = miniAppCommandActive && miniAppSearchTerm.length >= 1
     ? miniAppsForCommand.filter(app => app.name.toLowerCase().includes(miniAppSearchTerm))
     : [];
 
