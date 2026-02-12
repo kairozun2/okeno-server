@@ -10,22 +10,23 @@ import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/query-client";
+import { apiRequest, getApiUrl } from "@/lib/query-client";
 import { Spacing } from "@/constants/theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function CallScreen({ route, navigation }: any) {
-  const { userId, displayName, displayEmoji, chatId } = route.params || {};
+  const { userId, displayName, displayEmoji, chatId, isIncoming } = route.params || {};
   const { theme, isDark, language } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
-  const [callState, setCallState] = useState<"connecting" | "ringing" | "unavailable">("connecting");
+  const [callState, setCallState] = useState<"connecting" | "ringing" | "connected" | "unavailable">(isIncoming ? "connected" : "connecting");
   const [elapsed, setElapsed] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(false);
   const missedCallSentRef = useRef(false);
+  const connectedTimeRef = useRef(0);
 
   const pulse1 = useSharedValue(1);
   const pulse2 = useSharedValue(1);
@@ -76,6 +77,8 @@ export default function CallScreen({ route, navigation }: any) {
   }));
 
   useEffect(() => {
+    if (isIncoming) return;
+
     if (chatId && userId && user?.id) {
       apiRequest("POST", "/api/call", {
         callerId: user.id,
@@ -89,15 +92,35 @@ export default function CallScreen({ route, navigation }: any) {
     }, 2000);
 
     const unavailableTimer = setTimeout(() => {
-      setCallState("unavailable");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setCallState(prev => prev === "connected" ? prev : "unavailable");
+      if (callState !== "connected") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
     }, 25000);
+
+    const statusPoll = setInterval(async () => {
+      try {
+        const baseUrl = getApiUrl();
+        const url = new URL(`/api/call/status/${userId}`, baseUrl);
+        const res = await fetch(url.toString(), { credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === "answered") {
+          setCallState("connected");
+          connectedTimeRef.current = Date.now();
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          clearTimeout(unavailableTimer);
+          clearInterval(statusPoll);
+        }
+      } catch {}
+    }, 1500);
 
     return () => {
       clearTimeout(timer);
       clearTimeout(unavailableTimer);
+      clearInterval(statusPoll);
       if (userId) {
-        apiRequest("POST", "/api/call/cancel", { recipientId: userId }).catch(() => {});
+        apiRequest("POST", "/api/call/end", { recipientId: userId }).catch(() => {});
       }
     };
   }, []);
@@ -132,6 +155,9 @@ export default function CallScreen({ route, navigation }: any) {
     if (callState === "unavailable" || callState === "ringing") {
       await sendMissedCall();
     }
+    if (userId) {
+      apiRequest("POST", "/api/call/end", { recipientId: userId }).catch(() => {});
+    }
     navigation.goBack();
   };
 
@@ -145,6 +171,8 @@ export default function CallScreen({ route, navigation }: any) {
     ? t("Connecting...", "Подключение...")
     : callState === "ringing"
     ? t("Ringing...", "Звоним...")
+    : callState === "connected"
+    ? t("Connected", "На связи")
     : t("Didn't answer", "Не ответил");
 
   return (

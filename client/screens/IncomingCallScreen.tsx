@@ -90,7 +90,13 @@ export default function IncomingCallScreen({ route, navigation }: any) {
     try {
       await apiRequest("POST", "/api/call/answer", { userId: user?.id });
     } catch {}
-    navigation.replace("Chat", { chatId });
+    navigation.replace("CallScreen", {
+      userId: callerId,
+      displayName: callerName,
+      displayEmoji: callerEmoji,
+      chatId,
+      isIncoming: true,
+    });
   };
 
   const handleDecline = async () => {

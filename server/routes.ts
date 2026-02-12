@@ -808,12 +808,14 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
-  const activeCalls = new Map<string, { callerId: string; callerName: string; callerEmoji: string; chatId: string; createdAt: number }>();
+  const activeCalls = new Map<string, { callerId: string; callerName: string; callerEmoji: string; chatId: string; createdAt: number; status: string }>();
 
   setInterval(() => {
     const now = Date.now();
     for (const [recipientId, call] of activeCalls) {
-      if (now - call.createdAt > 30000) {
+      if (call.status === "answered" && now - call.createdAt > 120000) {
+        activeCalls.delete(recipientId);
+      } else if (call.status === "ringing" && now - call.createdAt > 35000) {
         activeCalls.delete(recipientId);
       }
     }
@@ -835,6 +837,7 @@ export async function registerRoutes(app: express.Express) {
         callerEmoji: caller.emoji,
         chatId,
         createdAt: Date.now(),
+        status: "ringing",
       });
       sendCallNotification(recipientId, caller.username, caller.emoji, chatId);
       res.json({ success: true });
@@ -847,13 +850,26 @@ export async function registerRoutes(app: express.Express) {
   app.get("/api/call/incoming/:userId", async (req, res) => {
     try {
       const call = activeCalls.get(req.params.userId);
-      if (call) {
+      if (call && call.status === "ringing") {
         res.json({ hasCall: true, ...call });
       } else {
         res.json({ hasCall: false });
       }
     } catch (error) {
       res.json({ hasCall: false });
+    }
+  });
+
+  app.get("/api/call/status/:recipientId", async (req, res) => {
+    try {
+      const call = activeCalls.get(req.params.recipientId);
+      if (call) {
+        res.json({ exists: true, status: call.status });
+      } else {
+        res.json({ exists: false, status: "ended" });
+      }
+    } catch (error) {
+      res.json({ exists: false, status: "ended" });
     }
   });
 
@@ -873,7 +889,22 @@ export async function registerRoutes(app: express.Express) {
     try {
       const { userId } = req.body;
       if (userId) {
-        activeCalls.delete(userId);
+        const call = activeCalls.get(userId);
+        if (call) {
+          call.status = "answered";
+        }
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.json({ success: true });
+    }
+  });
+
+  app.post("/api/call/end", async (req, res) => {
+    try {
+      const { recipientId } = req.body;
+      if (recipientId) {
+        activeCalls.delete(recipientId);
       }
       res.json({ success: true });
     } catch (error) {

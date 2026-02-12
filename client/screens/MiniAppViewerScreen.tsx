@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar, Text, Linking } from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar, Text, Linking, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import * as Haptics from "expo-haptics";
 import { BlurView } from "expo-blur";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -20,6 +20,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState(false);
   const webViewRef = useRef<WebView>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -29,6 +30,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
   const splashOpacity = useSharedValue(1);
   const splashScale = useSharedValue(0.9);
   const controlsOpacity = useSharedValue(1);
+  const loadingBarX = useSharedValue(-100);
 
   const validUrl = appUrl.startsWith("http://") || appUrl.startsWith("https://") ? appUrl : `https://${appUrl}`;
 
@@ -45,6 +47,25 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
   }, []);
+
+  const screenWidth = Dimensions.get("window").width;
+
+  useEffect(() => {
+    if (isLoading && !isInitialLoad) {
+      loadingBarX.value = -screenWidth * 0.4;
+      loadingBarX.value = withRepeat(
+        withSequence(
+          withTiming(screenWidth, { duration: 1200 }),
+          withTiming(-screenWidth * 0.4, { duration: 0 })
+        ),
+        -1
+      );
+    }
+  }, [isLoading, isInitialLoad]);
+
+  const loadingBarStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: loadingBarX.value }],
+  }));
 
   const controlsVisible = useRef(true);
 
@@ -184,8 +205,8 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               style={StyleSheet.absoluteFill}
               userAgent={userAgent}
               onLoadStart={() => setIsLoading(true)}
-              onLoadEnd={() => { setIsLoading(false); showControls(); }}
-              onError={() => { setIsLoading(false); setError(true); }}
+              onLoadEnd={() => { setIsLoading(false); setIsInitialLoad(false); showControls(); }}
+              onError={() => { setIsLoading(false); setIsInitialLoad(false); setError(true); }}
               onHttpError={(syntheticEvent) => {
                 const { statusCode } = syntheticEvent.nativeEvent;
                 if (statusCode >= 500) { setIsLoading(false); setError(true); }
@@ -253,9 +274,14 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
             </Pressable>
           </Animated.View>
 
-          {isLoading && !error ? (
+          {isLoading && isInitialLoad && !error ? (
             <View style={[styles.loadingOverlay, { backgroundColor: theme.backgroundRoot }]}>
               <ActivityIndicator size="large" color="#3478F6" />
+            </View>
+          ) : null}
+          {isLoading && !isInitialLoad && !error ? (
+            <View style={[styles.topLoadingBar, { top: insets.top }]}>
+              <Animated.View style={[styles.loadingIndicator, { backgroundColor: "#3478F6" }, loadingBarStyle]} />
             </View>
           ) : null}
         </>
@@ -296,6 +322,19 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
+  },
+  topLoadingBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 3,
+    zIndex: 150,
+    overflow: "hidden",
+  },
+  loadingIndicator: {
+    width: "40%",
+    height: "100%",
+    borderRadius: 2,
   },
   splashOverlay: {
     ...StyleSheet.absoluteFillObject,

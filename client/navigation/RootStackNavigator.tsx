@@ -68,7 +68,7 @@ export type RootStackParamList = {
   ThemeSelection: undefined;
   CreateGroupChat: undefined;
   GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string; isVerified?: boolean };
-  CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string };
+  CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string; isIncoming?: boolean };
   IncomingCall: { callerId: string; callerName: string; callerEmoji: string; chatId: string };
   NotificationSettings: undefined;
   Support: undefined;
