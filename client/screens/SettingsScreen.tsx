@@ -38,6 +38,7 @@ const SETTINGS_ICONS = {
   discord: require("../assets/icons/settings/discord.png"),
   archiveBox: require("../assets/icons/settings/archive-box.png"),
   miniapps: require("../assets/icons/settings/miniapps.png"),
+  developer: require("../assets/icons/settings/developer.png"),
 };
 
 const ACCENT_COLORS = [
@@ -147,6 +148,7 @@ export default function SettingsScreen({ navigation }: Props) {
   const [deletePin, setDeletePin] = useState("");
   const [debugTapCount, setDebugTapCount] = useState(0);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [showDeveloperGuide, setShowDeveloperGuide] = useState(false);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -288,6 +290,12 @@ export default function SettingsScreen({ navigation }: Props) {
           title: t("Mini Apps", "Мини-приложения"),
           subtitle: t("Browse and create apps", "Обзор и создание приложений"),
           onPress: () => navigation.navigate("MiniApps"),
+        },
+        {
+          customIcon: SETTINGS_ICONS.developer,
+          title: t("Developer Guide", "Гайд для разработчиков"),
+          subtitle: t("Recommendations and formats", "Рекомендации и форматы"),
+          onPress: () => setShowDeveloperGuide(true),
         },
       ],
     },
@@ -627,34 +635,36 @@ export default function SettingsScreen({ navigation }: Props) {
                 {t("Chat Settings", "Настройки чатов")}
               </ThemedText>
 
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: Spacing.lg }}>
-                {["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟", "👍", "❤️", "🔥", "😂", "😢"].map((emoji) => (
-                  <Pressable
-                    key={emoji}
-                    onPress={() => {
-                      setQuickReactionEmoji(emoji);
-                      if (hapticsEnabled) {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      }
-                    }}
-                    style={({ pressed }) => [
-                      {
-                        width: 48,
-                        height: 48,
-                        borderRadius: 14,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) + '25' : theme.backgroundSecondary,
-                        borderWidth: quickReactionEmoji === emoji ? 2 : 0,
-                        borderColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) : 'transparent',
-                        opacity: pressed ? 0.7 : 1,
-                      },
-                    ]}
-                  >
-                    <ThemedText style={{ fontSize: 22, lineHeight: 28, textAlign: 'center' }}>{emoji}</ThemedText>
-                  </Pressable>
-                ))}
-              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.lg }}>
+                <View style={{ flexDirection: 'row', gap: 8, paddingRight: Spacing.md }}>
+                  {["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟", "👍", "❤️", "🔥", "😂", "😢"].map((emoji) => (
+                    <Pressable
+                      key={emoji}
+                      onPress={() => {
+                        setQuickReactionEmoji(emoji);
+                        if (hapticsEnabled) {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        }
+                      }}
+                      style={({ pressed }) => [
+                        {
+                          width: 48,
+                          height: 48,
+                          borderRadius: 14,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) + '25' : theme.backgroundSecondary,
+                          borderWidth: quickReactionEmoji === emoji ? 2 : 0,
+                          borderColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) : 'transparent',
+                          opacity: pressed ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      <ThemedText style={{ fontSize: 22, lineHeight: 28, textAlign: 'center' }}>{emoji}</ThemedText>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
 
               <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
                 <Pressable
@@ -694,6 +704,106 @@ export default function SettingsScreen({ navigation }: Props) {
               </View>
             </View>
           </Animated.View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showDeveloperGuide}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowDeveloperGuide(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <ThemedText type="h3">{t("Developer Guide", "Гайд для разработчиков")}</ThemedText>
+            <Pressable onPress={() => setShowDeveloperGuide(false)} hitSlop={8}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.colorPickerContent} showsVerticalScrollIndicator={false}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.lg }}>
+              {t(
+                "Recommendations for creating mini apps in Okeno. Follow these guidelines for the best user experience.",
+                "Рекомендации по созданию мини-приложений в Okeno. Следуйте этим рекомендациям для лучшего пользовательского опыта."
+              )}
+            </ThemedText>
+
+            <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.lg }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.md }}>
+                <View style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: theme.link + '20', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="layout" size={16} color={theme.link} />
+                </View>
+                <ThemedText type="body" style={{ fontWeight: '600' }}>{t("Format & Layout", "Формат и макет")}</ThemedText>
+              </View>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                {t(
+                  "- Use responsive design that adapts to different screen sizes\n- Recommended viewport: 100vw x 100vh\n- Support both light and dark themes\n- Avoid fixed widths — use percentages or flexbox",
+                  "- Используйте адаптивный дизайн для разных экранов\n- Рекомендуемый viewport: 100vw x 100vh\n- Поддерживайте светлую и тёмную темы\n- Избегайте фиксированной ширины — используйте проценты или flexbox"
+                )}
+              </ThemedText>
+            </View>
+
+            <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.lg }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.md }}>
+                <View style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: theme.link + '20', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="smartphone" size={16} color={theme.link} />
+                </View>
+                <ThemedText type="body" style={{ fontWeight: '600' }}>{t("Mobile First", "Мобильный подход")}</ThemedText>
+              </View>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                {t(
+                  "- Design for mobile screens first (360-428px wide)\n- Use touch-friendly tap targets (min 44x44px)\n- Avoid hover-only interactions\n- Safe area: add 16px padding on sides",
+                  "- Проектируйте сначала для мобильных (360-428px)\n- Используйте удобные зоны нажатия (мин. 44x44px)\n- Избегайте hover-эффектов\n- Безопасная зона: отступы 16px по бокам"
+                )}
+              </ThemedText>
+            </View>
+
+            <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.lg }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.md }}>
+                <View style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: theme.link + '20', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="type" size={16} color={theme.link} />
+                </View>
+                <ThemedText type="body" style={{ fontWeight: '600' }}>{t("Typography & Spacing", "Типографика и отступы")}</ThemedText>
+              </View>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                {t(
+                  "- Base font size: 16px for body text\n- Headers: 20-24px, bold\n- Captions: 12-13px\n- Line height: 1.4-1.6x of font size\n- Spacing between elements: 8px, 12px, 16px, 24px\n- Use system fonts: -apple-system, system-ui",
+                  "- Базовый шрифт: 16px для основного текста\n- Заголовки: 20-24px, жирный\n- Подписи: 12-13px\n- Межстрочный интервал: 1.4-1.6x от размера шрифта\n- Отступы между элементами: 8px, 12px, 16px, 24px\n- Системные шрифты: -apple-system, system-ui"
+                )}
+              </ThemedText>
+            </View>
+
+            <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.lg }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.md }}>
+                <View style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: theme.link + '20', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="link" size={16} color={theme.link} />
+                </View>
+                <ThemedText type="body" style={{ fontWeight: '600' }}>{t("URL Requirements", "Требования к URL")}</ThemedText>
+              </View>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                {t(
+                  "- Must be HTTPS (HTTP is not allowed)\n- Page must load within 5 seconds\n- No redirects to external auth pages\n- Avoid pop-ups and aggressive ads",
+                  "- Обязательно HTTPS (HTTP не допускается)\n- Страница должна загрузиться за 5 секунд\n- Без редиректов на внешние страницы авторизации\n- Без всплывающих окон и агрессивной рекламы"
+                )}
+              </ThemedText>
+            </View>
+
+            <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, padding: Spacing.lg, marginBottom: Spacing.lg }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.md }}>
+                <View style={{ width: 28, height: 28, borderRadius: 7, backgroundColor: theme.link + '20', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="check-circle" size={16} color={theme.link} />
+                </View>
+                <ThemedText type="body" style={{ fontWeight: '600' }}>{t("Best Practices", "Лучшие практики")}</ThemedText>
+              </View>
+              <ThemedText type="caption" style={{ color: theme.textSecondary, lineHeight: 18 }}>
+                {t(
+                  "- Add a clear name and description\n- Choose a relevant emoji icon\n- Test on multiple screen sizes\n- Keep the app lightweight and fast\n- Use semantic HTML for accessibility\n- Handle errors gracefully with user-friendly messages",
+                  "- Добавьте понятное название и описание\n- Выберите подходящий эмодзи\n- Тестируйте на разных экранах\n- Делайте приложение лёгким и быстрым\n- Используйте семантический HTML\n- Обрабатывайте ошибки с понятными сообщениями"
+                )}
+              </ThemedText>
+            </View>
+          </ScrollView>
         </View>
       </Modal>
 
