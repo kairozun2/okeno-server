@@ -1,31 +1,37 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useQueryClient } from "@tanstack/react-query";
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { GlassView } from "expo-glass-effect";
+import * as Database from "@/lib/database";
 
 export default function CacheSettingsScreen() {
-  const { theme, isDark, hapticsEnabled } = useTheme();
+  const { theme, isDark, hapticsEnabled, language } = useTheme();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const queryClient = useQueryClient();
-  
+  const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
   const [stats, setStats] = useState({
     storage: "...",
-    percent: "...",
-    messages: "...",
-    images: "...",
-    cache: "..."
+    percent: 0,
+    messagesCount: 0,
+    imagesCount: 0,
+    postsCount: 0,
+    chatsCount: 0,
+    cacheSize: "...",
+    docSize: 0,
+    cacheBytes: 0,
+    totalBytes: 0,
   });
 
   const formatSize = (bytes: number) => {
@@ -54,24 +60,52 @@ export default function CacheSettingsScreen() {
 
   const loadRealStats = async () => {
     try {
-      // Calculate cache size using the object property access for stability
-      const cacheDir = FileSystem.cacheDirectory;
-      const documentDir = FileSystem.documentDirectory;
-      
       let cacheSize = 0;
-      if (cacheDir) cacheSize += await getDirSize(cacheDir);
-      
       let docSize = 0;
-      if (documentDir) docSize += await getDirSize(documentDir);
 
-      const totalAppSize = cacheSize + docSize + (15 * 1024 * 1024); // Adding approx base app size
+      if (Platform.OS !== 'web') {
+        const cacheDir = FileSystem.cacheDirectory;
+        const documentDir = FileSystem.documentDirectory;
+        if (cacheDir) cacheSize = await getDirSize(cacheDir);
+        if (documentDir) docSize = await getDirSize(documentDir);
+      }
+
+      const totalAppSize = cacheSize + docSize;
+
+      let messagesCount = 0;
+      let postsCount = 0;
+      let chatsCount = 0;
+      let imagesCount = 0;
+
+      try {
+        const db = await Database.getDatabase();
+        if (db) {
+          const msgResult = await db.getFirstAsync<any>('SELECT COUNT(*) as count FROM messages');
+          messagesCount = msgResult?.count || 0;
+
+          const postResult = await db.getFirstAsync<any>('SELECT COUNT(*) as count FROM posts');
+          postsCount = postResult?.count || 0;
+
+          const chatResult = await db.getFirstAsync<any>('SELECT COUNT(*) as count FROM chats');
+          chatsCount = chatResult?.count || 0;
+
+          const imgResult = await db.getFirstAsync<any>("SELECT COUNT(*) as count FROM messages WHERE image_url IS NOT NULL AND image_url != ''");
+          const postImgResult = await db.getFirstAsync<any>("SELECT COUNT(*) as count FROM posts WHERE image_url IS NOT NULL AND image_url != ''");
+          imagesCount = (imgResult?.count || 0) + (postImgResult?.count || 0);
+        }
+      } catch {}
 
       setStats({
         storage: formatSize(totalAppSize),
-        percent: ((totalAppSize / (1024 * 1024 * 1024)) * 100).toFixed(2) + "%",
-        messages: "156",
-        images: "24",
-        cache: formatSize(cacheSize)
+        percent: totalAppSize > 0 ? (totalAppSize / (1024 * 1024 * 1024)) * 100 : 0,
+        messagesCount,
+        imagesCount,
+        postsCount,
+        chatsCount,
+        cacheSize: formatSize(cacheSize),
+        docSize,
+        cacheBytes: cacheSize,
+        totalBytes: totalAppSize,
       });
     } catch (error) {
       console.error("Error loading storage stats:", error);
@@ -86,28 +120,33 @@ export default function CacheSettingsScreen() {
     if (hapticsEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    
+
     try {
       await queryClient.clear();
-      
-      if (FileSystem.cacheDirectory) {
+
+      if (Platform.OS !== 'web' && FileSystem.cacheDirectory) {
         const files = await FileSystem.readDirectoryAsync(FileSystem.cacheDirectory);
         await Promise.all(
           files.map(file => FileSystem.deleteAsync(`${FileSystem.cacheDirectory}${file}`, { idempotent: true }))
         );
       }
-      
+
+      try {
+        await Database.clearAllData();
+      } catch {}
+
       await loadRealStats();
-      
+
       if (hapticsEnabled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      Alert.alert("Готово", "Кэш успешно очищен");
+      Alert.alert(t("Done", "Готово"), t("Cache cleared successfully", "Кэш успешно очищен"));
     } catch (error) {
-      // Fallback if some files are locked
       await loadRealStats();
     }
   };
+
+  const progressPercent = Math.max(stats.percent, 0.5);
 
   return (
     <ThemedView style={styles.container}>
@@ -121,47 +160,81 @@ export default function CacheSettingsScreen() {
       >
         <Animated.View entering={FadeInDown.delay(100)} style={styles.chartContainer}>
            <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
-             <View style={[styles.progressFill, { width: '12%', backgroundColor: theme.link }]} />
+             <View style={[styles.progressFill, { width: `${Math.min(progressPercent, 100)}%`, backgroundColor: theme.link }]} />
            </View>
            <View style={styles.chartLegend}>
              <View style={styles.legendItem}>
                <View style={[styles.dot, { backgroundColor: theme.link }]} />
                <ThemedText type="caption">Okeno ({stats.storage})</ThemedText>
              </View>
-             <ThemedText type="caption" style={{ color: theme.textSecondary }}>Свободно ~20 ГБ</ThemedText>
+             <ThemedText type="caption" style={{ color: theme.textSecondary }}>
+               {stats.totalBytes > 0 ? `${progressPercent.toFixed(2)}%` : "—"}
+             </ThemedText>
            </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
-          <ThemedText type="caption" style={styles.sectionTitle}>ДАННЫЕ ПРИЛОЖЕНИЯ</ThemedText>
-          <GlassView tintColor={theme.cardBackground} glassEffectStyle={isDark ? "dark" : "light" as any} style={styles.glassCard}>
+          <ThemedText type="caption" style={styles.sectionTitle}>
+            {t("APP DATA", "ДАННЫЕ ПРИЛОЖЕНИЯ")}
+          </ThemedText>
+          <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
             <View style={styles.row}>
-              <ThemedText type="body">Сообщения</ThemedText>
-              <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.messages}</ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Feather name="message-circle" size={16} color={theme.textSecondary} />
+                <ThemedText type="body">{t("Messages", "Сообщения")}</ThemedText>
+              </View>
+              <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.messagesCount}</ThemedText>
             </View>
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <View style={styles.row}>
-              <ThemedText type="body">Изображения</ThemedText>
-              <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.images}</ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Feather name="image" size={16} color={theme.textSecondary} />
+                <ThemedText type="body">{t("Images", "Изображения")}</ThemedText>
+              </View>
+              <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.imagesCount}</ThemedText>
             </View>
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <View style={styles.row}>
-              <ThemedText type="body">Кэш запросов</ThemedText>
-              <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.cache}</ThemedText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Feather name="grid" size={16} color={theme.textSecondary} />
+                <ThemedText type="body">{t("Posts", "Посты")}</ThemedText>
+              </View>
+              <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.postsCount}</ThemedText>
             </View>
-          </GlassView>
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <View style={styles.row}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Feather name="message-square" size={16} color={theme.textSecondary} />
+                <ThemedText type="body">{t("Chats", "Чаты")}</ThemedText>
+              </View>
+              <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.chatsCount}</ThemedText>
+            </View>
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <View style={styles.row}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Feather name="database" size={16} color={theme.textSecondary} />
+                <ThemedText type="body">{t("Request cache", "Кэш запросов")}</ThemedText>
+              </View>
+              <ThemedText type="body" style={{ color: theme.textSecondary }}>{stats.cacheSize}</ThemedText>
+            </View>
+          </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>
           <Pressable onPress={handleClearCache}>
-            <GlassView tintColor={theme.cardBackground} glassEffectStyle={isDark ? "dark" : "light" as any} style={styles.glassCard}>
+            <View style={[styles.card, { backgroundColor: theme.cardBackground }]}>
               <View style={[styles.row, { justifyContent: 'center' }]}>
-                <ThemedText type="body" style={{ color: theme.error, fontWeight: "600" }}>Очистить весь кэш</ThemedText>
+                <ThemedText type="body" style={{ color: theme.error, fontWeight: "600" }}>
+                  {t("Clear all cache", "Очистить весь кэш")}
+                </ThemedText>
               </View>
-            </GlassView>
+            </View>
           </Pressable>
           <ThemedText type="caption" style={styles.footerText}>
-            Очистка кэша удалит временно сохраненные данные, но ваши сообщения и посты останутся на сервере.
+            {t(
+              "Clearing cache will remove temporarily saved data, but your messages and posts will remain on the server.",
+              "Очистка кэша удалит временно сохраненные данные, но ваши сообщения и посты останутся на сервере."
+            )}
           </ThemedText>
         </Animated.View>
       </ScrollView>
@@ -208,7 +281,7 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
     opacity: 0.6,
   },
-  glassCard: {
+  card: {
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
     padding: Spacing.md,

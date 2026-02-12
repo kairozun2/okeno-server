@@ -83,7 +83,7 @@ export default function CallScreen({ route, navigation }: any) {
     const unavailableTimer = setTimeout(() => {
       setCallState("unavailable");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    }, 12000);
+    }, 25000);
 
     return () => {
       clearTimeout(timer);
@@ -215,7 +215,7 @@ export default function CallScreen({ route, navigation }: any) {
               setTimeout(() => {
                 setCallState("unavailable");
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-              }, 12000);
+              }, 25000);
             }}
             style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.sm }}
           >

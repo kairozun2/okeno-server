@@ -541,6 +541,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showMessageSearch, setShowMessageSearch] = useState(false);
+  const [showCallMenu, setShowCallMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<TextInput>(null);
 
@@ -1235,22 +1236,58 @@ export default function ChatScreen({ route, navigation }: Props) {
             </Animated.View>
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {!isGroupChat ? (
+              {!isGroupChat && showCallMenu ? (
+                <Animated.View entering={FadeIn.duration(150)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowCallMenu(false);
+                      navigation.navigate("CallScreen" as any, { userId: otherUserId, displayName, displayEmoji, chatId });
+                    }}
+                    style={styles.headerButton}
+                  >
+                    {Platform.OS === 'ios' ? (
+                      <BlurView
+                        intensity={45}
+                        tint={isDark ? "dark" : "light"}
+                        style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
+                      />
+                    ) : null}
+                    <Feather name="phone" size={18} color={theme.accent} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowCallMenu(false);
+                    }}
+                    style={styles.headerButton}
+                  >
+                    {Platform.OS === 'ios' ? (
+                      <BlurView
+                        intensity={45}
+                        tint={isDark ? "dark" : "light"}
+                        style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
+                      />
+                    ) : null}
+                    <Feather name="x" size={16} color={theme.textSecondary} />
+                  </Pressable>
+                </Animated.View>
+              ) : !isGroupChat ? (
                 <Pressable
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    navigation.navigate("CallScreen" as any, { userId: otherUserId, displayName, displayEmoji, chatId });
+                    setShowCallMenu(true);
                   }}
                   style={styles.headerButton}
                 >
-                  {Platform.OS === 'ios' && (
+                  {Platform.OS === 'ios' ? (
                     <BlurView
                       intensity={45}
                       tint={isDark ? "dark" : "light"}
                       style={[StyleSheet.absoluteFill, { borderRadius: 18, overflow: 'hidden' }]}
                     />
-                  )}
-                  <Feather name="phone" size={18} color={theme.accent} />
+                  ) : null}
+                  <Feather name="chevron-left" size={20} color={theme.text} />
                 </Pressable>
               ) : null}
               <Pressable
@@ -1268,13 +1305,13 @@ export default function ChatScreen({ route, navigation }: Props) {
                 delayLongPress={400}
                 style={styles.userInfo}
               >
-                {Platform.OS === 'ios' && (
+                {Platform.OS === 'ios' ? (
                   <BlurView
                     intensity={45}
                     tint={isDark ? "dark" : "light"}
                     style={[StyleSheet.absoluteFill, { borderRadius: 20, overflow: 'hidden' }]}
                   />
-                )}
+                ) : null}
                 <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end' }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                     <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
