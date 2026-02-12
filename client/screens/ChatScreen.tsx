@@ -161,6 +161,7 @@ function MessageBubble({
   onImagePress,
   senderName,
   senderEmoji,
+  onMiniAppPress,
 }: {
   message: Message;
   isOwn: boolean;
@@ -173,6 +174,7 @@ function MessageBubble({
   onImagePress?: (imageUrl: string) => void;
   senderName?: string;
   senderEmoji?: string;
+  onMiniAppPress?: (appId: string) => void;
 }) {
   const { theme, isDark } = useTheme();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
@@ -219,6 +221,37 @@ function MessageBubble({
   }, []);
 
   const renderContent = (content: string, isOwn: boolean) => {
+    const miniAppMatch = content.match(/\/miniapp:([a-f0-9-]+)/i);
+    if (miniAppMatch) {
+      const appId = miniAppMatch[1];
+      const displayText = content.replace(/\n?\/miniapp:[a-f0-9-]+/i, '').trim();
+      return (
+        <Pressable
+          onPress={() => onMiniAppPress?.(appId)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            paddingVertical: 2,
+          }}
+        >
+          <ThemedText style={{ fontSize: displayText ? 16 : 14, color: theme.text }}>
+            {displayText || t("Open Mini App", "Открыть мини-приложение")}
+          </ThemedText>
+          <View style={{
+            backgroundColor: 'rgba(52,120,246,0.15)',
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            borderRadius: 10,
+          }}>
+            <ThemedText type="caption" style={{ color: '#3478F6', fontWeight: '600', fontSize: 11 }}>
+              {t("Open", "Открыть")}
+            </ThemedText>
+          </View>
+        </Pressable>
+      );
+    }
+
     const codeBlockRegex = /```[\s\S]*?```/g;
     const codeBlocks = content.match(codeBlockRegex);
 
@@ -544,6 +577,23 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [showCallMenu, setShowCallMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<TextInput>(null);
+
+  const { data: miniAppsForCommand = [] } = useQuery<{ id: string; name: string; emoji: string; url: string; isVerified: boolean }[]>({
+    queryKey: ["/api/mini-apps"],
+    queryFn: async () => {
+      const url = new URL("/api/mini-apps", getApiUrl());
+      const response = await fetch(url.toString(), { credentials: "include" });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 60000,
+  });
+
+  const miniAppCommandActive = message.startsWith("/m ");
+  const miniAppSearchTerm = miniAppCommandActive ? message.slice(3).toLowerCase() : "";
+  const filteredMiniApps = miniAppCommandActive
+    ? miniAppsForCommand.filter(app => app.name.toLowerCase().includes(miniAppSearchTerm))
+    : [];
 
   const REACTION_EMOJIS = ["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟"];
 
@@ -1123,6 +1173,18 @@ export default function ChatScreen({ route, navigation }: Props) {
     setPreviewImageUrl(imageUrl);
   }, []);
 
+  const handleMiniAppPress = useCallback((appId: string) => {
+    const app = miniAppsForCommand.find(a => a.id === appId);
+    if (app) {
+      (navigation as any).navigate("MiniAppViewer", {
+        appId: app.id,
+        appName: app.name,
+        appUrl: app.url,
+        appEmoji: app.emoji,
+      });
+    }
+  }, [miniAppsForCommand, navigation]);
+
   const renderItem = useCallback(
     ({ item }: { item: Message }) => {
       const senderInfo = isGroupChat && item.senderId !== user?.id
@@ -1141,10 +1203,11 @@ export default function ChatScreen({ route, navigation }: Props) {
           onImagePress={handleImagePreview}
           senderName={senderInfo?.username}
           senderEmoji={senderInfo?.emoji}
+          onMiniAppPress={handleMiniAppPress}
         />
       );
     },
-    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply, handleImagePreview, isGroupChat, membersMap, handleDoubleTap]
+    [user?.id, language, messages, selectedMessage?.id, showActionModal, handleReply, handleImagePreview, isGroupChat, membersMap, handleDoubleTap, handleMiniAppPress]
   );
 
   const chatContent = (
@@ -1433,6 +1496,37 @@ export default function ChatScreen({ route, navigation }: Props) {
                 <Feather name="chevron-down" size={18} color={theme.text} />
               </BlurView>
             </Pressable>
+          </Animated.View>
+        ) : null}
+
+        {filteredMiniApps.length > 0 ? (
+          <Animated.View
+            entering={FadeIn.duration(150)}
+            exiting={FadeOut.duration(100)}
+            style={[styles.miniAppSuggestions, { backgroundColor: isDark ? "rgba(30,30,30,0.95)" : "rgba(255,255,255,0.95)", borderColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)" }]}
+          >
+            <ScrollView horizontal={false} style={{ maxHeight: 180 }} showsVerticalScrollIndicator={false}>
+              {filteredMiniApps.map((app) => (
+                <Pressable
+                  key={app.id}
+                  style={styles.miniAppSuggestionItem}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setMessage("");
+                    sendMutation.mutate({ content: `${app.emoji} ${app.name}\n/miniapp:${app.id}` });
+                  }}
+                >
+                  <ThemedText style={{ fontSize: 28 }}>{app.emoji}</ThemedText>
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                      <ThemedText type="defaultSemiBold" style={{ color: theme.text }}>{app.name}</ThemedText>
+                      {app.isVerified ? <VerifiedBadge size={14} /> : null}
+                    </View>
+                  </View>
+                  <Feather name="send" size={16} color={theme.textSecondary} />
+                </Pressable>
+              ))}
+            </ScrollView>
           </Animated.View>
         ) : null}
 
@@ -1979,5 +2073,19 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  miniAppSuggestions: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.xs,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  miniAppSuggestionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    gap: Spacing.xs,
   },
 });

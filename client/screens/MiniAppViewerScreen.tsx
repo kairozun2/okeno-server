@@ -104,7 +104,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
     pointerEvents: controlsOpacity.value > 0.1 ? "auto" as const : "none" as const,
   }));
 
-  const emoji = appEmoji || "🌐";
+  const displayEmoji = appEmoji || "🌐";
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
@@ -197,7 +197,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
       <Animated.View style={[styles.splashOverlay, { backgroundColor: theme.backgroundRoot }, splashAnimStyle]}>
         <View style={styles.splashContent}>
           <View style={[styles.splashIcon, { backgroundColor: "rgba(52,120,246,0.1)" }]}>
-            <Text style={{ fontSize: 44 }}>{emoji}</Text>
+            <Text style={{ fontSize: 44 }}>{displayEmoji}</Text>
           </View>
           <ThemedText type="h2" style={{ marginTop: Spacing.lg, textAlign: "center" }}>{appName}</ThemedText>
           <ActivityIndicator color="#3478F6" style={{ marginTop: Spacing.xl }} />
