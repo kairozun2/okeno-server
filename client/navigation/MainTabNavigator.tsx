@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";
+import { useIsOnline } from "@/hooks/useNetworkStatus";
 
 import FeedScreen from "@/screens/FeedScreen";
 import ChatsListScreen from "@/screens/ChatsListScreen";
@@ -138,20 +139,25 @@ export default function MainTabNavigator() {
   const { theme, isDark, language } = useTheme();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const isOnline = useIsOnline();
   const { feedRefreshing, chatsRefreshing } = useRefresh();
   const [showPlus, setShowPlus] = useState(false);
 
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ["/api/users", user?.id, "unread-messages"],
     queryFn: async () => {
-      if (!user?.id) return { count: 0 };
-      const url = new URL(`/api/users/${user.id}/unread-messages`, getApiUrl());
-      const response = await fetch(url.toString(), { credentials: "include" });
-      if (!response.ok) return { count: 0 };
-      return response.json();
+      try {
+        if (!user?.id) return { count: 0 };
+        const url = new URL(`/api/users/${user.id}/unread-messages`, getApiUrl());
+        const response = await fetch(url.toString(), { credentials: "include" });
+        if (!response.ok) return { count: 0 };
+        return response.json();
+      } catch {
+        return { count: 0 };
+      }
     },
     enabled: !!user?.id,
-    refetchInterval: 5000,
+    refetchInterval: isOnline ? 5000 : false,
   });
 
   const unreadCount = unreadData?.count || 0;

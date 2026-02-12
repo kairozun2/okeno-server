@@ -28,6 +28,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, getApiUrl, getImageUrl } from "@/lib/query-client";
+import { useIsOnline } from "@/hooks/useNetworkStatus";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -560,6 +561,7 @@ export default function ChatScreen({ route, navigation }: Props) {
   const { chatId, otherUserName, otherUserUsername, otherUserEmoji, otherUserId, isGroupChat, groupName, groupEmoji } = route.params;
   const { theme, isDark, language, hapticsEnabled, chatFullscreen, quickReactionEmoji, scrollAssistEnabled } = useTheme();
   const { user } = useAuth();
+  const isOnline = useIsOnline();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
@@ -684,14 +686,18 @@ export default function ChatScreen({ route, navigation }: Props) {
   const { data: typingData } = useQuery<{ isTyping: boolean }>({
     queryKey: ["/api/chats", chatId, "typing", otherUserId],
     queryFn: async () => {
-      if (!otherUserId) return { isTyping: false };
-      const url = new URL(`/api/chats/${chatId}/typing/${otherUserId}`, getApiUrl());
-      const response = await fetch(url.toString(), { credentials: "include" });
-      if (!response.ok) return { isTyping: false };
-      return response.json();
+      try {
+        if (!otherUserId) return { isTyping: false };
+        const url = new URL(`/api/chats/${chatId}/typing/${otherUserId}`, getApiUrl());
+        const response = await fetch(url.toString(), { credentials: "include" });
+        if (!response.ok) return { isTyping: false };
+        return response.json();
+      } catch {
+        return { isTyping: false };
+      }
     },
-    enabled: !!otherUserId,
-    refetchInterval: 2000,
+    enabled: !!otherUserId && isOnline,
+    refetchInterval: isOnline ? 2000 : false,
   });
 
   const isOtherUserTyping = typingData?.isTyping || false;
@@ -846,8 +852,8 @@ export default function ChatScreen({ route, navigation }: Props) {
       return lastPage.length === 20 ? allPages.length * 20 : undefined;
     },
     initialPageParam: 0,
-    staleTime: 5000,
-    refetchInterval: 2000, 
+    staleTime: isOnline ? 5000 : 1000 * 60 * 30,
+    refetchInterval: isOnline ? 2000 : false,
   });
 
   const messages = React.useMemo(() => {

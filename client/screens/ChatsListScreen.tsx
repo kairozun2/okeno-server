@@ -28,6 +28,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsOnline } from "@/hooks/useNetworkStatus";
 import { Spacing } from "@/constants/theme";
 import { apiRequest, getApiUrl, getImageUrl } from "@/lib/query-client";
 import { fetchAndCacheChats } from "@/lib/sync";
@@ -434,6 +435,7 @@ function CompactFilterTabs({
 export default function ChatsListScreen({ navigation }: Props) {
   const { theme, language, chatFilterTabsEnabled } = useTheme();
   const { user } = useAuth();
+  const isOnline = useIsOnline();
   const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
@@ -490,28 +492,37 @@ export default function ChatsListScreen({ navigation }: Props) {
       }
     },
     enabled: !!user?.id,
-    staleTime: 5000,
-    refetchInterval: 4000,
+    staleTime: isOnline ? 5000 : 1000 * 60 * 30,
+    refetchInterval: isOnline ? 4000 : false,
   });
 
   const { data: allChatSettings = [] } = useQuery<ChatSettings[]>({
     queryKey: ["/api/users", user?.id, "chat-settings"],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/users/${user?.id}/chat-settings`, null);
-      return response.json();
+      try {
+        const response = await apiRequest("GET", `/api/users/${user?.id}/chat-settings`, null);
+        return response.json();
+      } catch {
+        return [];
+      }
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && isOnline,
   });
 
   const { data: miniAppsData = [] } = useQuery<MiniAppItem[]>({
     queryKey: ["/api/mini-apps"],
     queryFn: async () => {
-      const url = new URL("/api/mini-apps", getApiUrl());
-      const response = await fetch(url.toString(), { credentials: "include" });
-      if (!response.ok) return [];
-      return response.json();
+      try {
+        const url = new URL("/api/mini-apps", getApiUrl());
+        const response = await fetch(url.toString(), { credentials: "include" });
+        if (!response.ok) return [];
+        return response.json();
+      } catch {
+        return [];
+      }
     },
-    staleTime: 30000,
+    staleTime: 1000 * 60 * 30,
+    enabled: isOnline,
   });
 
   const saveChatSettingsMutation = useMutation({
