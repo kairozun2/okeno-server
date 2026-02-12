@@ -162,6 +162,7 @@ function MessageBubble({
   senderName,
   senderEmoji,
   onMiniAppPress,
+  miniApps,
 }: {
   message: Message;
   isOwn: boolean;
