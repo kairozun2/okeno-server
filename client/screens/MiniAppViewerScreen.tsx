@@ -542,6 +542,21 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
             </View>
 
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 20, marginBottom: 10, marginLeft: 4 }}>
+              {t("DESCRIBE THE ISSUE", "ОПИШИТЕ ПРОБЛЕМУ")}
+            </ThemedText>
+
+            <TextInput
+              style={[styles.reportFullInput, { backgroundColor: theme.cardBackground, color: theme.text, borderColor: theme.border }]}
+              placeholder={t("Additional details (optional)", "Подробности (необязательно)")}
+              placeholderTextColor={theme.textSecondary}
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+              numberOfLines={5}
+              textAlignVertical="top"
+            />
+
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 20, marginBottom: 10, marginLeft: 4 }}>
               {t("SELECT A REASON", "ВЫБЕРИТЕ ПРИЧИНУ")}
             </ThemedText>
 
@@ -563,21 +578,6 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
                 </React.Fragment>
               ))}
             </View>
-
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 20, marginBottom: 10, marginLeft: 4 }}>
-              {t("ADDITIONAL DETAILS", "ПОДРОБНОСТИ")}
-            </ThemedText>
-
-            <TextInput
-              style={[styles.reportFullInput, { backgroundColor: theme.cardBackground, color: theme.text, borderColor: theme.border }]}
-              placeholder={t("Describe the issue (optional)", "Опишите проблему (необязательно)")}
-              placeholderTextColor={theme.textSecondary}
-              value={reportReason}
-              onChangeText={setReportReason}
-              multiline
-              numberOfLines={5}
-              textAlignVertical="top"
-            />
           </ScrollView>
         </View>
       </Modal>
