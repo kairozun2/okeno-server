@@ -674,8 +674,11 @@ export default function SettingsScreen({ navigation }: Props) {
             </Pressable>
           </View>
 
-          <ScrollView contentContainerStyle={styles.colorPickerContent}>
-            <View style={styles.emojiGrid}>
+          <ScrollView contentContainerStyle={{ padding: Spacing.lg }}>
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.md, textAlign: 'center' }}>
+              {t("Double-tap a message to react", "Нажмите дважды на сообщение для реакции")}
+            </ThemedText>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
               {["💕", "🥲", "☺️", "🥹", "😅", "🤣", "😟", "👍", "❤️", "🔥", "😂", "😢"].map((emoji) => (
                 <Pressable
                   key={emoji}
@@ -687,14 +690,20 @@ export default function SettingsScreen({ navigation }: Props) {
                     }
                   }}
                   style={({ pressed }) => [
-                    styles.emojiItem,
                     {
-                      backgroundColor: quickReactionEmoji === emoji ? theme.accent : theme.cardBackground,
+                      width: 56,
+                      height: 56,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) + '25' : theme.backgroundSecondary,
+                      borderWidth: quickReactionEmoji === emoji ? 2 : 0,
+                      borderColor: quickReactionEmoji === emoji ? (theme.link || theme.accent) : 'transparent',
                       opacity: pressed ? 0.7 : 1,
                     },
                   ]}
                 >
-                  <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
+                  <ThemedText style={{ fontSize: 26, lineHeight: 32, textAlign: 'center' }}>{emoji}</ThemedText>
                 </Pressable>
               ))}
             </View>
