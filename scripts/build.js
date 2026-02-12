@@ -104,11 +104,23 @@ async function checkMetroHealth() {
   }
 }
 
+async function killExistingMetro() {
+  try {
+    const { execSync } = require("child_process");
+    execSync("pkill -f 'expo start' || true", { stdio: "ignore" });
+    execSync("pkill -f '@expo/cli' || true", { stdio: "ignore" });
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  } catch {
+    // ignore
+  }
+}
+
 async function startMetro(expoPublicDomain) {
   const isRunning = await checkMetroHealth();
   if (isRunning) {
-    console.log("Metro already running");
-    return;
+    console.log("Metro already running, restarting with correct domain...");
+    await killExistingMetro();
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
   console.log("Starting Metro...");
