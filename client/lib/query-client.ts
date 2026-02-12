@@ -1,11 +1,14 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, QueryFunction, onlineManager } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+import NetInfo from "@react-native-community/netinfo";
 
-/**
- * Gets the base URL for the Express API server (e.g., "http://localhost:3000")
- * @returns {string} The API base URL
- */
+onlineManager.setEventListener((setOnline) => {
+  return NetInfo.addEventListener((state) => {
+    setOnline(!!state.isConnected);
+  });
+});
+
 export function getApiUrl(): string {
   let host = process.env.EXPO_PUBLIC_DOMAIN;
 
@@ -13,36 +16,21 @@ export function getApiUrl(): string {
     throw new Error("EXPO_PUBLIC_DOMAIN is not set");
   }
 
-  // Ensure host doesn't already have a protocol
   const cleanHost = host.replace(/^https?:\/\//, '');
-  
-  // Construct URL and force https (except for localhost/127.0.0.1 if needed, 
-  // but Replit domains should use https)
   return `https://${cleanHost}`;
 }
 
-/**
- * Builds a full image URL from a path (handles both relative and absolute URLs)
- * @param path The image path (e.g., "/uploads/image.jpg" or "https://domain.com/uploads/image.jpg")
- * @returns {string} The full image URL, or empty string for invalid/unsupported URLs
- */
 export function getImageUrl(path: string | null | undefined): string {
   if (!path) {
     return "";
   }
   
-  const host = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
-  
-  // Invalid URL types that can't be loaded from server
   if (path.startsWith("blob:")) {
     return "";
   }
   
-  // If it's a local file URI or already an absolute URL, return as-is
   if (path.startsWith("file://") || path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
-    // Check if it's using an old development domain and needs to be rewritten
     if (path.includes("/uploads/")) {
-      // Extract just the /uploads/... part and rebuild with current domain
       const uploadsIndex = path.indexOf("/uploads/");
       if (uploadsIndex !== -1) {
         const relativePath = path.substring(uploadsIndex);
@@ -52,7 +40,6 @@ export function getImageUrl(path: string | null | undefined): string {
     return path;
   }
   
-  // It's a relative path, build full URL
   const baseUrl = getApiUrl().replace(/\/$/, '');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${baseUrl}${cleanPath}`;
@@ -111,10 +98,14 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days - keep cached data longer
-      retry: 2,
-      networkMode: 'offlineFirst', // Use cached data when offline
+      staleTime: 1000 * 60 * 30,
+      gcTime: 1000 * 60 * 60 * 24 * 30,
+      retry: (failureCount, error) => {
+        if (!onlineManager.isOnline()) return false;
+        if (error instanceof TypeError && error.message === 'Network request failed') return false;
+        return failureCount < 2;
+      },
+      networkMode: 'offlineFirst',
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {
@@ -127,10 +118,16 @@ export const queryClient = new QueryClient({
 export const asyncStoragePersister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: 'okeno-cache',
+  throttleTime: 2000,
 });
 
 export const persistOptions = {
   persister: asyncStoragePersister,
-  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days - keep persisted data longer
-  buster: 'v1', // Cache version - change this to bust the cache if needed
+  maxAge: 1000 * 60 * 60 * 24 * 30,
+  buster: 'v2',
+  dehydrateOptions: {
+    shouldDehydrateQuery: (query: any) => {
+      return query.state.status === 'success' && query.state.data !== undefined;
+    },
+  },
 };
