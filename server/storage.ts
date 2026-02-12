@@ -16,6 +16,7 @@ import {
   blockedUsers,
   pushTokens,
   groupChatMembers,
+  miniApps,
   type User,
   type InsertUser,
   type Post,
@@ -46,6 +47,8 @@ import {
   type InsertPushToken,
   type GroupChatMember,
   type InsertGroupChatMember,
+  type MiniApp,
+  type InsertMiniApp,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
@@ -149,6 +152,19 @@ export interface IStorage {
   addGroupChatMember(member: InsertGroupChatMember): Promise<GroupChatMember>;
   removeGroupChatMember(chatId: string, userId: string): Promise<void>;
   getUserGroupChats(userId: string): Promise<Chat[]>;
+
+  // Mini apps
+  getMiniApps(): Promise<MiniApp[]>;
+  getMiniApp(id: string): Promise<MiniApp | undefined>;
+  getUserMiniApps(userId: string): Promise<MiniApp[]>;
+  createMiniApp(app: InsertMiniApp): Promise<MiniApp>;
+  updateMiniApp(id: string, data: Partial<MiniApp>): Promise<MiniApp | undefined>;
+  deleteMiniApp(id: string): Promise<void>;
+  setMiniAppVerified(id: string, isVerified: boolean): Promise<void>;
+
+  // Group chat verification
+  setGroupChatVerified(chatId: string, isVerified: boolean): Promise<void>;
+  getAllGroupChats(): Promise<Chat[]>;
 
   // Account deletion
   deleteUser(userId: string): Promise<void>;
@@ -679,6 +695,47 @@ export class DatabaseStorage implements IStorage {
     await db.delete(pushTokens).where(
       and(eq(pushTokens.userId, userId), eq(pushTokens.token, token))
     );
+  }
+
+  // Mini apps
+  async getMiniApps(): Promise<MiniApp[]> {
+    return db.select().from(miniApps).where(eq(miniApps.isPublished, true)).orderBy(desc(miniApps.createdAt));
+  }
+
+  async getMiniApp(id: string): Promise<MiniApp | undefined> {
+    const [app] = await db.select().from(miniApps).where(eq(miniApps.id, id));
+    return app || undefined;
+  }
+
+  async getUserMiniApps(userId: string): Promise<MiniApp[]> {
+    return db.select().from(miniApps).where(eq(miniApps.creatorId, userId)).orderBy(desc(miniApps.createdAt));
+  }
+
+  async createMiniApp(app: InsertMiniApp): Promise<MiniApp> {
+    const [created] = await db.insert(miniApps).values(app).returning();
+    return created;
+  }
+
+  async updateMiniApp(id: string, data: Partial<MiniApp>): Promise<MiniApp | undefined> {
+    const [updated] = await db.update(miniApps).set({ ...data, updatedAt: new Date() }).where(eq(miniApps.id, id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteMiniApp(id: string): Promise<void> {
+    await db.delete(miniApps).where(eq(miniApps.id, id));
+  }
+
+  async setMiniAppVerified(id: string, isVerified: boolean): Promise<void> {
+    await db.update(miniApps).set({ isVerified }).where(eq(miniApps.id, id));
+  }
+
+  // Group chat verification
+  async setGroupChatVerified(chatId: string, isVerified: boolean): Promise<void> {
+    await db.update(chats).set({ isVerified }).where(eq(chats.id, chatId));
+  }
+
+  async getAllGroupChats(): Promise<Chat[]> {
+    return db.select().from(chats).where(eq(chats.isGroup, true)).orderBy(desc(chats.createdAt));
   }
 }
 

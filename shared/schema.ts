@@ -76,6 +76,7 @@ export const chats = pgTable("chats", {
   name: text("name"),
   groupEmoji: text("group_emoji"),
   backgroundImage: text("background_image"),
+  isVerified: boolean("is_verified").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -193,6 +194,22 @@ export const pushTokens = pgTable("push_tokens", {
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   token: text("token").notNull(),
   platform: text("platform"), // 'ios', 'android', 'web'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Mini apps table - user-created mini applications
+export const miniApps = pgTable("mini_apps", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  creatorId: varchar("creator_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  url: text("url").notNull(),
+  emoji: text("emoji").notNull(),
+  isVerified: boolean("is_verified").default(false).notNull(),
+  isPublished: boolean("is_published").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -338,6 +355,13 @@ export const chatSettingsRelations = relations(chatSettings, ({ one }) => ({
   }),
 }));
 
+export const miniAppsRelations = relations(miniApps, ({ one }) => ({
+  creator: one(users, {
+    fields: [miniApps.creatorId],
+    references: [users.id],
+  }),
+}));
+
 export const pushTokensRelations = relations(pushTokens, ({ one }) => ({
   user: one(users, {
     fields: [pushTokens.userId],
@@ -443,6 +467,14 @@ export const insertGroupChatMemberSchema = createInsertSchema(groupChatMembers).
   role: true,
 });
 
+export const insertMiniAppSchema = createInsertSchema(miniApps).pick({
+  creatorId: true,
+  name: true,
+  description: true,
+  url: true,
+  emoji: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -474,3 +506,5 @@ export type InsertPushToken = z.infer<typeof insertPushTokenSchema>;
 export type PushToken = typeof pushTokens.$inferSelect;
 export type InsertGroupChatMember = z.infer<typeof insertGroupChatMemberSchema>;
 export type GroupChatMember = typeof groupChatMembers.$inferSelect;
+export type InsertMiniApp = z.infer<typeof insertMiniAppSchema>;
+export type MiniApp = typeof miniApps.$inferSelect;

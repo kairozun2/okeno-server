@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import express, { type Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema, chats, groupChatMembers, messages } from "@shared/schema";
+import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema, insertMiniAppSchema, chats, groupChatMembers, messages } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, isNotNull, desc, like, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -1361,6 +1361,138 @@ export async function registerRoutes(app: express.Express) {
     } catch (error) {
       console.error("Delete push token error:", error);
       res.status(500).json({ error: "Failed to delete push token" });
+    }
+  });
+
+  // Mini apps routes
+  app.get("/api/mini-apps", async (req, res) => {
+    try {
+      const apps = await storage.getMiniApps();
+      const appsWithCreator = await Promise.all(apps.map(async (app) => {
+        const creator = await storage.getUser(app.creatorId);
+        return { ...app, creator: creator ? { id: creator.id, username: creator.username, emoji: creator.emoji, isVerified: creator.isVerified } : null };
+      }));
+      res.json(appsWithCreator);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get mini apps" });
+    }
+  });
+
+  app.get("/api/mini-apps/my", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+      const apps = await storage.getUserMiniApps(userId);
+      res.json(apps);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get user mini apps" });
+    }
+  });
+
+  app.post("/api/mini-apps", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+      const data = insertMiniAppSchema.parse({ ...req.body, creatorId: userId });
+      const app = await storage.createMiniApp(data);
+      res.json(app);
+    } catch (error) {
+      console.error("Create mini app error:", error);
+      res.status(400).json({ error: "Failed to create mini app" });
+    }
+  });
+
+  app.patch("/api/mini-apps/:id", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+      const app = await storage.getMiniApp(req.params.id);
+      if (!app) return res.status(404).json({ error: "Mini app not found" });
+      if (app.creatorId !== userId) return res.status(403).json({ error: "Not the owner" });
+      const { name, description, url, emoji } = req.body;
+      const updated = await storage.updateMiniApp(req.params.id, { name, description, url, emoji });
+      res.json(updated);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update mini app" });
+    }
+  });
+
+  app.delete("/api/mini-apps/:id", async (req, res) => {
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+      const app = await storage.getMiniApp(req.params.id);
+      if (!app) return res.status(404).json({ error: "Mini app not found" });
+      const isAdmin = await storage.isUserAdmin(userId);
+      if (app.creatorId !== userId && !isAdmin) return res.status(403).json({ error: "Not the owner" });
+      await storage.deleteMiniApp(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete mini app" });
+    }
+  });
+
+  // Admin: group chats
+  app.get("/api/admin/groups", async (req, res) => {
+    try {
+      const adminId = req.headers["x-user-id"] as string;
+      if (!adminId) return res.status(401).json({ error: "Unauthorized" });
+      const isAdmin = await storage.isUserAdmin(adminId);
+      if (!isAdmin && adminId !== "36277fd7-5211-4715-9411-4401ea120d88") return res.status(403).json({ error: "Admin access required" });
+      const groups = await storage.getAllGroupChats();
+      const groupsWithMembers = await Promise.all(groups.map(async (g) => {
+        const members = await storage.getGroupChatMembers(g.id);
+        return { ...g, memberCount: members.length };
+      }));
+      res.json(groupsWithMembers);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get groups" });
+    }
+  });
+
+  app.post("/api/admin/groups/:id/verify", async (req, res) => {
+    try {
+      const adminId = req.headers["x-user-id"] as string;
+      if (!adminId) return res.status(401).json({ error: "Unauthorized" });
+      const isAdmin = await storage.isUserAdmin(adminId);
+      if (!isAdmin && adminId !== "36277fd7-5211-4715-9411-4401ea120d88") return res.status(403).json({ error: "Admin access required" });
+      const { value } = req.body;
+      await storage.setGroupChatVerified(req.params.id, value);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update group verification" });
+    }
+  });
+
+  // Admin: mini apps verification
+  app.get("/api/admin/mini-apps", async (req, res) => {
+    try {
+      const adminId = req.headers["x-user-id"] as string;
+      if (!adminId) return res.status(401).json({ error: "Unauthorized" });
+      const isAdmin = await storage.isUserAdmin(adminId);
+      if (!isAdmin && adminId !== "36277fd7-5211-4715-9411-4401ea120d88") return res.status(403).json({ error: "Admin access required" });
+      const apps = await storage.getMiniApps();
+      const appsWithCreator = await Promise.all(apps.map(async (app) => {
+        const creator = await storage.getUser(app.creatorId);
+        return { ...app, creator: creator ? { id: creator.id, username: creator.username, emoji: creator.emoji } : null };
+      }));
+      res.json(appsWithCreator);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get mini apps" });
+    }
+  });
+
+  app.post("/api/admin/mini-apps/:id/verify", async (req, res) => {
+    try {
+      const adminId = req.headers["x-user-id"] as string;
+      if (!adminId) return res.status(401).json({ error: "Unauthorized" });
+      const isAdmin = await storage.isUserAdmin(adminId);
+      if (!isAdmin && adminId !== "36277fd7-5211-4715-9411-4401ea120d88") return res.status(403).json({ error: "Admin access required" });
+      const { value } = req.body;
+      await storage.setMiniAppVerified(req.params.id, value);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update mini app verification" });
     }
   });
 
