@@ -39,6 +39,8 @@
         ]
       },
       "infoPlist": {
+        "CFBundleDisplayName": "Okeno",
+        "CFBundleName": "Okeno",
         "NSCameraUsageDescription": "Okeno uses your camera to capture photos and videos that you can share with friends.",
         "NSPhotoLibraryUsageDescription": "Okeno accesses your photo library so you can select and share existing photos and videos.",
         "NSPhotoLibraryAddUsageDescription": "Okeno saves photos and videos you create to your photo library.",
