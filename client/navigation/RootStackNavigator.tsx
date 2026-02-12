@@ -69,7 +69,7 @@ export type RootStackParamList = {
   NotificationSettings: undefined;
   Support: undefined;
   MiniApps: undefined;
-  MiniAppViewer: { appId: string; appName: string; appUrl: string };
+  MiniAppViewer: { appId: string; appName: string; appUrl: string; appEmoji?: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

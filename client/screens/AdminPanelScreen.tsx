@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, Platform, ActionSheetIOS, Modal, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, Platform, ActionSheetIOS, Modal, ScrollView, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
@@ -215,8 +215,8 @@ export default function AdminPanelScreen({ navigation }: Props) {
 
   const renderMiniAppItem = ({ item }: { item: AdminMiniApp }) => (
     <View style={[styles.listItem, { backgroundColor: theme.cardBackground }]}>
-      <View style={[styles.appIconBox, { backgroundColor: "#3478F6" + "20" }]}>
-        <Feather name={(["play","music","bar-chart-2","shopping-cart","edit-3","pen-tool","tool","message-square","camera","map-pin","target","zap","globe","hash","book-open"].includes(item.emoji) ? item.emoji : "globe") as any} size={22} color="#3478F6" />
+      <View style={styles.emojiCircle}>
+        <Text style={{ fontSize: 22 }}>{item.emoji || "🌐"}</Text>
       </View>
       <View style={styles.itemInfo}>
         <View style={styles.nameRow}>

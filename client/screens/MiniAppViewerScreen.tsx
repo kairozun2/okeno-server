@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
-import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar } from "react-native";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { View, StyleSheet, Pressable, ActivityIndicator, Platform, StatusBar, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import * as Haptics from "expo-haptics";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, runOnJS } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -15,17 +15,19 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 type Props = NativeStackScreenProps<RootStackParamList, "MiniAppViewer">;
 
 export default function MiniAppViewerScreen({ navigation, route }: Props) {
-  const { appName, appUrl } = route.params;
+  const { appName, appUrl, appEmoji } = route.params;
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [showControls, setShowControls] = useState(false);
   const webViewRef = useRef<WebView>(null);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isScrollingRef = useRef(false);
 
   const splashOpacity = useSharedValue(1);
   const splashScale = useSharedValue(0.9);
-  const controlsOpacity = useSharedValue(0);
+  const controlsOpacity = useSharedValue(1);
 
   const validUrl = appUrl.startsWith("http://") || appUrl.startsWith("https://") ? appUrl : `https://${appUrl}`;
 
@@ -36,22 +38,60 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
       splashOpacity.value = withTiming(0, { duration: 400 });
     }, 3000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
   }, []);
 
-  const toggleControls = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const next = !showControls;
-    setShowControls(next);
-    controlsOpacity.value = withTiming(next ? 1 : 0, { duration: 200 });
+  const scheduleAutoHide = useCallback(() => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
+      controlsOpacity.value = withTiming(0, { duration: 300 });
+    }, 5000);
+  }, []);
 
-    if (next) {
-      setTimeout(() => {
-        setShowControls(false);
-        controlsOpacity.value = withTiming(0, { duration: 200 });
-      }, 4000);
+  const showControls = useCallback(() => {
+    controlsOpacity.value = withTiming(1, { duration: 200 });
+    scheduleAutoHide();
+  }, [scheduleAutoHide]);
+
+  const onScrollMessage = useCallback(() => {
+    if (!isScrollingRef.current) {
+      isScrollingRef.current = true;
+      controlsOpacity.value = withTiming(0, { duration: 200 });
     }
-  };
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+      showControls();
+    }, 600);
+  }, [showControls]);
+
+  const injectedJS = `
+    (function() {
+      var lastY = 0;
+      var scrolling = false;
+      var timer = null;
+      window.addEventListener('scroll', function() {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll' }));
+      }, { passive: true });
+      document.addEventListener('touchmove', function() {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll' }));
+      }, { passive: true });
+    })();
+    true;
+  `;
+
+  const handleWebViewMessage = useCallback((event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === "scroll") {
+        onScrollMessage();
+      }
+    } catch (_) {}
+  }, [onScrollMessage]);
 
   const splashAnimStyle = useAnimatedStyle(() => ({
     opacity: splashOpacity.value,
@@ -63,6 +103,8 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
     opacity: controlsOpacity.value,
     pointerEvents: controlsOpacity.value > 0.1 ? "auto" as const : "none" as const,
   }));
+
+  const emoji = appEmoji || "🌐";
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
@@ -82,10 +124,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               {isDark ? "Повторить" : "Retry"}
             </ThemedText>
           </Pressable>
-          <Pressable
-            onPress={() => navigation.goBack()}
-            style={{ marginTop: Spacing.lg }}
-          >
+          <Pressable onPress={() => navigation.goBack()} style={{ marginTop: Spacing.lg }}>
             <ThemedText type="body" style={{ color: "#3478F6" }}>
               {isDark ? "Закрыть" : "Close"}
             </ThemedText>
@@ -112,43 +151,40 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               </Pressable>
             </View>
           ) : (
-            <>
-              <Pressable onPress={toggleControls} style={StyleSheet.absoluteFill}>
-                <WebView
-                  ref={webViewRef}
-                  source={{ uri: validUrl }}
-                  style={StyleSheet.absoluteFill}
-                  onLoadStart={() => setIsLoading(true)}
-                  onLoadEnd={() => setIsLoading(false)}
-                  onError={() => { setIsLoading(false); setError(true); }}
-                  javaScriptEnabled
-                  domStorageEnabled
-                  startInLoadingState={false}
-                  allowsInlineMediaPlayback
-                  mediaPlaybackRequiresUserAction={false}
-                  scrollEnabled
-                  bounces
-                  scalesPageToFit
-                  allowsBackForwardNavigationGestures
-                />
-              </Pressable>
-
-              <Animated.View style={[styles.controlsBar, { top: insets.top + 8 }, controlsAnimStyle]}>
-                <Pressable
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); navigation.goBack(); }}
-                  style={styles.controlBtn}
-                >
-                  <Feather name="x" size={20} color="#FFF" />
-                </Pressable>
-                <Pressable
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); webViewRef.current?.reload(); }}
-                  style={styles.controlBtn}
-                >
-                  <Feather name="refresh-cw" size={18} color="#FFF" />
-                </Pressable>
-              </Animated.View>
-            </>
+            <WebView
+              ref={webViewRef}
+              source={{ uri: validUrl }}
+              style={StyleSheet.absoluteFill}
+              onLoadStart={() => setIsLoading(true)}
+              onLoadEnd={() => { setIsLoading(false); scheduleAutoHide(); }}
+              onError={() => { setIsLoading(false); setError(true); }}
+              onMessage={handleWebViewMessage}
+              injectedJavaScript={injectedJS}
+              javaScriptEnabled
+              domStorageEnabled
+              startInLoadingState={false}
+              allowsInlineMediaPlayback
+              mediaPlaybackRequiresUserAction={false}
+              scrollEnabled
+              bounces
+              allowsBackForwardNavigationGestures
+            />
           )}
+
+          <Animated.View style={[styles.controlsBar, { top: insets.top + 8 }, controlsAnimStyle]}>
+            <Pressable
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); navigation.goBack(); }}
+              style={styles.controlBtn}
+            >
+              <Feather name="x" size={20} color="#FFF" />
+            </Pressable>
+            <Pressable
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); webViewRef.current?.reload(); }}
+              style={styles.controlBtn}
+            >
+              <Feather name="refresh-cw" size={18} color="#FFF" />
+            </Pressable>
+          </Animated.View>
 
           {isLoading && !error ? (
             <View style={[styles.loadingOverlay, { backgroundColor: theme.backgroundRoot }]}>
@@ -160,8 +196,8 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
       <Animated.View style={[styles.splashOverlay, { backgroundColor: theme.backgroundRoot }, splashAnimStyle]}>
         <View style={styles.splashContent}>
-          <View style={[styles.splashIcon, { backgroundColor: "#3478F6" + "20" }]}>
-            <Feather name="grid" size={40} color="#3478F6" />
+          <View style={[styles.splashIcon, { backgroundColor: "rgba(52,120,246,0.1)" }]}>
+            <Text style={{ fontSize: 44 }}>{emoji}</Text>
           </View>
           <ThemedText type="h2" style={{ marginTop: Spacing.lg, textAlign: "center" }}>{appName}</ThemedText>
           <ActivityIndicator color="#3478F6" style={{ marginTop: Spacing.xl }} />
@@ -175,7 +211,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   controlsBar: {
     position: "absolute",
-    right: 16,
+    left: 16,
     flexDirection: "row",
     gap: 12,
     zIndex: 100,
@@ -203,9 +239,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   splashIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: 88,
+    height: 88,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
   },

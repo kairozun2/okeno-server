@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, TextInput, Modal, ScrollView, Share, Platform } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, TextInput, Modal, ScrollView, Share, Platform, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
@@ -31,24 +31,10 @@ interface MiniApp {
 
 type Props = NativeStackScreenProps<RootStackParamList, "MiniApps">;
 
-type IconName = "play" | "music" | "bar-chart-2" | "shopping-cart" | "edit-3" | "pen-tool" | "tool" | "message-square" | "camera" | "map-pin" | "target" | "zap" | "globe" | "hash" | "book-open";
-
-const ICON_OPTIONS: { name: IconName; label: string }[] = [
-  { name: "play", label: "Game" },
-  { name: "music", label: "Music" },
-  { name: "bar-chart-2", label: "Stats" },
-  { name: "shopping-cart", label: "Shop" },
-  { name: "edit-3", label: "Notes" },
-  { name: "pen-tool", label: "Art" },
-  { name: "tool", label: "Tool" },
-  { name: "message-square", label: "Chat" },
-  { name: "camera", label: "Photo" },
-  { name: "map-pin", label: "Map" },
-  { name: "target", label: "Focus" },
-  { name: "zap", label: "Fast" },
-  { name: "globe", label: "Web" },
-  { name: "hash", label: "Code" },
-  { name: "book-open", label: "Read" },
+const EMOJI_OPTIONS = [
+  "🎮", "🎵", "📊", "🛒", "📝", "🎨", "🔧", "💬",
+  "📷", "📍", "🎯", "⚡", "🌐", "💻", "📖", "🎬",
+  "🏠", "❤️", "🔥", "✨", "🎲", "🤖", "📱", "🎪",
 ];
 
 export default function MiniAppsScreen({ navigation }: Props) {
@@ -62,7 +48,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [url, setUrl] = useState("");
-  const [selectedIcon, setSelectedIcon] = useState<IconName>("globe");
+  const [selectedEmoji, setSelectedEmoji] = useState("🌐");
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
   const headers = { "x-user-id": user?.id || "" };
@@ -141,16 +127,16 @@ export default function MiniAppsScreen({ navigation }: Props) {
     setName("");
     setDescription("");
     setUrl("");
-    setSelectedIcon("globe");
+    setSelectedEmoji("🌐");
   };
 
   const handleSubmit = () => {
     if (!name.trim() || !url.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (editingApp) {
-      updateMutation.mutate({ id: editingApp.id, data: { name: name.trim(), description: description.trim() || null, url: url.trim(), emoji: selectedIcon } });
+      updateMutation.mutate({ id: editingApp.id, data: { name: name.trim(), description: description.trim() || null, url: url.trim(), emoji: selectedEmoji } });
     } else {
-      createMutation.mutate({ name: name.trim(), description: description.trim(), url: url.trim(), emoji: selectedIcon });
+      createMutation.mutate({ name: name.trim(), description: description.trim(), url: url.trim(), emoji: selectedEmoji });
     }
   };
 
@@ -159,8 +145,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
     setName(app.name);
     setDescription(app.description || "");
     setUrl(app.url);
-    const found = ICON_OPTIONS.find(i => i.name === app.emoji);
-    setSelectedIcon(found ? app.emoji as IconName : "globe");
+    setSelectedEmoji(app.emoji || "🌐");
     setShowCreate(true);
   };
 
@@ -169,36 +154,27 @@ export default function MiniAppsScreen({ navigation }: Props) {
     const domain = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
     const protocol = domain.includes("localhost") ? "http" : "https";
     const appLink = `${protocol}://${domain}/mini-app/${app.id}`;
-    const shareText = `${app.name}\n${appLink}`;
     try {
       if (Platform.OS === "web") {
         await Clipboard.setStringAsync(appLink);
       } else {
-        await Share.share({
-          message: shareText,
-          url: appLink,
-        });
+        await Share.share({ message: appLink });
       }
     } catch (_e) {
       await Clipboard.setStringAsync(appLink);
     }
   };
 
-  const getAppIcon = (iconKey: string): IconName => {
-    const found = ICON_OPTIONS.find(i => i.name === iconKey);
-    return found ? iconKey as IconName : "globe";
-  };
-
   const renderAppItem = ({ item }: { item: MiniApp }) => (
     <Pressable
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        navigation.navigate("MiniAppViewer", { appId: item.id, appName: item.name, appUrl: item.url });
+        navigation.navigate("MiniAppViewer", { appId: item.id, appName: item.name, appUrl: item.url, appEmoji: item.emoji });
       }}
       style={[styles.appCard, { backgroundColor: theme.cardBackground }]}
     >
-      <View style={[styles.appIconBox, { backgroundColor: "#3478F6" + "20" }]}>
-        <Feather name={getAppIcon(item.emoji)} size={24} color="#3478F6" />
+      <View style={styles.emojiBox}>
+        <Text style={styles.emojiText}>{item.emoji || "🌐"}</Text>
       </View>
       <View style={styles.appInfo}>
         <View style={styles.appNameRow}>
@@ -223,8 +199,8 @@ export default function MiniAppsScreen({ navigation }: Props) {
 
   const renderMyAppItem = ({ item }: { item: MiniApp }) => (
     <View style={[styles.appCard, { backgroundColor: theme.cardBackground }]}>
-      <View style={[styles.appIconBox, { backgroundColor: "#3478F6" + "20" }]}>
-        <Feather name={getAppIcon(item.emoji)} size={24} color="#3478F6" />
+      <View style={styles.emojiBox}>
+        <Text style={styles.emojiText}>{item.emoji || "🌐"}</Text>
       </View>
       <View style={styles.appInfo}>
         <View style={styles.appNameRow}>
@@ -340,18 +316,18 @@ export default function MiniAppsScreen({ navigation }: Props) {
           </View>
 
           <ScrollView style={styles.formContainer} contentContainerStyle={{ padding: Spacing.md }}>
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>{t("Icon", "Иконка")}</ThemedText>
-            <View style={styles.iconGrid}>
-              {ICON_OPTIONS.map((icon) => (
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>{t("Emoji", "Эмодзи")}</ThemedText>
+            <View style={styles.emojiGrid}>
+              {EMOJI_OPTIONS.map((emoji) => (
                 <Pressable
-                  key={icon.name}
-                  onPress={() => { setSelectedIcon(icon.name); Haptics.selectionAsync(); }}
+                  key={emoji}
+                  onPress={() => { setSelectedEmoji(emoji); Haptics.selectionAsync(); }}
                   style={[
-                    styles.iconOption,
-                    { borderColor: selectedIcon === icon.name ? "#3478F6" : theme.border, backgroundColor: selectedIcon === icon.name ? "#3478F6" + "20" : "transparent" },
+                    styles.emojiOption,
+                    { borderColor: selectedEmoji === emoji ? "#3478F6" : theme.border, backgroundColor: selectedEmoji === emoji ? "#3478F6" + "20" : "transparent" },
                   ]}
                 >
-                  <Feather name={icon.name} size={22} color={selectedIcon === icon.name ? "#3478F6" : theme.textSecondary} />
+                  <Text style={{ fontSize: 26 }}>{emoji}</Text>
                 </Pressable>
               ))}
             </View>
@@ -419,12 +395,16 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
   },
-  appIconBox: {
+  emojiBox: {
     width: 48,
     height: 48,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(52,120,246,0.1)",
+  },
+  emojiText: {
+    fontSize: 26,
   },
   appInfo: { flex: 1 },
   appNameRow: { flexDirection: "row", alignItems: "center" },
@@ -460,15 +440,15 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
   },
   formContainer: { flex: 1 },
-  iconGrid: {
+  emojiGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.sm,
   },
-  iconOption: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+  emojiOption: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
