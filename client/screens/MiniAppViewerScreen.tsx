@@ -46,33 +46,51 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
     };
   }, []);
 
+  const controlsVisible = useRef(true);
+
   const scheduleAutoHide = useCallback(() => {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     hideTimerRef.current = setTimeout(() => {
-      controlsOpacity.value = withTiming(0, { duration: 300 });
-    }, 5000);
+      controlsOpacity.value = withTiming(0.35, { duration: 400 });
+      controlsVisible.current = false;
+    }, 6000);
   }, []);
 
   const showControls = useCallback(() => {
     controlsOpacity.value = withTiming(1, { duration: 200 });
+    controlsVisible.current = true;
     scheduleAutoHide();
   }, [scheduleAutoHide]);
+
+  const toggleControls = useCallback(() => {
+    if (controlsVisible.current) {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      controlsOpacity.value = withTiming(0.35, { duration: 300 });
+      controlsVisible.current = false;
+    } else {
+      showControls();
+    }
+  }, [showControls]);
 
   const onScrollMessage = useCallback(() => {
     if (!isScrollingRef.current) {
       isScrollingRef.current = true;
-      controlsOpacity.value = withTiming(0, { duration: 200 });
+      controlsOpacity.value = withTiming(0.35, { duration: 200 });
+      controlsVisible.current = false;
     }
     if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
     scrollTimerRef.current = setTimeout(() => {
       isScrollingRef.current = false;
       showControls();
-    }, 600);
+    }, 800);
   }, [showControls]);
+
+  const userAgent = Platform.OS === 'ios'
+    ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
+    : 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36';
 
   const injectedJS = `
     (function() {
-      var scrollTimer = null;
       var throttled = false;
       window.addEventListener('scroll', function() {
         if (!throttled) {
@@ -81,6 +99,14 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
           setTimeout(function() { throttled = false; }, 300);
         }
       }, { passive: true });
+
+      var meta = document.querySelector('meta[name="viewport"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, initial-scale=1, maximum-scale=5';
+        document.head.appendChild(meta);
+      }
     })();
     true;
   `;
@@ -102,7 +128,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
   const controlsAnimStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
-    pointerEvents: controlsOpacity.value > 0.1 ? "auto" as const : "none" as const,
+    pointerEvents: "auto" as const,
   }));
 
   const displayEmoji = appEmoji || "🌐";
@@ -156,13 +182,15 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               ref={webViewRef}
               source={{ uri: validUrl }}
               style={StyleSheet.absoluteFill}
+              userAgent={userAgent}
               onLoadStart={() => setIsLoading(true)}
-              onLoadEnd={() => { setIsLoading(false); scheduleAutoHide(); }}
+              onLoadEnd={() => { setIsLoading(false); showControls(); }}
               onError={() => { setIsLoading(false); setError(true); }}
               onHttpError={(syntheticEvent) => {
                 const { statusCode } = syntheticEvent.nativeEvent;
                 if (statusCode >= 500) { setIsLoading(false); setError(true); }
               }}
+              onContentProcessDidTerminate={() => { webViewRef.current?.reload(); }}
               onMessage={handleWebViewMessage}
               injectedJavaScript={injectedJS}
               javaScriptEnabled
@@ -200,7 +228,11 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
           <Animated.View style={[styles.controlsBar, { top: insets.top + 8 }, controlsAnimStyle]}>
             <Pressable
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); webViewRef.current?.reload(); }}
+              onPress={() => {
+                if (!controlsVisible.current) { showControls(); return; }
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                webViewRef.current?.reload();
+              }}
               style={{ borderRadius: 20, overflow: 'hidden' }}
             >
               <BlurView intensity={50} tint="dark" style={styles.controlBtn}>
@@ -208,7 +240,11 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
               </BlurView>
             </Pressable>
             <Pressable
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); navigation.goBack(); }}
+              onPress={() => {
+                if (!controlsVisible.current) { showControls(); return; }
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                navigation.goBack();
+              }}
               style={{ borderRadius: 20, overflow: 'hidden' }}
             >
               <BlurView intensity={50} tint="dark" style={styles.controlBtn}>

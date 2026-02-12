@@ -7,6 +7,7 @@ import {
   FlatList,
   Platform,
   Keyboard,
+  Text,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -311,7 +312,7 @@ export default function UserSearchScreen({ navigation }: Props) {
                   alignItems: "center",
                   justifyContent: "center",
                 }}>
-                  <ThemedText style={{ fontSize: 22 }}>{item.emoji}</ThemedText>
+                  <Text style={{ fontSize: 22, lineHeight: 28 }}>{item.emoji}</Text>
                 </View>
                 <View style={styles.userInfo}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
