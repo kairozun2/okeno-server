@@ -317,7 +317,7 @@ function FilterTabs({
   }
 
   return (
-    <View style={{ flexDirection: "row", paddingHorizontal: Spacing.md, paddingVertical: 6, gap: 8 }}>
+    <View style={{ flexDirection: "row", justifyContent: "center", paddingHorizontal: Spacing.md, paddingVertical: 6, gap: 8 }}>
       {filters.map((f) => (
         <Pressable
           key={f.key}
@@ -351,7 +351,7 @@ function FilterTabs({
 }
 
 export default function ChatsListScreen({ navigation }: Props) {
-  const { theme, language } = useTheme();
+  const { theme, language, chatFilterTabsEnabled } = useTheme();
   const { user } = useAuth();
   const headerHeight = useHeaderHeight() || 64;
   const tabBarHeight = useBottomTabBarHeight();
@@ -655,7 +655,7 @@ export default function ChatsListScreen({ navigation }: Props) {
         onRefresh={onRefresh}
         refreshing={refreshing}
         ListHeaderComponent={
-          sortedChats.length > 0 ? (
+          sortedChats.length > 0 && chatFilterTabsEnabled ? (
             <FilterTabs
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
