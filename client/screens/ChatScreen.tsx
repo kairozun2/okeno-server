@@ -308,23 +308,23 @@ function MessageBubble({
 
   if (isMissedCall) {
     return (
-      <View style={{ alignItems: 'center', marginVertical: Spacing.sm, width: '100%' }}>
+      <View style={{ alignItems: 'center', marginVertical: 4, width: '100%' }}>
         <View style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: isDark ? 'rgba(255,70,70,0.12)' : 'rgba(255,70,70,0.08)',
-          paddingHorizontal: Spacing.md,
-          paddingVertical: Spacing.sm,
-          borderRadius: 16,
-          gap: 6,
+          backgroundColor: isDark ? 'rgba(255,70,70,0.1)' : 'rgba(255,70,70,0.06)',
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 12,
+          gap: 4,
         }}>
-          <Feather name={isOwn ? "phone-outgoing" : "phone-incoming"} size={14} color="#FF6B6B" />
-          <ThemedText type="caption" style={{ color: '#FF6B6B', fontWeight: '600', fontSize: 13 }}>
+          <Feather name={isOwn ? "phone-outgoing" : "phone-incoming"} size={11} color="#FF6B6B" />
+          <ThemedText type="caption" style={{ color: '#FF6B6B', fontWeight: '600', fontSize: 11 }}>
             {isOwn
               ? t("Outgoing call", "Исходящий звонок")
               : t("Missed call", "Пропущенный звонок")}
           </ThemedText>
-          <ThemedText type="caption" style={{ color: theme.textSecondary, fontSize: 11 }}>
+          <ThemedText type="caption" style={{ color: theme.textSecondary, fontSize: 10 }}>
             {formatMessageTime(new Date(message.createdAt))}
           </ThemedText>
         </View>

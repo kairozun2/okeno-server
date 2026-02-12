@@ -82,6 +82,20 @@ export async function sendLikeNotification(
   );
 }
 
+export async function sendCallNotification(
+  recipientId: string,
+  callerName: string,
+  callerEmoji: string,
+  chatId: string
+): Promise<void> {
+  await sendPushNotification(
+    recipientId,
+    `${callerEmoji} ${callerName}`,
+    "Incoming call...",
+    { type: "call", chatId }
+  );
+}
+
 export async function sendCommentNotification(
   postOwnerId: string,
   commenterName: string,

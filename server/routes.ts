@@ -9,7 +9,7 @@ import { moderateUsername } from "./moderation";
 import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
-import { sendNewMessageNotification, sendLikeNotification, sendCommentNotification } from "./push-notifications";
+import { sendNewMessageNotification, sendLikeNotification, sendCommentNotification, sendCallNotification } from "./push-notifications";
 
 const EMOJIS = ["🐸", "🦊", "🐻", "🐼", "🦁", "🐯", "🐨", "🐮", "🐷", "🐵", "🐔", "🐧", "🐦", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🕷", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊", "🐇", "🦝", "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿", "🦔"];
 
@@ -789,6 +789,24 @@ export async function registerRoutes(app: express.Express) {
     } catch (error) {
       console.error("Create message error:", error);
       res.status(400).json({ error: "Invalid message data" });
+    }
+  });
+
+  app.post("/api/call", async (req, res) => {
+    try {
+      const { callerId, recipientId, chatId } = req.body;
+      if (!callerId || !recipientId || !chatId) {
+        return res.status(400).json({ error: "callerId, recipientId, and chatId required" });
+      }
+      const caller = await storage.getUser(callerId);
+      if (!caller) {
+        return res.status(404).json({ error: "Caller not found" });
+      }
+      sendCallNotification(recipientId, caller.username, caller.emoji, chatId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Call notification error:", error);
+      res.status(500).json({ error: "Failed to send call notification" });
     }
   });
 
