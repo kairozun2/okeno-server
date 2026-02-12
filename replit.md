@@ -205,9 +205,16 @@ To test features:
 - Images stored on server filesystem (consider cloud storage for production scaling)
 
 ### Offline Support
-- TanStack React Query with AsyncStorage persistence
-- Data cached for 7 days for offline viewing
+- TanStack React Query with AsyncStorage persistence (maxAge: 30 days)
+- `staleTime: 30 minutes` — data stays fresh for 30 min without refetching
+- `gcTime: 30 days` — cached data kept for a month
 - `networkMode: 'offlineFirst'` prioritizes cached data when offline
+- `onlineManager` integrated with NetInfo — React Query aware of network state
+- Smart retry: disabled when offline, stops on network errors
+- All polling queries (refetchInterval) disabled when offline to prevent error spam
+- Queries with no offline fallback return safe defaults (empty arrays) instead of throwing
+- Cache buster version: 'v2' (change to force cache reset)
+- Only successful queries are persisted to AsyncStorage (dehydrateOptions filter)
 - Images must be online to load (no local image caching yet)
 - **SQLite Limitation**: expo-sqlite is only available on native iOS/Android devices. On web platform (including Replit webview), SQLite operations are gracefully skipped and the app uses network-only mode. This is handled automatically in `client/lib/database.ts` and `client/lib/sync.ts`.
 
