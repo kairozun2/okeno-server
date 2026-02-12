@@ -65,6 +65,7 @@ interface User {
 
 interface ChatWithDetails extends Chat {
   isGroup?: boolean;
+  isVerified?: boolean;
   name?: string;
   groupEmoji?: string;
   backgroundImage?: string | null;
@@ -229,6 +230,7 @@ function ChatItem({
                   <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
                     {displayName}
                   </ThemedText>
+                  {isGroup && chat.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
                   {!isGroup && chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
                 </View>
               </View>

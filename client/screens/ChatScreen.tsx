@@ -1293,7 +1293,7 @@ export default function ChatScreen({ route, navigation }: Props) {
               <Pressable
                 onPress={() => {
                   if (isGroupChat && chatId) {
-                    navigation.navigate("GroupChatInfo", { chatId, groupName: displayName, groupEmoji: displayEmoji });
+                    navigation.navigate("GroupChatInfo", { chatId, groupName: displayName, groupEmoji: displayEmoji, isVerified: chatData?.isVerified });
                   } else if (!isGroupChat && otherUserId) {
                     navigation.navigate("UserProfile", { userId: otherUserId });
                   }
@@ -1315,6 +1315,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                 <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end' }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                     <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
+                    {isGroupChat && chatData?.isVerified ? <VerifiedBadge size={14} /> : null}
                     {!isGroupChat && userData?.isVerified ? <VerifiedBadge size={14} /> : null}
                   </View>
                 </View>

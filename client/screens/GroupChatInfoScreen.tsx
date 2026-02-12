@@ -50,7 +50,7 @@ interface GroupMember {
 }
 
 export default function GroupChatInfoScreen({ navigation, route }: Props) {
-  const { chatId, groupName, groupEmoji } = route.params;
+  const { chatId, groupName, groupEmoji, isVerified: groupIsVerified } = route.params;
   const { theme, isDark, language } = useTheme();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -270,9 +270,12 @@ export default function GroupChatInfoScreen({ navigation, route }: Props) {
       >
         <View style={styles.profileHeader}>
           <ThemedText style={styles.emojiLarge}>{groupEmoji || "🐸"}</ThemedText>
-          <ThemedText type="h2" style={{ marginTop: Spacing.sm, textAlign: 'center' }}>
-            {groupName || t("Group", "Группа")}
-          </ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: Spacing.sm }}>
+            <ThemedText type="h2" style={{ textAlign: 'center' }}>
+              {groupName || t("Group", "Группа")}
+            </ThemedText>
+            {groupIsVerified ? <VerifiedBadge size={18} style={{ marginLeft: 6 }} /> : null}
+          </View>
           <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
             {membersQuery.data ? `${membersQuery.data.length} ${t("members", "участников")}` : ""}
           </ThemedText>
