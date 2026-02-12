@@ -12,7 +12,6 @@ import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsStore } from "@/lib/settings-store";
@@ -430,8 +429,8 @@ export default function SettingsScreen({ navigation }: Props) {
         onRequestClose={() => setShowAccountModal(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-            <ThemedText type="h3">Account</ThemedText>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top - 10 : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <ThemedText type="h3">{t("Account", "Аккаунт")}</ThemedText>
             <Pressable onPress={() => setShowAccountModal(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
@@ -443,9 +442,9 @@ export default function SettingsScreen({ navigation }: Props) {
               source={SETTINGS_ICONS.privacy} 
               style={{ width: 60, height: 60, borderRadius: 14, marginBottom: Spacing.md }} 
             />
-            <ThemedText type="h4" style={{ marginBottom: Spacing.sm }}>Recovery ID</ThemedText>
+            <ThemedText type="h4" style={{ marginBottom: Spacing.sm }}>{t("Recovery ID", "ID восстановления")}</ThemedText>
               <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.md }}>
-                This ID is required to restore access to your account. Never share it with anyone.
+                {t("This ID is required to restore access to your account. Never share it with anyone.", "Этот ID необходим для восстановления доступа к аккаунту. Никогда не делитесь им.")}
               </ThemedText>
               
               <View style={[styles.idContainer, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
@@ -463,16 +462,27 @@ export default function SettingsScreen({ navigation }: Props) {
                 </Pressable>
               </View>
 
-              <Button 
+              <Pressable
                 onPress={handleCopyId}
-                style={{ marginTop: Spacing.md }}
-                textStyle={{ color: "#fff" }}
+                style={({ pressed }) => [
+                  {
+                    marginTop: Spacing.md,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    paddingVertical: Spacing.md,
+                    paddingHorizontal: Spacing.xl,
+                    borderRadius: BorderRadius.md,
+                    backgroundColor: pressed ? theme.backgroundSecondary : theme.cardBackground,
+                    borderWidth: 1,
+                    borderColor: theme.border,
+                  },
+                ]}
               >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <ThemedText style={{ color: "#fff", fontWeight: "600" }}>Copy ID</ThemedText>
-                  <Feather name="copy" size={16} color="#fff" />
-                </View>
-              </Button>
+                <Feather name="copy" size={16} color={theme.text} />
+                <ThemedText style={{ fontWeight: "600" }}>{t("Copy ID", "Копировать ID")}</ThemedText>
+              </Pressable>
             </View>
 
             <View style={{ height: Spacing.xl }} />
@@ -481,7 +491,7 @@ export default function SettingsScreen({ navigation }: Props) {
               <SettingRow 
                 item={{
                   icon: "log-out",
-                  title: "Logout",
+                  title: t("Logout", "Выйти"),
                   onPress: () => {
                     setShowAccountModal(false);
                     handleLogout();
@@ -492,7 +502,7 @@ export default function SettingsScreen({ navigation }: Props) {
               <SettingRow 
                 item={{
                   customIcon: SETTINGS_ICONS.delete,
-                  title: "Delete Account",
+                  title: t("Delete Account", "Удалить аккаунт"),
                   onPress: () => {
                     setShowAccountModal(false);
                     setShowDeleteModal(true);
@@ -504,7 +514,7 @@ export default function SettingsScreen({ navigation }: Props) {
             </View>
 
             <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xl, textAlign: "center" }}>
-              Okeno uses an anonymous account system.{"\n"}Your PIN and ID are the only ways to access it.
+              {t("Okeno uses an anonymous account system.\nYour PIN and ID are the only ways to access it.", "Okeno использует анонимную систему аккаунтов.\nВаш PIN и ID — единственные способы доступа к нему.")}
             </ThemedText>
           </ScrollView>
         </View>
@@ -517,8 +527,8 @@ export default function SettingsScreen({ navigation }: Props) {
         onRequestClose={() => setShowDeleteModal(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-            <ThemedText type="h3">Delete Account</ThemedText>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? insets.top - 10 : Spacing.md, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+            <ThemedText type="h3">{t("Delete Account", "Удалить аккаунт")}</ThemedText>
             <Pressable onPress={() => setShowDeleteModal(false)} hitSlop={8}>
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
@@ -528,15 +538,15 @@ export default function SettingsScreen({ navigation }: Props) {
             <View style={styles.deleteWarning}>
               <Feather name="alert-triangle" size={48} color={theme.error} />
               <ThemedText type="h4" style={{ color: theme.error, marginTop: Spacing.md, textAlign: "center" }}>
-                Warning!
+                {t("Warning!", "Внимание!")}
               </ThemedText>
               <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: "center" }}>
-                Once your account is deleted, all your data will be lost forever. This action cannot be undone.
+                {t("Once your account is deleted, all your data will be lost forever. This action cannot be undone.", "После удаления аккаунта все ваши данные будут потеряны навсегда. Это действие нельзя отменить.")}
               </ThemedText>
             </View>
 
             <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.xl }}>
-              Enter your PIN to confirm:
+              {t("Enter your PIN to confirm:", "Введите PIN для подтверждения:")}
             </ThemedText>
             <TextInput
               value={deletePin}

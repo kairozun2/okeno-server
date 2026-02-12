@@ -214,7 +214,7 @@ export default function UserSearchScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top : Spacing.md }]}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? insets.top - 10 : Spacing.md }]}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.closeButton}
@@ -232,7 +232,7 @@ export default function UserSearchScreen({ navigation }: Props) {
         <View style={{ width: 36 }} />
       </View>
 
-      <View style={[styles.searchContainer, { backgroundColor: theme.backgroundDefault }]}>
+      <View style={[styles.searchContainer, { backgroundColor: theme.backgroundDefault, borderWidth: 1, borderColor: theme.border }]}>
         <Feather name="search" size={18} color={theme.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}

@@ -534,8 +534,8 @@ export default function ChatScreen({ route, navigation }: Props) {
       return response.json();
     },
     enabled: !!user?.id && !!otherUserId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 30000,
+    gcTime: 300000,
   });
 
   useEffect(() => {
@@ -961,7 +961,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior="padding"
-          keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? -42 : 15) : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? (chatFullscreen ? -35 : 15) : 0}
         >
         <View style={[styles.header, { top: chatFullscreen ? insets.top + Spacing.xs : Spacing.sm }]}>
           <Pressable
