@@ -166,18 +166,21 @@ export default function MiniAppsScreen({ navigation }: Props) {
 
   const handleShare = async (app: MiniApp) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const shareUrl = app.url;
+    const domain = process.env.EXPO_PUBLIC_DOMAIN || "okeno.app";
+    const protocol = domain.includes("localhost") ? "http" : "https";
+    const appLink = `${protocol}://${domain}/mini-app/${app.id}`;
+    const shareText = `${app.name}\n${appLink}`;
     try {
       if (Platform.OS === "web") {
-        await Clipboard.setStringAsync(shareUrl);
+        await Clipboard.setStringAsync(appLink);
       } else {
         await Share.share({
-          message: `${app.name}\n${shareUrl}`,
-          url: shareUrl,
+          message: shareText,
+          url: appLink,
         });
       }
     } catch (_e) {
-      await Clipboard.setStringAsync(shareUrl);
+      await Clipboard.setStringAsync(appLink);
     }
   };
 

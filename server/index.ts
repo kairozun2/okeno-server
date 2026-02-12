@@ -211,6 +211,31 @@ async function getOGDataForPath(reqPath: string, baseUrl: string): Promise<OGDat
         }
       }
     }
+    // Mini app page: /mini-app/:id
+    if (reqPath.startsWith("/mini-app/")) {
+      const appId = reqPath.split("/mini-app/")[1]?.split("/")[0];
+      if (appId) {
+        const { db } = await import("./db");
+        const { miniApps, users } = await import("@shared/schema");
+        const { eq } = await import("drizzle-orm");
+
+        const miniApp = await db.query.miniApps.findFirst({
+          where: eq(miniApps.id, appId),
+        });
+
+        if (miniApp) {
+          const creator = await db.query.users.findFirst({
+            where: eq(users.id, miniApp.creatorId),
+          });
+          return {
+            title: `${miniApp.name} — Okeno Mini App`,
+            description: miniApp.description || `Open ${miniApp.name} in Okeno`,
+            image: `${baseUrl}/assets/images/icon.png`,
+            url: `${baseUrl}/mini-app/${appId}`,
+          };
+        }
+      }
+    }
   } catch (error) {
     log(`[OG] Error fetching data for path ${reqPath}:`, error);
   }
@@ -273,7 +298,7 @@ function configureExpoAndLanding(app: express.Application) {
       return next();
     }
 
-    const isLandingPath = path === "/" || path === "/manifest" || path.startsWith("/u/") || path.startsWith("/post/");
+    const isLandingPath = path === "/" || path === "/manifest" || path.startsWith("/u/") || path.startsWith("/post/") || path.startsWith("/mini-app/");
     
     if (isLandingPath) {
       log(`[Landing] Attempting to serve landing for path: ${path}`);
