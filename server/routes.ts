@@ -808,6 +808,17 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
+  const activeCalls = new Map<string, { callerId: string; callerName: string; callerEmoji: string; chatId: string; createdAt: number }>();
+
+  setInterval(() => {
+    const now = Date.now();
+    for (const [recipientId, call] of activeCalls) {
+      if (now - call.createdAt > 30000) {
+        activeCalls.delete(recipientId);
+      }
+    }
+  }, 5000);
+
   app.post("/api/call", async (req, res) => {
     try {
       const { callerId, recipientId, chatId } = req.body;
@@ -818,11 +829,55 @@ export async function registerRoutes(app: express.Express) {
       if (!caller) {
         return res.status(404).json({ error: "Caller not found" });
       }
+      activeCalls.set(recipientId, {
+        callerId,
+        callerName: caller.username,
+        callerEmoji: caller.emoji,
+        chatId,
+        createdAt: Date.now(),
+      });
       sendCallNotification(recipientId, caller.username, caller.emoji, chatId);
       res.json({ success: true });
     } catch (error) {
       console.error("Call notification error:", error);
       res.status(500).json({ error: "Failed to send call notification" });
+    }
+  });
+
+  app.get("/api/call/incoming/:userId", async (req, res) => {
+    try {
+      const call = activeCalls.get(req.params.userId);
+      if (call) {
+        res.json({ hasCall: true, ...call });
+      } else {
+        res.json({ hasCall: false });
+      }
+    } catch (error) {
+      res.json({ hasCall: false });
+    }
+  });
+
+  app.post("/api/call/cancel", async (req, res) => {
+    try {
+      const { recipientId } = req.body;
+      if (recipientId) {
+        activeCalls.delete(recipientId);
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.json({ success: true });
+    }
+  });
+
+  app.post("/api/call/answer", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (userId) {
+        activeCalls.delete(userId);
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.json({ success: true });
     }
   });
 

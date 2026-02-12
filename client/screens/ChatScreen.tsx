@@ -850,7 +850,15 @@ export default function ChatScreen({ route, navigation }: Props) {
     refetchInterval: 2000, 
   });
 
-  const messages = data?.pages.flat() || [];
+  const messages = React.useMemo(() => {
+    const all = data?.pages.flat() || [];
+    const seen = new Set<string>();
+    return all.filter(msg => {
+      if (seen.has(msg.id)) return false;
+      seen.add(msg.id);
+      return true;
+    });
+  }, [data]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim() || !showMessageSearch) return [];

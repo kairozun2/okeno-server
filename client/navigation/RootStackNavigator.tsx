@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Pressable, View, StyleSheet, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
+import { useNavigation } from "@react-navigation/native";
+import { getApiUrl } from "@/lib/query-client";
 
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import AuthStackNavigator from "@/navigation/AuthStackNavigator";
@@ -29,6 +31,7 @@ import ThemeSelectionScreen from "@/screens/ThemeSelectionScreen";
 import CreateGroupChatScreen from "@/screens/CreateGroupChatScreen";
 import GroupChatInfoScreen from "@/screens/GroupChatInfoScreen";
 import CallScreen from "@/screens/CallScreen";
+import IncomingCallScreen from "@/screens/IncomingCallScreen";
 import NotificationSettingsScreen from "@/screens/NotificationSettingsScreen";
 import SupportScreen from "@/screens/SupportScreen";
 import MiniAppsScreen from "@/screens/MiniAppsScreen";
@@ -66,6 +69,7 @@ export type RootStackParamList = {
   CreateGroupChat: undefined;
   GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string; isVerified?: boolean };
   CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string };
+  IncomingCall: { callerId: string; callerName: string; callerEmoji: string; chatId: string };
   NotificationSettings: undefined;
   Support: undefined;
   MiniApps: undefined;
@@ -130,6 +134,44 @@ function ChatHeaderTitle({ name, username, onPress, emoji, isVerified }: { name?
   );
 }
 
+function IncomingCallPoller() {
+  const { user } = useAuth();
+  const navigation = useNavigation<any>();
+  const lastCallIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const poll = async () => {
+      try {
+        const baseUrl = getApiUrl();
+        const url = new URL(`/api/call/incoming/${user.id}`, baseUrl);
+        const res = await fetch(url.toString(), { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.hasCall && data.callerId !== lastCallIdRef.current) {
+          lastCallIdRef.current = data.callerId;
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          navigation.navigate("IncomingCall", {
+            callerId: data.callerId,
+            callerName: data.callerName,
+            callerEmoji: data.callerEmoji,
+            chatId: data.chatId,
+          });
+        } else if (!data.hasCall) {
+          lastCallIdRef.current = null;
+        }
+      } catch {}
+    };
+
+    const interval = setInterval(poll, 2000);
+    poll();
+    return () => clearInterval(interval);
+  }, [user?.id, navigation]);
+
+  return null;
+}
+
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const modalOptions = useModalScreenOptions();
@@ -141,6 +183,8 @@ export default function RootStackNavigator() {
   }
 
   return (
+    <>
+    {isAuthenticated ? <IncomingCallPoller /> : null}
     <Stack.Navigator screenOptions={screenOptions}>
       {isAuthenticated ? (
         <>
@@ -404,6 +448,16 @@ export default function RootStackNavigator() {
               gestureEnabled: true,
             }}
           />
+          <Stack.Screen
+            name="IncomingCall"
+            component={IncomingCallScreen}
+            options={{
+              headerShown: false,
+              presentation: "fullScreenModal",
+              animation: "slide_from_bottom",
+              gestureEnabled: false,
+            }}
+          />
         </>
       ) : (
         <Stack.Screen
@@ -413,5 +467,6 @@ export default function RootStackNavigator() {
         />
       )}
     </Stack.Navigator>
+    </>
   );
 }

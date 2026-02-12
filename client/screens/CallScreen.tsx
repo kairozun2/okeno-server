@@ -96,6 +96,9 @@ export default function CallScreen({ route, navigation }: any) {
     return () => {
       clearTimeout(timer);
       clearTimeout(unavailableTimer);
+      if (userId) {
+        apiRequest("POST", "/api/call/cancel", { recipientId: userId }).catch(() => {});
+      }
     };
   }, []);
 
