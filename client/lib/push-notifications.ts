@@ -3,15 +3,35 @@ import * as Device from "expo-device";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { getApiUrl } from "./query-client";
+import { useSettingsStore } from "./settings-store";
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    const prefs = useSettingsStore.getState().notifications;
+    const data = notification.request.content.data as Record<string, any> | undefined;
+    const type = data?.type;
+
+    let shouldShow = true;
+    if (type === "message") {
+      shouldShow = prefs?.messages !== false;
+    } else if (type === "group_message") {
+      shouldShow = prefs?.groupMessages !== false;
+    } else if (type === "like") {
+      shouldShow = prefs?.likes !== false;
+    } else if (type === "comment") {
+      shouldShow = prefs?.comments !== false;
+    } else if (type === "call") {
+      shouldShow = prefs?.calls !== false;
+    }
+
+    return {
+      shouldShowAlert: shouldShow,
+      shouldPlaySound: shouldShow,
+      shouldSetBadge: shouldShow,
+      shouldShowBanner: shouldShow,
+      shouldShowList: shouldShow,
+    };
+  },
 });
 
 export async function registerForPushNotificationsAsync(userId: string): Promise<string | null> {

@@ -76,6 +76,14 @@ export default function CallScreen({ route, navigation }: any) {
   }));
 
   useEffect(() => {
+    if (chatId && userId && user?.id) {
+      apiRequest("POST", "/api/call", {
+        callerId: user.id,
+        recipientId: userId,
+        chatId,
+      }).catch(() => {});
+    }
+
     const timer = setTimeout(() => {
       setCallState("ringing");
     }, 2000);

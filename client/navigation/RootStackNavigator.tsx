@@ -29,6 +29,7 @@ import ThemeSelectionScreen from "@/screens/ThemeSelectionScreen";
 import CreateGroupChatScreen from "@/screens/CreateGroupChatScreen";
 import GroupChatInfoScreen from "@/screens/GroupChatInfoScreen";
 import CallScreen from "@/screens/CallScreen";
+import NotificationSettingsScreen from "@/screens/NotificationSettingsScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -62,6 +63,7 @@ export type RootStackParamList = {
   CreateGroupChat: undefined;
   GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string };
   CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string };
+  NotificationSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -125,7 +127,7 @@ function ChatHeaderTitle({ name, username, onPress, emoji, isVerified }: { name?
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const modalOptions = useModalScreenOptions();
-  const { theme, isDark, chatFullscreen } = useTheme();
+  const { theme, isDark, chatFullscreen, language } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -250,6 +252,16 @@ export default function RootStackNavigator() {
               presentation: "modal",
               animation: "slide_from_bottom",
             }}
+          />
+          <Stack.Screen
+            name="NotificationSettings"
+            component={NotificationSettingsScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: language === "ru" ? "Уведомления" : "Notifications",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
           />
           <Stack.Screen
             name="CacheSettings"

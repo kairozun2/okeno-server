@@ -54,7 +54,8 @@ export async function sendNewMessageNotification(
   senderName: string,
   senderEmoji: string,
   messagePreview: string,
-  chatId: string
+  chatId: string,
+  isGroup: boolean = false
 ): Promise<void> {
   const truncatedMessage = messagePreview.length > 50 
     ? messagePreview.substring(0, 50) + "..." 
@@ -64,7 +65,7 @@ export async function sendNewMessageNotification(
     recipientId,
     `${senderEmoji} ${senderName}`,
     truncatedMessage,
-    { type: "message", chatId }
+    { type: isGroup ? "group_message" : "message", chatId }
   );
 }
 

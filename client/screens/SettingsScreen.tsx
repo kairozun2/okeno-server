@@ -245,6 +245,18 @@ export default function SettingsScreen({ navigation }: Props) {
         },
       ],
     },
+
+    {
+      title: t("NOTIFICATIONS", "УВЕДОМЛЕНИЯ"),
+      items: [
+        {
+          icon: "bell",
+          title: t("Notifications", "Уведомления"),
+          subtitle: t("Messages, likes, calls", "Сообщения, лайки, звонки"),
+          onPress: () => navigation.navigate("NotificationSettings" as any),
+        },
+      ],
+    },
     {
       title: t("DATA & STORAGE", "ДАННЫЕ И ПАМЯТЬ"),
       items: [
