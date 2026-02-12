@@ -213,8 +213,10 @@ export default function UserSearchScreen({ navigation }: Props) {
     staleTime: 60000,
   });
 
-  const filteredMiniApps = isMiniAppSearch && miniAppSearchTerm.length >= 1
-    ? allMiniApps.filter(app => app.name.toLowerCase().includes(miniAppSearchTerm))
+  const filteredMiniApps = isMiniAppSearch
+    ? (miniAppSearchTerm.length >= 1
+      ? allMiniApps.filter(app => app.name.toLowerCase().includes(miniAppSearchTerm))
+      : allMiniApps)
     : [];
 
   const handleMiniAppPress = useCallback((app: MiniApp) => {
@@ -346,7 +348,7 @@ export default function UserSearchScreen({ navigation }: Props) {
               <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: "center" }}>
                 {miniAppSearchTerm.length > 0
                   ? t(`No apps found matching "${miniAppSearchTerm}"`, `Приложения "${miniAppSearchTerm}" не найдены`)
-                  : t("Type / followed by app name", "Введите / и название приложения")
+                  : t("No mini apps available", "Мини-приложений пока нет")
                 }
               </ThemedText>
             </View>

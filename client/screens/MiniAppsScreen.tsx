@@ -223,7 +223,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <Pressable onPress={() => navigation.goBack()} style={{ borderRadius: 16, overflow: "hidden" }}>
           <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={{ padding: Spacing.sm, borderRadius: 16 }}>
             <Feather name="arrow-left" size={22} color={theme.text} />
@@ -276,7 +276,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
               data={apps}
               keyExtractor={(item) => item.id}
               renderItem={renderAppItem}
-              contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingBottom: insets.bottom + Spacing.lg, paddingTop: Spacing.sm }}
+              contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingBottom: insets.bottom + Spacing.lg, paddingTop: Spacing.xs }}
               ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
@@ -302,14 +302,14 @@ export default function MiniAppsScreen({ navigation }: Props) {
       <Modal visible={showCreate} transparent animationType="slide" onRequestClose={resetForm}>
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
           <View style={[styles.modalHeader, { paddingTop: insets.top + 4 }]}>
-            <Pressable onPress={resetForm}>
-              <ThemedText type="body" style={{ color: "#3478F6" }}>{t("Cancel", "Отмена")}</ThemedText>
+            <Pressable onPress={resetForm} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center' }}>
+              <Feather name="x" size={20} color={theme.text} />
             </Pressable>
             <ThemedText type="body" style={{ fontWeight: "600" }}>
               {editingApp ? t("Edit App", "Редактировать") : t("New App", "Новое приложение")}
             </ThemedText>
-            <Pressable onPress={handleSubmit} disabled={!name.trim() || !url.trim()}>
-              <ThemedText type="body" style={{ color: name.trim() && url.trim() ? "#3478F6" : theme.textSecondary, fontWeight: "600" }}>
+            <Pressable onPress={handleSubmit} disabled={!name.trim() || !url.trim()} style={[styles.saveBtn, { backgroundColor: name.trim() && url.trim() ? "#3478F6" : theme.border }]}>
+              <ThemedText type="caption" style={{ color: name.trim() && url.trim() ? "#FFF" : theme.textSecondary, fontWeight: "600" }}>
                 {t("Save", "Сохранить")}
               </ThemedText>
             </Pressable>
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   loading: { flex: 1, justifyContent: "center", alignItems: "center" },
   appCard: {
@@ -430,6 +430,11 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     justifyContent: "center",
     alignItems: "center",
+  },
+  saveBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: BorderRadius.md,
   },
   modalContainer: { flex: 1 },
   modalHeader: {

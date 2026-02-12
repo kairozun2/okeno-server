@@ -95,7 +95,7 @@ function VoiceMessagePlayer({
         onPress={togglePlayback}
         style={[
           styles.voicePlayButton,
-          { backgroundColor: isOwn ? "rgba(0,0,0,0.08)" : theme.backgroundSecondary }
+          { backgroundColor: theme.backgroundSecondary }
         ]}
       >
         <Feather 
@@ -105,7 +105,7 @@ function VoiceMessagePlayer({
         />
       </Pressable>
       <View style={{ flex: 1, gap: 4 }}>
-        <View style={[styles.voiceProgress, { backgroundColor: isOwn ? "rgba(0,0,0,0.15)" : theme.border }]}>
+        <View style={[styles.voiceProgress, { backgroundColor: theme.border }]}>
           <View 
             style={[
               styles.voiceProgressFill, 
@@ -416,39 +416,21 @@ function MessageBubble({
           style={({ pressed }) => [
             styles.messageInner,
             { 
-              backgroundColor: isOwn 
-                ? (isDark ? 'rgba(52,120,246,0.12)' : 'rgba(52,120,246,0.08)')
-                : (isSelected ? (isDark ? "#323235" : "#f0f0f2") : theme.cardBackground),
+              backgroundColor: isSelected ? (isDark ? "#323235" : "#f0f0f2") : theme.cardBackground,
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: isSelected ? 1.05 : 1 }],
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isOwn ? 0.1 : (isSelected ? 0.3 : 0),
-              shadowRadius: isOwn ? 6 : 8,
-              elevation: isOwn ? 2 : (isSelected ? 10 : 0),
+              shadowOpacity: isSelected ? 0.3 : 0,
+              shadowRadius: isSelected ? 8 : 0,
+              elevation: isSelected ? 10 : 0,
               overflow: 'hidden',
-              borderWidth: isOwn ? 1 : 0,
-              borderColor: isOwn ? (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)') : 'transparent',
               borderBottomRightRadius: isOwn ? Spacing.xs : undefined,
               borderBottomLeftRadius: !isOwn ? Spacing.xs : undefined,
             },
           ]}
         >
-          {isOwn ? (
-            <>
-              {Platform.OS === 'ios' ? (
-                <BlurView
-                  intensity={60}
-                  tint={isDark ? "dark" : "light"}
-                  style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.65)' }]}
-                />
-              ) : (
-                <View style={[StyleSheet.absoluteFill, { 
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.7)',
-                }]} />
-              )}
-            </>
-          ) : null}
+          
           {senderName ? (
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4, gap: 4 }}>
               {senderEmoji ? <Avatar emoji={senderEmoji} size={16} /> : null}
@@ -1545,7 +1527,9 @@ export default function ChatScreen({ route, navigation }: Props) {
                     sendMutation.mutate({ content: `${app.emoji} ${app.name}\n/miniapp:${app.id}` });
                   }}
                 >
-                  <ThemedText style={{ fontSize: 28 }}>{app.emoji}</ThemedText>
+                  <View style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}>
+                    <ThemedText style={{ fontSize: 26, lineHeight: 32 }}>{app.emoji}</ThemedText>
+                  </View>
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                       <ThemedText type="body" style={{ color: theme.text, fontWeight: '600' }}>{app.name}</ThemedText>
@@ -2108,13 +2092,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    overflow: "hidden",
   },
   miniAppSuggestionItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
-    gap: Spacing.xs,
+    paddingVertical: 14,
+    gap: Spacing.sm,
   },
 });
