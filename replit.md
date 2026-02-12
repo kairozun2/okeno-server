@@ -54,6 +54,16 @@ Core entities defined in Drizzle schema:
 UPDATE users SET is_admin = true, is_verified = true WHERE id = 'USER_ID_HERE';
 ```
 
+### Group Chat Management
+- Group chat info screen: Accessible by tapping the avatar/header in a group chat (GroupChatInfoScreen)
+- Shows: group emoji, name, member count, full member list, media tabs (Photos/Voice/Links)
+- Members can be tapped to view their profile
+- Group edit modal: accessible via swipe-to-edit on group chats in chat list
+  - Edit group name and emoji
+  - View and kick members (admin only)
+  - Add new members from contacts (admin only) with search
+- API: `GET /api/chats/:id/media?type=photos|voice|links` - fetch shared media from a chat
+
 ### Authentication Flow
 1. Register with username + 4-digit PIN → server assigns random emoji
 2. Login with user ID + PIN → creates session
