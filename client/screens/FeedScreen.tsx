@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from "react";
-import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert, TextInput, ScrollView, ActivityIndicator } from "react-native";
+import { Share, View, StyleSheet, Pressable, Dimensions, Modal, Platform, Alert, TextInput, ScrollView, ActivityIndicator, Linking } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -710,15 +710,42 @@ export default function FeedScreen({ navigation }: Props) {
             </Pressable>
           </View>
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl }}>
-             <Feather name="map" size={48} color={theme.textSecondary} />
-             <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: 'center' }}>
-               Maps are available in the Okeno app via Expo Go on your device.
-             </ThemedText>
-             {selectedLocation && (
-               <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: 'center' }}>
-                 Coordinates: {selectedLocation.lat.toFixed(4)}, {selectedLocation.lng.toFixed(4)}
-               </ThemedText>
-             )}
+             <Feather name="map-pin" size={48} color={theme.link} />
+             {selectedLocation ? (
+               <>
+                 <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: 'center' }}>
+                   {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
+                 </ThemedText>
+                 <Pressable
+                   onPress={() => {
+                     if (!selectedLocation) return;
+                     const { lat, lng, name } = selectedLocation;
+                     const label = encodeURIComponent(name || `${lat},${lng}`);
+                     const url = Platform.select({
+                       ios: `maps:0,0?q=${label}@${lat},${lng}`,
+                       android: `geo:${lat},${lng}?q=${lat},${lng}(${label})`,
+                       default: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+                     });
+                     if (url) Linking.openURL(url).catch(() => {});
+                   }}
+                   style={{
+                     marginTop: Spacing.lg,
+                     backgroundColor: theme.link,
+                     paddingHorizontal: 24,
+                     paddingVertical: 12,
+                     borderRadius: 12,
+                     flexDirection: 'row',
+                     alignItems: 'center',
+                     gap: 8,
+                   }}
+                 >
+                   <Feather name="navigation" size={16} color="#fff" />
+                   <ThemedText style={{ color: '#fff', fontWeight: '600' }}>
+                     {t("Open in Maps", "Открыть в Картах")}
+                   </ThemedText>
+                 </Pressable>
+               </>
+             ) : null}
           </View>
         </ThemedView>
       </Modal>
