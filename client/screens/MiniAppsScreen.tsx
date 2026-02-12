@@ -63,7 +63,7 @@ export default function MiniAppsScreen({ navigation }: Props) {
   });
 
   const { data: myApps = [], refetch: refetchMyApps } = useQuery<MiniApp[]>({
-    queryKey: ["/api/mini-apps/my"],
+    queryKey: ["/api/mini-apps/my", user?.id],
     queryFn: async () => {
       const response = await fetch(new URL("/api/mini-apps/my", getApiUrl()).toString(), { headers });
       if (!response.ok) throw new Error("Failed");
