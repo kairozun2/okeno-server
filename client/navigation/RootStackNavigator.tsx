@@ -27,6 +27,7 @@ import BlockedUsersScreen from "@/screens/BlockedUsersScreen";
 import DebugConsoleScreen from "@/screens/DebugConsoleScreen";
 import ThemeSelectionScreen from "@/screens/ThemeSelectionScreen";
 import CreateGroupChatScreen from "@/screens/CreateGroupChatScreen";
+import GroupChatInfoScreen from "@/screens/GroupChatInfoScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -58,6 +59,7 @@ export type RootStackParamList = {
   DebugConsole: undefined;
   ThemeSelection: undefined;
   CreateGroupChat: undefined;
+  GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -334,6 +336,14 @@ export default function RootStackNavigator() {
               presentation: "modal",
               animation: "slide_from_bottom",
             }}
+          />
+          <Stack.Screen
+            name="GroupChatInfo"
+            component={GroupChatInfoScreen}
+            options={({ navigation }) => ({
+              ...screenOptions,
+              headerTitle: "",
+            })}
           />
         </>
       ) : (

@@ -3,7 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema, chats, groupChatMembers, messages } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, isNotNull, desc, like, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { moderateUsername } from "./moderation";
 import * as fs from "fs";
@@ -690,6 +690,41 @@ export async function registerRoutes(app: express.Express) {
     } catch (error) {
       console.error("Get chat error:", error);
       res.status(500).json({ error: "Failed to get chat" });
+    }
+  });
+
+  app.get("/api/chats/:id/media", async (req, res) => {
+    try {
+      const chatId = req.params.id;
+      const type = req.query.type as string || "photos";
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      let condition;
+      if (type === "photos") {
+        condition = and(eq(messages.chatId, chatId), isNotNull(messages.imageUrl));
+      } else if (type === "voice") {
+        condition = and(eq(messages.chatId, chatId), isNotNull(messages.voiceUrl));
+      } else if (type === "links") {
+        condition = and(
+          eq(messages.chatId, chatId),
+          sql`${messages.content} ~ 'https?://'`
+        );
+      } else {
+        return res.status(400).json({ error: "Invalid type. Use: photos, voice, links" });
+      }
+
+      const results = await db.select()
+        .from(messages)
+        .where(condition)
+        .orderBy(desc(messages.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      res.json(results);
+    } catch (error) {
+      console.error("Get chat media error:", error);
+      res.status(500).json({ error: "Failed to get media" });
     }
   });
 
