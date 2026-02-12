@@ -500,84 +500,86 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
 
       <Modal
         visible={showReportModal}
-        transparent
-        animationType="fade"
+        transparent={false}
+        animationType="slide"
         onRequestClose={() => setShowReportModal(false)}
       >
-        <Pressable style={styles.menuOverlay} onPress={() => setShowReportModal(false)}>
-          <View style={styles.reportContainer} onStartShouldSetResponder={() => true}>
-            <BlurView intensity={120} tint="dark" style={styles.reportContent}>
-              <View style={styles.reportHeader}>
-                <Text style={{ fontSize: 24 }}>{displayEmoji}</Text>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={[styles.menuAppName, { color: "#FFF" }]}>{appName}</Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 }}>
-                    {t("Report this mini app", "Пожаловаться на мини-приложение")}
-                  </Text>
-                </View>
+        <View style={[styles.reportFullScreen, { backgroundColor: theme.backgroundRoot }]}>
+          <View style={[styles.reportFullHeader, { paddingTop: insets.top + 8, borderBottomColor: theme.border }]}>
+            <Pressable onPress={() => { setShowReportModal(false); setReportCategory(null); setReportReason(""); }}>
+              <ThemedText type="body" style={{ color: theme.accent }}>{t("Cancel", "Отмена")}</ThemedText>
+            </Pressable>
+            <ThemedText type="body" style={{ fontWeight: '600' }}>{t("Report", "Жалоба")}</ThemedText>
+            <Pressable
+              onPress={() => {
+                if (!reportCategory) {
+                  Alert.alert(t("Error", "Ошибка"), t("Select a reason", "Выберите причину"));
+                  return;
+                }
+                reportMutation.mutate();
+              }}
+              disabled={reportMutation.isPending}
+            >
+              <ThemedText type="body" style={{ color: reportCategory ? '#FF3B30' : theme.textSecondary, fontWeight: '600' }}>
+                {reportMutation.isPending ? t("...", "...") : t("Send", "Отправить")}
+              </ThemedText>
+            </Pressable>
+          </View>
+
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 40 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={[styles.reportAppCard, { backgroundColor: theme.cardBackground }]}>
+              <Text style={{ fontSize: 28 }}>{displayEmoji}</Text>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <ThemedText type="body" style={{ fontWeight: '600' }}>{appName}</ThemedText>
+                <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
+                  {t("Report this mini app", "Пожаловаться на мини-приложение")}
+                </ThemedText>
               </View>
+            </View>
 
-              <View style={[styles.menuDivider, { backgroundColor: 'rgba(255,255,255,0.1)' }]} />
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 20, marginBottom: 10, marginLeft: 4 }}>
+              {t("SELECT A REASON", "ВЫБЕРИТЕ ПРИЧИНУ")}
+            </ThemedText>
 
-              <ScrollView style={{ maxHeight: 200 }}>
-                {REPORT_CATEGORIES.map((cat) => (
+            <View style={[styles.reportCategoriesCard, { backgroundColor: theme.cardBackground }]}>
+              {REPORT_CATEGORIES.map((cat, idx) => (
+                <React.Fragment key={cat.id}>
+                  {idx > 0 ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: theme.border, marginLeft: 44 }} /> : null}
                   <Pressable
-                    key={cat.id}
-                    style={[
-                      styles.reportCategoryItem,
-                      reportCategory === cat.id && { backgroundColor: 'rgba(255,59,48,0.15)' },
-                    ]}
+                    style={styles.reportCategoryRow}
                     onPress={() => setReportCategory(cat.id)}
                   >
                     <View style={[styles.reportRadio, reportCategory === cat.id && styles.reportRadioSelected]}>
                       {reportCategory === cat.id ? <View style={styles.reportRadioDot} /> : null}
                     </View>
-                    <Text style={{ color: "#FFF", fontSize: 15 }}>
+                    <ThemedText type="body">
                       {language === "ru" ? cat.ru : cat.en}
-                    </Text>
+                    </ThemedText>
                   </Pressable>
-                ))}
-              </ScrollView>
+                </React.Fragment>
+              ))}
+            </View>
 
-              <TextInput
-                style={[styles.reportInput, { borderColor: 'rgba(255,255,255,0.15)', color: "#FFF" }]}
-                placeholder={t("Additional details (optional)", "Подробности (необязательно)")}
-                placeholderTextColor="rgba(255,255,255,0.3)"
-                value={reportReason}
-                onChangeText={setReportReason}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+            <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 20, marginBottom: 10, marginLeft: 4 }}>
+              {t("ADDITIONAL DETAILS", "ПОДРОБНОСТИ")}
+            </ThemedText>
 
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-                <Pressable
-                  style={[styles.reportBtn, { backgroundColor: 'rgba(255,255,255,0.1)', flex: 1 }]}
-                  onPress={() => { setShowReportModal(false); setReportCategory(null); setReportReason(""); }}
-                >
-                  <Text style={{ color: 'rgba(255,255,255,0.6)', fontWeight: '600', fontSize: 15 }}>
-                    {t("Cancel", "Отмена")}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.reportBtn, { backgroundColor: reportCategory ? '#FF3B30' : 'rgba(255,59,48,0.3)', flex: 1 }]}
-                  onPress={() => {
-                    if (!reportCategory) {
-                      Alert.alert(t("Error", "Ошибка"), t("Select a reason", "Выберите причину"));
-                      return;
-                    }
-                    reportMutation.mutate();
-                  }}
-                  disabled={reportMutation.isPending}
-                >
-                  <Text style={{ color: "#FFF", fontWeight: '600', fontSize: 15 }}>
-                    {reportMutation.isPending ? t("Sending...", "Отправка...") : t("Send", "Отправить")}
-                  </Text>
-                </Pressable>
-              </View>
-            </BlurView>
-          </View>
-        </Pressable>
+            <TextInput
+              style={[styles.reportFullInput, { backgroundColor: theme.cardBackground, color: theme.text, borderColor: theme.border }]}
+              placeholder={t("Describe the issue (optional)", "Опишите проблему (необязательно)")}
+              placeholderTextColor={theme.textSecondary}
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+              numberOfLines={5}
+              textAlignVertical="top"
+            />
+          </ScrollView>
+        </View>
       </Modal>
     </View>
   );
@@ -766,28 +768,32 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginLeft: 8,
   },
-  reportContainer: {
-    marginHorizontal: 16,
-    marginBottom: 30,
-    borderRadius: 20,
+  reportFullScreen: {
+    flex: 1,
+  },
+  reportFullHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  reportAppCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 14,
+  },
+  reportCategoriesCard: {
+    borderRadius: 14,
     overflow: "hidden",
   },
-  reportContent: {
-    padding: 20,
-    backgroundColor: "rgba(15,25,45,0.65)",
-  },
-  reportHeader: {
+  reportCategoryRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
-  },
-  reportCategoryItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 11,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    marginBottom: 4,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
   },
   reportRadio: {
     width: 20,
@@ -808,18 +814,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: "#FF3B30",
   },
-  reportInput: {
+  reportFullInput: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 8,
-    fontSize: 14,
-    minHeight: 70,
-  },
-  reportBtn: {
-    paddingVertical: 13,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 14,
+    padding: 14,
+    fontSize: 15,
+    minHeight: 100,
   },
 });
