@@ -473,6 +473,11 @@ export default function ChatsListScreen({ navigation }: Props) {
     },
   });
 
+  const groupMembersQuery = useQuery({
+    queryKey: ["/api/group-chats", longPressChat?.id, "members"],
+    enabled: showEditGroupModal && !!longPressChat?.id,
+  });
+
   const editGroupMutation = useMutation({
     mutationFn: async ({ chatId, name, groupEmoji }: { chatId: string; name: string; groupEmoji: string }) => {
       await apiRequest("PATCH", `/api/group-chats/${chatId}`, { name, groupEmoji });
@@ -482,6 +487,17 @@ export default function ChatsListScreen({ navigation }: Props) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowEditGroupModal(false);
       setLongPressChat(null);
+    },
+  });
+
+  const kickMemberMutation = useMutation({
+    mutationFn: async ({ chatId, userId }: { chatId: string; userId: string }) => {
+      await apiRequest("DELETE", `/api/group-chats/${chatId}/members/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/group-chats", longPressChat?.id, "members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "chats"] });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
   });
 
@@ -695,10 +711,10 @@ export default function ChatsListScreen({ navigation }: Props) {
             </Pressable>
           </View>
           
-          <ScrollView contentContainerStyle={{ padding: Spacing.lg }}>
+          <ScrollView contentContainerStyle={{ padding: Spacing.lg, paddingBottom: insets.bottom + Spacing.xl }}>
             <View style={{ alignItems: 'center', marginBottom: Spacing.xl }}>
-              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: theme.backgroundSecondary, alignItems: 'center', justifyContent: 'center' }}>
-                <ThemedText style={{ fontSize: 40 }}>{editGroupEmoji}</ThemedText>
+              <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: theme.backgroundSecondary, alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}>
+                <ThemedText style={{ fontSize: 44, lineHeight: 54, textAlign: 'center' }}>{editGroupEmoji}</ThemedText>
               </View>
             </View>
             
@@ -731,6 +747,61 @@ export default function ChatsListScreen({ navigation }: Props) {
               ]}
               maxLength={4}
             />
+
+            <ThemedText type="body" style={{ color: theme.textSecondary, marginBottom: Spacing.sm, marginTop: Spacing.xl, fontWeight: '500' }}>
+              {t("Members", "Участники")} {groupMembersQuery.data ? `(${(groupMembersQuery.data as any[]).length})` : ""}
+            </ThemedText>
+            <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12, overflow: 'hidden' }}>
+              {groupMembersQuery.isLoading ? (
+                <View style={{ padding: Spacing.lg, alignItems: 'center' }}>
+                  <ActivityIndicator size="small" color={theme.link} />
+                </View>
+              ) : (groupMembersQuery.data as any[] || []).map((member: any, index: number) => {
+                const isCurrentUser = member.userId === user?.id;
+                const isAdmin = member.role === "admin";
+                const membersList = groupMembersQuery.data as any[];
+                const isLast = index === membersList.length - 1;
+                return (
+                  <View
+                    key={member.id}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      padding: Spacing.md,
+                      borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+                      borderBottomColor: theme.border,
+                    }}
+                  >
+                    <Avatar emoji={member.user?.emoji || "🐸"} size={40} />
+                    <View style={{ flex: 1, marginLeft: Spacing.md }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <ThemedText type="body" style={{ fontWeight: '500' }}>
+                          {member.user?.username || "User"}
+                        </ThemedText>
+                        {member.user?.isVerified ? <VerifiedBadge size={14} /> : null}
+                      </View>
+                      <ThemedText type="caption" style={{ color: isAdmin ? theme.link : theme.textSecondary }}>
+                        {isAdmin ? t("Admin", "Админ") : t("Member", "Участник")}
+                      </ThemedText>
+                    </View>
+                    {!isCurrentUser && !isAdmin && longPressChat?.user1Id === user?.id ? (
+                      <Pressable
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                          if (longPressChat) {
+                            kickMemberMutation.mutate({ chatId: longPressChat.id, userId: member.userId });
+                          }
+                        }}
+                        style={{ padding: Spacing.sm }}
+                        disabled={kickMemberMutation.isPending}
+                      >
+                        <Feather name="user-minus" size={18} color={theme.error} />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </View>
           </ScrollView>
         </View>
       </Modal>
