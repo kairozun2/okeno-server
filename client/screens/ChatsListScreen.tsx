@@ -491,7 +491,7 @@ export default function ChatsListScreen({ navigation }: Props) {
     },
     enabled: !!user?.id,
     staleTime: 5000,
-    refetchInterval: 3000,
+    refetchInterval: 4000,
   });
 
   const { data: allChatSettings = [] } = useQuery<ChatSettings[]>({

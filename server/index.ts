@@ -1,6 +1,8 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
+import { addDatabaseIndexes } from "./add-indexes";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -22,7 +24,7 @@ function setupCors(app: express.Application) {
     }
 
     if (process.env.REPLIT_DOMAINS) {
-      process.env.REPLIT_DOMAINS.split(",").forEach((d) => {
+      process.env.REPLIT_DOMAINS.split(",").forEach((d: string) => {
         origins.add(`https://${d.trim()}`);
       });
     }
@@ -341,6 +343,44 @@ function configureExpoAndLanding(app: express.Application) {
   log("Expo routing: Checking expo-platform header on / and /manifest");
 }
 
+function setupRateLimiting(app: express.Application) {
+  const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of rateLimitMap) {
+      if (now > value.resetTime) {
+        rateLimitMap.delete(key);
+      }
+    }
+  }, 60000);
+
+  app.use((req, res, next) => {
+    if (!req.path.startsWith("/api")) {
+      return next();
+    }
+
+    const ip = req.ip || req.socket.remoteAddress || "unknown";
+    const isAuthEndpoint = req.path.startsWith("/api/auth/");
+    const limit = isAuthEndpoint ? 10 : 100;
+    const key = `${ip}:${isAuthEndpoint ? "auth" : "general"}`;
+    const now = Date.now();
+
+    const entry = rateLimitMap.get(key);
+    if (!entry || now > entry.resetTime) {
+      rateLimitMap.set(key, { count: 1, resetTime: now + 60000 });
+      return next();
+    }
+
+    entry.count++;
+    if (entry.count > limit) {
+      return res.status(429).json({ error: "Too many requests, please try again later" });
+    }
+
+    return next();
+  });
+}
+
 function setupErrorHandler(app: express.Application) {
   app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
     const error = err as {
@@ -363,11 +403,14 @@ function setupErrorHandler(app: express.Application) {
 }
 
 (async () => {
+  setupRateLimiting(app);
   setupCors(app);
+  app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
   setupBodyParsing(app);
   setupRequestLogging(app);
 
   const server = await registerRoutes(app);
+  await addDatabaseIndexes();
 
   configureExpoAndLanding(app);
 

@@ -691,7 +691,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       return response.json();
     },
     enabled: !!otherUserId,
-    refetchInterval: 1500,
+    refetchInterval: 2000,
   });
 
   const isOtherUserTyping = typingData?.isTyping || false;
@@ -847,7 +847,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     },
     initialPageParam: 0,
     staleTime: 5000,
-    refetchInterval: 1500, 
+    refetchInterval: 2000, 
   });
 
   const messages = data?.pages.flat() || [];

@@ -151,7 +151,7 @@ export default function MainTabNavigator() {
       return response.json();
     },
     enabled: !!user?.id,
-    refetchInterval: 3000,
+    refetchInterval: 5000,
   });
 
   const unreadCount = unreadData?.count || 0;

