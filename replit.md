@@ -6,7 +6,7 @@ Okeno is a mobile-first social media application built with React Native (Expo) 
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+Preferred communication style: Simple, everyday language. Always respond in Russian.
 Design priorities: Stability, optimization, smooth performance, minimalist Telegram-style UI.
 
 ## System Architecture

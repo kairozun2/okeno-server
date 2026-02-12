@@ -215,8 +215,14 @@ export default function MainTabNavigator() {
             ),
             headerRight: () => (
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <SearchButton />
-                <NotificationsButton />
+                {showPlus ? (
+                  <Animated.View entering={FadeIn} exiting={FadeOut}>
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <SearchButton />
+                      <NotificationsButton />
+                    </View>
+                  </Animated.View>
+                ) : null}
               </View>
             ),
             tabBarIcon: ({ color }) => (
