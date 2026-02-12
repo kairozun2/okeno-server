@@ -808,7 +808,7 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
-  const activeCalls = new Map<string, { callerId: string; callerName: string; callerEmoji: string; chatId: string; createdAt: number; status: string }>();
+  const activeCalls = new Map<string, { callerId: string; callerName: string; callerEmoji: string; chatId: string; createdAt: number; status: string; declinedAt?: number }>();
 
   setInterval(() => {
     const now = Date.now();
@@ -906,13 +906,15 @@ export async function registerRoutes(app: express.Express) {
       if (userId) {
         const call = activeCalls.get(userId);
         if (call) {
+          const declinedAt = Date.now();
           call.status = "declined";
+          call.declinedAt = declinedAt;
           setTimeout(() => {
             const c = activeCalls.get(userId);
-            if (c && c.status === "declined") {
+            if (c && c.status === "declined" && c.declinedAt === declinedAt) {
               activeCalls.delete(userId);
             }
-          }, 5000);
+          }, 10000);
         }
       }
       res.json({ success: true });

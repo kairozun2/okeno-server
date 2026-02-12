@@ -29,6 +29,9 @@ export default function CallScreen({ route, navigation }: any) {
   const [isSpeaker, setIsSpeaker] = useState(false);
   const missedCallSentRef = useRef(false);
   const connectedTimeRef = useRef(0);
+  const statusPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const ringingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const unavailableTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dialingPlayer = useAudioPlayer(isIncoming ? null : dialingSource);
 
   const pulse1 = useSharedValue(1);
@@ -79,36 +82,44 @@ export default function CallScreen({ route, navigation }: any) {
     opacity: 2 - pulse3.value,
   }));
 
-  useEffect(() => {
-    if (isIncoming) return;
+  const cleanupCallTimers = () => {
+    if (ringingTimerRef.current) { clearTimeout(ringingTimerRef.current); ringingTimerRef.current = null; }
+    if (unavailableTimerRef.current) { clearTimeout(unavailableTimerRef.current); unavailableTimerRef.current = null; }
+    if (statusPollRef.current) { clearInterval(statusPollRef.current); statusPollRef.current = null; }
+    try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
+  };
+
+  const initiateCall = () => {
+    cleanupCallTimers();
+
+    setCallState("connecting");
+    setElapsed(0);
+    missedCallSentRef.current = false;
 
     if (chatId && userId && user?.id) {
-      apiRequest("POST", "/api/call", {
-        callerId: user.id,
-        recipientId: userId,
-        chatId,
-      }).catch(() => {});
+      apiRequest("POST", "/api/call/end", { recipientId: userId })
+        .catch(() => {})
+        .finally(() => {
+          apiRequest("POST", "/api/call", {
+            callerId: user.id,
+            recipientId: userId,
+            chatId,
+          }).catch(() => {});
+        });
     }
 
-    try {
-      if (dialingPlayer) {
-        dialingPlayer.loop = true;
-        dialingPlayer.volume = 0.5;
-      }
-    } catch {}
-
-    const timer = setTimeout(() => {
+    ringingTimerRef.current = setTimeout(() => {
       setCallState("ringing");
       try { if (dialingPlayer) dialingPlayer.play(); } catch {}
     }, 2000);
 
-    const unavailableTimer = setTimeout(() => {
+    unavailableTimerRef.current = setTimeout(() => {
       setCallState(prev => (prev === "connected" || prev === "declined") ? prev : "unavailable");
       try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }, 30000);
 
-    const statusPoll = setInterval(async () => {
+    statusPollRef.current = setInterval(async () => {
       try {
         const baseUrl = getApiUrl();
         const url = new URL(`/api/call/status/${userId}`, baseUrl);
@@ -120,25 +131,35 @@ export default function CallScreen({ route, navigation }: any) {
           connectedTimeRef.current = Date.now();
           try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          clearTimeout(unavailableTimer);
-          clearInterval(statusPoll);
+          if (unavailableTimerRef.current) clearTimeout(unavailableTimerRef.current);
+          if (statusPollRef.current) clearInterval(statusPollRef.current);
         } else if (data.status === "declined") {
           setCallState("declined");
           try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          clearTimeout(unavailableTimer);
-          clearInterval(statusPoll);
+          if (unavailableTimerRef.current) clearTimeout(unavailableTimerRef.current);
+          if (statusPollRef.current) clearInterval(statusPollRef.current);
         } else if (!data.exists) {
-          clearInterval(statusPoll);
+          if (statusPollRef.current) clearInterval(statusPollRef.current);
         }
       } catch {}
     }, 1500);
+  };
+
+  useEffect(() => {
+    if (isIncoming) return;
+
+    try {
+      if (dialingPlayer) {
+        dialingPlayer.loop = true;
+        dialingPlayer.volume = 0.5;
+      }
+    } catch {}
+
+    initiateCall();
 
     return () => {
-      clearTimeout(timer);
-      clearTimeout(unavailableTimer);
-      clearInterval(statusPoll);
-      try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
+      cleanupCallTimers();
       if (userId) {
         apiRequest("POST", "/api/call/end", { recipientId: userId }).catch(() => {});
       }
@@ -269,25 +290,7 @@ export default function CallScreen({ route, navigation }: any) {
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              missedCallSentRef.current = false;
-              setCallState("connecting");
-              setElapsed(0);
-              if (chatId && userId && user?.id) {
-                apiRequest("POST", "/api/call", {
-                  callerId: user.id,
-                  recipientId: userId,
-                  chatId,
-                }).catch(() => {});
-              }
-              setTimeout(() => {
-                setCallState("ringing");
-                try { if (dialingPlayer) dialingPlayer.play(); } catch {}
-              }, 2000);
-              setTimeout(() => {
-                setCallState(prev => (prev === "connected" || prev === "declined") ? prev : "unavailable");
-                try { if (dialingPlayer) dialingPlayer.pause(); } catch {}
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-              }, 30000);
+              initiateCall();
             }}
             style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.sm }}
           >
