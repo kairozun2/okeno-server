@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { WebView } from "react-native-webview";
 import * as Haptics from "expo-haptics";
+import { BlurView } from "expo-blur";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -180,15 +181,19 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
           <Animated.View style={[styles.controlsBar, { top: insets.top + 8 }, controlsAnimStyle]}>
             <Pressable
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); webViewRef.current?.reload(); }}
-              style={styles.controlBtn}
+              style={{ borderRadius: 20, overflow: 'hidden' }}
             >
-              <Feather name="refresh-cw" size={18} color="#FFF" />
+              <BlurView intensity={50} tint="dark" style={styles.controlBtn}>
+                <Feather name="refresh-cw" size={18} color="#FFF" />
+              </BlurView>
             </Pressable>
             <Pressable
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); navigation.goBack(); }}
-              style={styles.controlBtn}
+              style={{ borderRadius: 20, overflow: 'hidden' }}
             >
-              <Feather name="x" size={20} color="#FFF" />
+              <BlurView intensity={50} tint="dark" style={styles.controlBtn}>
+                <Feather name="x" size={20} color="#FFF" />
+              </BlurView>
             </Pressable>
           </Animated.View>
 
@@ -227,7 +232,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.25)",
     justifyContent: "center",
     alignItems: "center",
   },

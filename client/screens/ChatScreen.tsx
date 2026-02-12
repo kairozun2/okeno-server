@@ -417,14 +417,14 @@ function MessageBubble({
             styles.messageInner,
             { 
               backgroundColor: isOwn 
-                ? "transparent"
+                ? (isDark ? 'rgba(52,120,246,0.12)' : 'rgba(52,120,246,0.08)')
                 : (isSelected ? (isDark ? "#323235" : "#f0f0f2") : theme.cardBackground),
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: isSelected ? 1.05 : 1 }],
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isOwn ? 0.08 : (isSelected ? 0.3 : 0),
-              shadowRadius: isOwn ? 4 : 8,
+              shadowOpacity: isOwn ? 0.1 : (isSelected ? 0.3 : 0),
+              shadowRadius: isOwn ? 6 : 8,
               elevation: isOwn ? 2 : (isSelected ? 10 : 0),
               overflow: 'hidden',
               borderWidth: isOwn ? 1 : 0,
@@ -2114,7 +2114,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: 12,
     gap: Spacing.xs,
   },
 });
