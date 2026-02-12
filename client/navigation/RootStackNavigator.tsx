@@ -31,6 +31,8 @@ import GroupChatInfoScreen from "@/screens/GroupChatInfoScreen";
 import CallScreen from "@/screens/CallScreen";
 import NotificationSettingsScreen from "@/screens/NotificationSettingsScreen";
 import SupportScreen from "@/screens/SupportScreen";
+import MiniAppsScreen from "@/screens/MiniAppsScreen";
+import MiniAppViewerScreen from "@/screens/MiniAppViewerScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -66,6 +68,8 @@ export type RootStackParamList = {
   CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string };
   NotificationSettings: undefined;
   Support: undefined;
+  MiniApps: undefined;
+  MiniAppViewer: { appId: string; appName: string; appUrl: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -370,6 +374,25 @@ export default function RootStackNavigator() {
               ...screenOptions,
               headerTitle: "",
             })}
+          />
+          <Stack.Screen
+            name="MiniApps"
+            component={MiniAppsScreen}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
+          <Stack.Screen
+            name="MiniAppViewer"
+            component={MiniAppViewerScreen}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+              gestureEnabled: true,
+            }}
           />
           <Stack.Screen
             name="CallScreen"

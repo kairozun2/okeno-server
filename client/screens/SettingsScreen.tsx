@@ -37,6 +37,7 @@ const SETTINGS_ICONS = {
   bug: require("../assets/icons/settings/bug.png"),
   discord: require("../assets/icons/settings/discord.png"),
   archiveBox: require("../assets/icons/settings/archive-box.png"),
+  miniapps: require("../assets/icons/settings/miniapps.png"),
 };
 
 const ACCENT_COLORS = [
@@ -276,6 +277,17 @@ export default function SettingsScreen({ navigation }: Props) {
           title: t("App Language", "Язык приложения"),
           subtitle: language === "ru" ? "Русский" : "English",
           onPress: () => setShowLanguagePicker(true),
+        },
+      ],
+    },
+    {
+      title: t("MINI APPS", "МИНИ-ПРИЛОЖЕНИЯ"),
+      items: [
+        {
+          customIcon: SETTINGS_ICONS.miniapps,
+          title: t("Mini Apps", "Мини-приложения"),
+          subtitle: t("Browse and create apps", "Обзор и создание приложений"),
+          onPress: () => navigation.navigate("MiniApps"),
         },
       ],
     },
