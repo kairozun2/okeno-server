@@ -252,7 +252,7 @@ export default function MiniAppViewerScreen({ navigation, route }: Props) {
         <View style={styles.webFallback}>
           <Feather name="smartphone" size={48} color={theme.textSecondary} />
           <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: "center" }}>
-            Mini apps work best in Expo Go
+            Mini apps work best on mobile devices
           </ThemedText>
           <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm, textAlign: "center" }}>
             {validUrl}
