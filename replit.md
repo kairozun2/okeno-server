@@ -27,6 +27,9 @@ Design priorities: Stability, optimization, smooth performance, minimalist Teleg
 - **Database ORM**: Drizzle ORM with PostgreSQL
 - **API Style**: RESTful JSON endpoints under `/api/` prefix
 - **Schema Location**: Shared between client and server in `shared/schema.ts`
+- **Security**: Helmet headers, in-memory rate limiting (100/min general, 10/min auth), input sanitization
+- **Database Indexes**: Comprehensive indexes on all frequently queried columns (server/add-indexes.ts)
+- **Connection Pool**: Optimized with max=20, idle timeout 30s, connection timeout 5s
 
 ### Path Aliases
 - `@/` maps to `./client/` (frontend code)
