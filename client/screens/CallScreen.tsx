@@ -9,19 +9,23 @@ import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, useSharedValue, u
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiRequest } from "@/lib/query-client";
 import { Spacing } from "@/constants/theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function CallScreen({ route, navigation }: any) {
-  const { userId, displayName, displayEmoji } = route.params || {};
+  const { userId, displayName, displayEmoji, chatId } = route.params || {};
   const { theme, isDark, language } = useTheme();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
   const [callState, setCallState] = useState<"connecting" | "ringing" | "unavailable">("connecting");
   const [elapsed, setElapsed] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(false);
+  const missedCallSentRef = useRef(false);
 
   const pulse1 = useSharedValue(1);
   const pulse2 = useSharedValue(1);
@@ -100,16 +104,37 @@ export default function CallScreen({ route, navigation }: any) {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const handleEndCall = () => {
+  const sendMissedCall = async () => {
+    if (missedCallSentRef.current || !chatId || !user?.id) return;
+    missedCallSentRef.current = true;
+    try {
+      await apiRequest("POST", "/api/messages", {
+        chatId,
+        senderId: user.id,
+        content: `📞 ${t("Missed call", "Пропущенный звонок")}`,
+      });
+    } catch {}
+  };
+
+  const handleEndCall = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    if (callState === "unavailable" || callState === "ringing") {
+      await sendMissedCall();
+    }
     navigation.goBack();
   };
+
+  useEffect(() => {
+    if (callState === "unavailable") {
+      sendMissedCall();
+    }
+  }, [callState]);
 
   const statusText = callState === "connecting"
     ? t("Connecting...", "Подключение...")
     : callState === "ringing"
     ? t("Ringing...", "Звоним...")
-    : t("Unavailable", "Недоступен");
+    : t("Didn't answer", "Не ответил");
 
   return (
     <View style={[styles.container, { backgroundColor: '#000' }]}>
@@ -180,13 +205,25 @@ export default function CallScreen({ route, navigation }: any) {
               style={[StyleSheet.absoluteFill, { borderRadius: 16, overflow: 'hidden' }]}
             />
           ) : null}
-          <Feather name="info" size={16} color={theme.textSecondary} />
-          <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 8, flex: 1 }}>
-            {t(
-              "Voice calls require a native app build. Coming soon!",
-              "Голосовые звонки требуют нативную сборку. Скоро!"
-            )}
-          </ThemedText>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              missedCallSentRef.current = false;
+              setCallState("connecting");
+              setElapsed(0);
+              setTimeout(() => setCallState("ringing"), 2000);
+              setTimeout(() => {
+                setCallState("unavailable");
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              }, 12000);
+            }}
+            style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.sm }}
+          >
+            <Feather name="phone" size={16} color={theme.accent} />
+            <ThemedText type="body" style={{ color: theme.accent, marginLeft: 8, fontWeight: '600' }}>
+              {t("Call again", "Позвонить снова")}
+            </ThemedText>
+          </Pressable>
         </Animated.View>
       ) : null}
 

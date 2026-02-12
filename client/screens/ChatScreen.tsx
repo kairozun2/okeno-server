@@ -304,6 +304,34 @@ function MessageBubble({
 
   const hasReactions = (message as any).reactions && (message as any).reactions.length > 0;
 
+  const isMissedCall = typeof message.content === 'string' && message.content.includes("📞");
+
+  if (isMissedCall) {
+    return (
+      <View style={{ alignItems: 'center', marginVertical: Spacing.sm, width: '100%' }}>
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: isDark ? 'rgba(255,70,70,0.12)' : 'rgba(255,70,70,0.08)',
+          paddingHorizontal: Spacing.md,
+          paddingVertical: Spacing.sm,
+          borderRadius: 16,
+          gap: 6,
+        }}>
+          <Feather name={isOwn ? "phone-outgoing" : "phone-incoming"} size={14} color="#FF6B6B" />
+          <ThemedText type="caption" style={{ color: '#FF6B6B', fontWeight: '600', fontSize: 13 }}>
+            {isOwn
+              ? t("Outgoing call", "Исходящий звонок")
+              : t("Missed call", "Пропущенный звонок")}
+          </ThemedText>
+          <ThemedText type="caption" style={{ color: theme.textSecondary, fontSize: 11 }}>
+            {formatMessageTime(new Date(message.createdAt))}
+          </ThemedText>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View style={[{ zIndex: isSelected ? 1001 : 1, width: '100%' }, animatedStyle]}>
@@ -1211,7 +1239,7 @@ export default function ChatScreen({ route, navigation }: Props) {
                 <Pressable
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    navigation.navigate("CallScreen" as any, { userId: otherUserId, displayName, displayEmoji });
+                    navigation.navigate("CallScreen" as any, { userId: otherUserId, displayName, displayEmoji, chatId });
                   }}
                   style={styles.headerButton}
                 >

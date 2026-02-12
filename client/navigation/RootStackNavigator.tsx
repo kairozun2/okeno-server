@@ -61,7 +61,7 @@ export type RootStackParamList = {
   ThemeSelection: undefined;
   CreateGroupChat: undefined;
   GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string };
-  CallScreen: { userId?: string; displayName?: string; displayEmoji?: string };
+  CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
