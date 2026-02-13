@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -7,6 +7,7 @@ import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
+import { Avatar } from "@/components/Avatar";
 import { ProfileEffect, PROFILE_EFFECTS, ProfileEffectType } from "@/components/ProfileEffect";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +16,9 @@ import { storeAuth } from "@/lib/auth";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const CARD_WIDTH = (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md) / 2;
 
 type Props = NativeStackScreenProps<RootStackParamList, "ProfileEffectSelection">;
 
@@ -56,46 +60,47 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl, paddingTop: Spacing.lg }}
-      >
-        <View style={[styles.preview, { backgroundColor: theme.backgroundSecondary }]}>
-          <ProfileEffect effect={selected} height={160} />
-          <View style={styles.previewContent}>
-            <ThemedText style={styles.previewEmoji}>{user?.emoji || "🐸"}</ThemedText>
-            <ThemedText type="body" style={{ color: theme.textSecondary }}>
-              {t("Preview", "Предпросмотр")}
-            </ThemedText>
-          </View>
+      <Animated.View entering={FadeIn.duration(300)} style={[styles.preview, { backgroundColor: theme.backgroundSecondary }]}>
+        <ProfileEffect effect={selected} height={220} />
+        <View style={styles.previewContent}>
+          <Avatar emoji={user?.emoji || "🐸"} size={72} />
+          <ThemedText type="h3" style={{ marginTop: Spacing.sm }}>
+            {user?.username}
+          </ThemedText>
+          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
+            {t("Preview", "Предпросмотр")}
+          </ThemedText>
         </View>
+      </Animated.View>
 
-        <View style={styles.grid}>
-          {PROFILE_EFFECTS.map((effect, index) => {
-            const isActive = selected === effect.id;
-            return (
-              <Animated.View key={effect.id || "none"} entering={FadeIn.delay(index * 50)}>
-                <Pressable
-                  onPress={() => handleSelect(effect.id)}
-                  style={[
-                    styles.effectCard,
-                    {
-                      backgroundColor: theme.backgroundSecondary,
-                      borderColor: isActive ? theme.accent : "transparent",
-                      borderWidth: 2,
-                    },
-                  ]}
-                >
-                  <View style={styles.effectPreview}>
-                    {effect.id ? (
-                      <ProfileEffect effect={effect.id} height={80} />
-                    ) : (
-                      <View style={[styles.noEffect, { backgroundColor: theme.backgroundRoot }]}>
-                        <Feather name="x" size={20} color={theme.textSecondary} />
-                      </View>
-                    )}
-                  </View>
-                  <ThemedText type="caption" style={[styles.effectLabel, isActive ? { color: theme.accent } : { color: theme.text }]}>
+      <View style={styles.cardsRow}>
+        {PROFILE_EFFECTS.map((effect, index) => {
+          const isActive = selected === effect.id;
+          return (
+            <Animated.View key={effect.id || "none"} entering={FadeIn.delay(index * 80).duration(300)}>
+              <Pressable
+                onPress={() => handleSelect(effect.id)}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: theme.backgroundSecondary,
+                    borderColor: isActive ? theme.accent : "transparent",
+                    borderWidth: 2,
+                    width: CARD_WIDTH,
+                  },
+                ]}
+              >
+                <View style={[styles.cardPreview, { backgroundColor: theme.backgroundRoot }]}>
+                  {effect.id ? (
+                    <ProfileEffect effect={effect.id} height={90} />
+                  ) : (
+                    <View style={styles.noEffectIcon}>
+                      <Feather name="x-circle" size={28} color={theme.textSecondary} />
+                    </View>
+                  )}
+                </View>
+                <View style={styles.cardLabel}>
+                  <ThemedText type="body" style={[isActive ? { color: theme.accent, fontWeight: "600" } : null]}>
                     {language === "ru" ? effect.labelRu : effect.label}
                   </ThemedText>
                   {isActive ? (
@@ -103,12 +108,12 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
                       <Feather name="check" size={12} color="#fff" />
                     </View>
                   ) : null}
-                </Pressable>
-              </Animated.View>
-            );
-          })}
-        </View>
-      </ScrollView>
+                </View>
+              </Pressable>
+            </Animated.View>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -116,11 +121,12 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
   },
   preview: {
-    marginHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    height: 160,
+    borderRadius: BorderRadius.xl,
+    height: 220,
     overflow: "hidden",
     marginBottom: Spacing.xl,
     justifyContent: "center",
@@ -128,42 +134,36 @@ const styles = StyleSheet.create({
   },
   previewContent: {
     alignItems: "center",
-    gap: 4,
+    zIndex: 1,
   },
-  previewEmoji: {
-    fontSize: 48,
-  },
-  grid: {
+  cardsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
-  effectCard: {
-    width: 100,
-    borderRadius: BorderRadius.md,
+  card: {
+    borderRadius: BorderRadius.lg,
     overflow: "hidden",
+  },
+  cardPreview: {
+    height: 90,
+    overflow: "hidden",
+    justifyContent: "center",
     alignItems: "center",
-    paddingBottom: Spacing.sm,
   },
-  effectPreview: {
-    width: "100%",
-    height: 80,
-    overflow: "hidden",
-  },
-  noEffect: {
+  noEffectIcon: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  effectLabel: {
-    marginTop: Spacing.xs,
-    textAlign: "center",
+  cardLabel: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   checkmark: {
-    position: "absolute",
-    top: 6,
-    right: 6,
     width: 20,
     height: 20,
     borderRadius: 10,

@@ -32,6 +32,7 @@ interface User {
   emoji: string;
   isVerified?: boolean;
   createdAt: string;
+  profileEffect?: string | null;
 }
 
 interface Post {
@@ -304,7 +305,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
     return (
       <View style={styles.header}>
-        <ProfileEffect effect={(profileUser as any)?.profileEffect as ProfileEffectType} height={200} />
+        <ProfileEffect effect={profileUser?.profileEffect as ProfileEffectType} height={200} />
         <Avatar emoji={profileUser?.emoji || "🐸"} size={72} />
         <View style={{ flexDirection: "row", alignItems: "center", marginTop: Spacing.sm }}>
           <ThemedText type="h3" style={[styles.username, { marginTop: 0 }]} truncate maxLength={15}>

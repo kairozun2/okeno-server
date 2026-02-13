@@ -318,7 +318,7 @@ export async function registerRoutes(app: express.Express) {
     try {
       const { effect } = req.body;
       const userId = req.params.id;
-      const validEffects = [null, "fireflies", "aurora", "bubbles", "stars", "snow", "rain"];
+      const validEffects = [null, "stars", "rain"];
       if (!validEffects.includes(effect)) {
         return res.status(400).json({ error: "Invalid effect" });
       }
