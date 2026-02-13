@@ -13,7 +13,7 @@ import {
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming, Easing } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
@@ -194,6 +194,17 @@ export function ProfileEditModal({
   const daysLeft = getDaysUntilChange();
   const showEmojiGrid = !isKeyboardVisible && !isClosing;
 
+  const emojiOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    const timingConfig = { duration: 200, easing: Easing.out(Easing.ease) };
+    emojiOpacity.value = withTiming(showEmojiGrid ? 1 : 0, timingConfig);
+  }, [showEmojiGrid]);
+
+  const emojiAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: emojiOpacity.value,
+  }));
+
   return (
     <Modal
       visible={visible}
@@ -236,14 +247,14 @@ export function ProfileEditModal({
               </View>
             </View>
 
-            {error && showEmojiGrid ? (
-              <View style={[styles.errorContainer, { backgroundColor: theme.error + "20" }]}>
-                <ThemedText style={{ color: theme.error }}>{error}</ThemedText>
-              </View>
-            ) : null}
-
             {showEmojiGrid ? (
-              <>
+              <Animated.View style={emojiAnimatedStyle}>
+                {error ? (
+                  <View style={[styles.errorContainer, { backgroundColor: theme.error + "20" }]}>
+                    <ThemedText style={{ color: theme.error }}>{error}</ThemedText>
+                  </View>
+                ) : null}
+
                 <ThemedText type="body" style={styles.sectionTitle}>
                   {isAdmin
                     ? t("All Emojis", "\u0412\u0441\u0435 \u044D\u043C\u043E\u0434\u0437\u0438")
@@ -271,7 +282,7 @@ export function ProfileEditModal({
                     </Pressable>
                   ))}
                 </ScrollView>
-              </>
+              </Animated.View>
             ) : null}
 
             <View style={styles.inputBar}>
