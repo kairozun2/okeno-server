@@ -13,6 +13,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Button } from "@/components/Button";
 import { ProfileEffect, ProfileEffectType } from "@/components/ProfileEffect";
+import { ParallaxAvatar } from "@/components/ParallaxAvatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, getImageUrl, getShareUrl } from "@/lib/query-client";
@@ -305,8 +306,8 @@ export default function UserProfileScreen({ route, navigation }: Props) {
 
     return (
       <View style={styles.header}>
-        <ProfileEffect effect={profileUser?.profileEffect as ProfileEffectType} height={200} />
-        <Avatar emoji={profileUser?.emoji || "🐸"} size={72} />
+        <ProfileEffect effect={profileUser?.profileEffect as ProfileEffectType} height={200} scrollY={scrollY} />
+        <ParallaxAvatar emoji={profileUser?.emoji || "🐸"} size={72} />
         <View style={{ flexDirection: "row", alignItems: "center", marginTop: Spacing.sm }}>
           <ThemedText type="h3" style={[styles.username, { marginTop: 0 }]} truncate maxLength={15}>
             {profileUser?.username}

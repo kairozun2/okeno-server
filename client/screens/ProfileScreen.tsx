@@ -21,6 +21,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
+import { ParallaxAvatar } from "@/components/ParallaxAvatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { ProfileEditModal } from "@/components/ProfileEditModal";
 import { ProfileEffect, ProfileEffectType } from "@/components/ProfileEffect";
@@ -261,10 +262,10 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const headerComponent = (
     <View style={styles.header}>
-      <ProfileEffect effect={(user as any)?.profileEffect as ProfileEffectType} height={200} />
+      <ProfileEffect effect={(user as any)?.profileEffect as ProfileEffectType} height={200} scrollY={scrollY} />
       <Pressable onLongPress={handleAvatarLongPress} delayLongPress={500}>
         <Animated.View style={[styles.avatarContainer, mainAvatarStyle]}>
-          <Avatar emoji={user?.emoji || "🐸"} size={80} />
+          <ParallaxAvatar emoji={user?.emoji || "🐸"} size={80} />
         </Animated.View>
       </Pressable>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>

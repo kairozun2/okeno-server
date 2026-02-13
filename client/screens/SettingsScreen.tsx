@@ -39,6 +39,7 @@ const SETTINGS_ICONS = {
   archiveBox: require("../assets/icons/settings/archive-box.png"),
   miniapps: require("../assets/icons/settings/miniapps.png"),
   developer: require("../assets/icons/settings/developer.png"),
+  effects: require("../assets/icons/settings/effects.png"),
 };
 
 const ACCENT_COLORS = [
@@ -354,7 +355,7 @@ export default function SettingsScreen({ navigation }: Props) {
           },
         },
         {
-          icon: "zap",
+          customIcon: SETTINGS_ICONS.effects,
           title: t("Profile Effect", "Эффект профиля"),
           subtitle: (user as any)?.profileEffect ? t("Active", "Активен") : t("None", "Нет"),
           onPress: () => navigation.navigate("ProfileEffectSelection" as any),

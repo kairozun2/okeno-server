@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import { View, StyleSheet, Pressable, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,7 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
   const queryClient = useQueryClient();
   const currentEffect = (user as any)?.profileEffect as ProfileEffectType;
   const [selected, setSelected] = useState<ProfileEffectType>(currentEffect || null);
+  const hasChanges = selected !== (currentEffect || null);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -47,16 +48,38 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
         await storeAuth(updatedUser as any, sessionId);
       }
       await queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id] });
+      navigation.goBack();
     },
   });
+
+  const handleSave = () => {
+    mutation.mutate(selected);
+  };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={handleSave}
+          disabled={!hasChanges || mutation.isPending}
+          style={{ paddingHorizontal: Spacing.md, opacity: hasChanges ? 1 : 0.4 }}
+        >
+          <ThemedText style={{ color: theme.accent, fontSize: 16, fontWeight: "600" }}>
+            {t("Save", "Сохранить")}
+          </ThemedText>
+        </Pressable>
+      ),
+    });
+  }, [navigation, hasChanges, selected, mutation.isPending, theme.accent]);
 
   const handleSelect = (effect: ProfileEffectType) => {
     if (hapticsEnabled) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setSelected(effect);
-    mutation.mutate(effect);
   };
+
+  const effectsOnly = PROFILE_EFFECTS.filter(e => e.id !== null);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
@@ -74,10 +97,10 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
       </Animated.View>
 
       <View style={styles.cardsRow}>
-        {PROFILE_EFFECTS.map((effect, index) => {
+        {effectsOnly.map((effect, index) => {
           const isActive = selected === effect.id;
           return (
-            <Animated.View key={effect.id || "none"} entering={FadeIn.delay(index * 80).duration(300)}>
+            <Animated.View key={effect.id} entering={FadeIn.delay(index * 80).duration(300)} style={{ width: CARD_WIDTH }}>
               <Pressable
                 onPress={() => handleSelect(effect.id)}
                 style={[
@@ -86,18 +109,11 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
                     backgroundColor: theme.backgroundSecondary,
                     borderColor: isActive ? theme.accent : "transparent",
                     borderWidth: 2,
-                    width: CARD_WIDTH,
                   },
                 ]}
               >
                 <View style={[styles.cardPreview, { backgroundColor: theme.backgroundRoot }]}>
-                  {effect.id ? (
-                    <ProfileEffect effect={effect.id} height={90} />
-                  ) : (
-                    <View style={styles.noEffectIcon}>
-                      <Feather name="x-circle" size={28} color={theme.textSecondary} />
-                    </View>
-                  )}
+                  <ProfileEffect effect={effect.id} height={100} />
                 </View>
                 <View style={styles.cardLabel}>
                   <ThemedText type="body" style={[isActive ? { color: theme.accent, fontWeight: "600" } : null]}>
@@ -114,6 +130,18 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
           );
         })}
       </View>
+
+      {selected !== null ? (
+        <Pressable
+          onPress={() => handleSelect(null)}
+          style={[styles.resetButton, { borderColor: theme.textSecondary }]}
+        >
+          <Feather name="x" size={16} color={theme.textSecondary} />
+          <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 6 }}>
+            {t("Remove effect", "Убрать эффект")}
+          </ThemedText>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -138,7 +166,6 @@ const styles = StyleSheet.create({
   },
   cardsRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: Spacing.md,
   },
   card: {
@@ -146,15 +173,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   cardPreview: {
-    height: 90,
+    height: 100,
     overflow: "hidden",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  noEffectIcon: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   cardLabel: {
     flexDirection: "row",
@@ -169,5 +189,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
+  },
+  resetButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
   },
 });
