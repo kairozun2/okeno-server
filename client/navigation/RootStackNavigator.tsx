@@ -281,7 +281,7 @@ export default function RootStackNavigator() {
             component={QRCodeScreen}
             options={{
               headerShown: false,
-              presentation: "transparentModal",
+              presentation: "modal",
               animation: "slide_from_bottom",
             }}
           />
