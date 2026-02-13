@@ -708,7 +708,10 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             </Pressable>
 
             <Pressable
-              onPress={() => setShowCaptionEditor(true)}
+              onPress={() => {
+                setShowEditModal(false);
+                setTimeout(() => setShowCaptionEditor(true), 300);
+              }}
               style={({ pressed }) => [styles.editActionItem, { backgroundColor: theme.cardBackground }, pressed && { opacity: 0.6 }]}
             >
               <Feather name="type" size={20} color={theme.accent} />
@@ -718,33 +721,31 @@ export default function PostDetailScreen({ route, navigation }: Props) {
               <Feather name="chevron-right" size={18} color={theme.textSecondary} />
             </Pressable>
 
-            <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
+            <View style={styles.modalFooterRow}>
+              {isArchived ? (
+                <Pressable 
+                  style={({ pressed }) => [styles.footerActionButton, { backgroundColor: theme.cardBackground }, pressed && { opacity: 0.6 }]}
+                  onPress={() => {
+                    setShowEditModal(false);
+                    unarchiveMutation.mutate();
+                  }}
+                >
+                  <Feather name="arrow-up" size={18} color={theme.text} />
+                  <ThemedText style={{ marginLeft: Spacing.sm, fontSize: 14, fontWeight: "500" }}>{t("Restore", "Восстановить")}</ThemedText>
+                </Pressable>
+              ) : (
+                <Pressable 
+                  style={({ pressed }) => [styles.footerActionButton, { backgroundColor: theme.cardBackground }, pressed && { opacity: 0.6 }]}
+                  onPress={() => {
+                    setShowEditModal(false);
+                    archiveMutation.mutate();
+                  }}
+                >
+                  <Feather name="archive" size={18} color={theme.text} />
+                  <ThemedText style={{ marginLeft: Spacing.sm, fontSize: 14, fontWeight: "500" }}>{t("Archive", "В архив")}</ThemedText>
+                </Pressable>
+              )}
 
-            {isArchived ? (
-              <Pressable 
-                style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
-                onPress={() => {
-                  setShowEditModal(false);
-                  unarchiveMutation.mutate();
-                }}
-              >
-                <Feather name="arrow-up" size={20} color={theme.text} />
-                <ThemedText style={{ marginLeft: Spacing.md, fontSize: 16, fontWeight: "500" }}>{t("Restore from archive", "Восстановить из архива")}</ThemedText>
-              </Pressable>
-            ) : (
-              <Pressable 
-                style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
-                onPress={() => {
-                  setShowEditModal(false);
-                  archiveMutation.mutate();
-                }}
-              >
-                <Feather name="archive" size={20} color={theme.text} />
-                <ThemedText style={{ marginLeft: Spacing.md, fontSize: 16, fontWeight: "500" }}>{t("Move to archive", "В архив")}</ThemedText>
-              </Pressable>
-            )}
-
-            <View style={styles.modalFooter}>
               <Pressable 
                 onPress={handleSaveEdit}
                 disabled={editMutation.isPending}
@@ -765,7 +766,10 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         visible={showCaptionEditor}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowCaptionEditor(false)}
+        onRequestClose={() => {
+          setShowCaptionEditor(false);
+          setTimeout(() => setShowEditModal(true), 300);
+        }}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -774,11 +778,17 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         >
           <Pressable 
             style={StyleSheet.absoluteFillObject} 
-            onPress={() => setShowCaptionEditor(false)}
+            onPress={() => {
+              setShowCaptionEditor(false);
+              setTimeout(() => setShowEditModal(true), 300);
+            }}
           />
           <View style={styles.captionEditorContainer}>
             <View style={[styles.captionInputRow, { backgroundColor: theme.backgroundSecondary }]}>
-              <Pressable onPress={() => setShowCaptionEditor(false)} hitSlop={10} style={styles.captionBackButton}>
+              <Pressable onPress={() => {
+                setShowCaptionEditor(false);
+                setTimeout(() => setShowEditModal(true), 300);
+              }} hitSlop={10} style={styles.captionBackButton}>
                 <Feather name="arrow-left" size={22} color={theme.text} />
               </Pressable>
               <TextInput
@@ -792,7 +802,10 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 autoFocus
               />
               <Pressable 
-                onPress={() => setShowCaptionEditor(false)}
+                onPress={() => {
+                  setShowCaptionEditor(false);
+                  setTimeout(() => setShowEditModal(true), 300);
+                }}
                 style={[styles.captionSaveButton, { backgroundColor: theme.link }]}
               >
                 <Feather name="check" size={18} color="#fff" />
@@ -924,10 +937,19 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     paddingTop: Spacing.xs,
   },
-  modalFooter: {
+  modalFooterRow: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: Spacing.sm,
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+  footerActionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.full,
   },
   saveButton: {
     paddingHorizontal: Spacing.xl,
