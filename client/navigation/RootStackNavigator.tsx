@@ -36,6 +36,7 @@ import NotificationSettingsScreen from "@/screens/NotificationSettingsScreen";
 import SupportScreen from "@/screens/SupportScreen";
 import MiniAppsScreen from "@/screens/MiniAppsScreen";
 import MiniAppViewerScreen from "@/screens/MiniAppViewerScreen";
+import ProfileEffectSelectionScreen from "@/screens/ProfileEffectSelectionScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -66,6 +67,7 @@ export type RootStackParamList = {
   BlockedUsers: undefined;
   DebugConsole: undefined;
   ThemeSelection: undefined;
+  ProfileEffectSelection: undefined;
   CreateGroupChat: undefined;
   GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string; isVerified?: boolean };
   CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string; isIncoming?: boolean };
@@ -398,6 +400,16 @@ export default function RootStackNavigator() {
             options={({ navigation }) => ({
               ...modalOptions,
               headerTitle: "Оформление",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
+          />
+          <Stack.Screen
+            name="ProfileEffectSelection"
+            component={ProfileEffectSelectionScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: "Эффект профиля",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               headerShadowVisible: false,
             })}

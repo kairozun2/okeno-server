@@ -353,6 +353,12 @@ export default function SettingsScreen({ navigation }: Props) {
             }
           },
         },
+        {
+          icon: "zap",
+          title: t("Profile Effect", "Эффект профиля"),
+          subtitle: (user as any)?.profileEffect ? t("Active", "Активен") : t("None", "Нет"),
+          onPress: () => navigation.navigate("ProfileEffectSelection" as any),
+        },
       ],
     },
     {

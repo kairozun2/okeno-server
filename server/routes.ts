@@ -216,7 +216,7 @@ export async function registerRoutes(app: express.Express) {
     try {
       const user = await storage.getUserByUsername(req.params.username);
       if (!user) return res.status(404).json({ error: "User not found" });
-      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned });
+      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, profileEffect: user.profileEffect });
     } catch (error) {
       console.error("Get user by username error:", error);
       res.status(500).json({ error: "Failed to get user" });
@@ -239,7 +239,7 @@ export async function registerRoutes(app: express.Express) {
     try {
       const user = await storage.getUser(req.params.id);
       if (!user) return res.status(404).json({ error: "User not found" });
-      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, lastUsernameChange: user.lastUsernameChange });
+      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, lastUsernameChange: user.lastUsernameChange, profileEffect: user.profileEffect });
     } catch (error) {
       console.error("Get user error:", error);
       res.status(500).json({ error: "Failed to get user" });
@@ -305,11 +305,31 @@ export async function registerRoutes(app: express.Express) {
         isVerified: updated.isVerified, 
         isAdmin: updated.isAdmin, 
         isBanned: updated.isBanned,
-        lastUsernameChange: updated.lastUsernameChange
+        lastUsernameChange: updated.lastUsernameChange,
+        profileEffect: updated.profileEffect
       });
     } catch (error) {
       console.error("Update profile error:", error);
       res.status(500).json({ error: "Failed to update profile" });
+    }
+  });
+
+  app.patch("/api/users/:id/profile-effect", async (req, res) => {
+    try {
+      const { effect } = req.body;
+      const userId = req.params.id;
+      const validEffects = [null, "fireflies", "aurora", "bubbles", "stars", "snow", "rain"];
+      if (!validEffects.includes(effect)) {
+        return res.status(400).json({ error: "Invalid effect" });
+      }
+      const [updated] = await db.update(users).set({ profileEffect: effect }).where(eq(users.id, userId)).returning();
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ profileEffect: updated.profileEffect });
+    } catch (error) {
+      console.error("Update profile effect error:", error);
+      res.status(500).json({ error: "Failed to update effect" });
     }
   });
 

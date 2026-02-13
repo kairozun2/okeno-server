@@ -23,6 +23,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { ProfileEditModal } from "@/components/ProfileEditModal";
+import { ProfileEffect, ProfileEffectType } from "@/components/ProfileEffect";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { getImageUrl, apiRequest } from "@/lib/query-client";
@@ -260,6 +261,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const headerComponent = (
     <View style={styles.header}>
+      <ProfileEffect effect={(user as any)?.profileEffect as ProfileEffectType} height={200} />
       <Pressable onLongPress={handleAvatarLongPress} delayLongPress={500}>
         <Animated.View style={[styles.avatarContainer, mainAvatarStyle]}>
           <Avatar emoji={user?.emoji || "🐸"} size={80} />
