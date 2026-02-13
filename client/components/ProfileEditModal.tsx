@@ -9,17 +9,29 @@ import {
   Dimensions,
   Platform,
   Keyboard,
+  LayoutAnimation,
+  UIManager,
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming, Easing } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const SMOOTH_TRANSITION = LayoutAnimation.create(
+  300,
+  LayoutAnimation.Types.easeInEaseOut,
+  LayoutAnimation.Properties.opacity,
+);
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -107,13 +119,19 @@ export function ProfileEditModal({
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       () => {
-        if (!isClosing) setIsKeyboardVisible(true);
+        if (!isClosing) {
+          LayoutAnimation.configureNext(SMOOTH_TRANSITION);
+          setIsKeyboardVisible(true);
+        }
       }
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
-        if (!isClosing) setIsKeyboardVisible(false);
+        if (!isClosing) {
+          LayoutAnimation.configureNext(SMOOTH_TRANSITION);
+          setIsKeyboardVisible(false);
+        }
       }
     );
     return () => {
@@ -194,20 +212,6 @@ export function ProfileEditModal({
   const daysLeft = getDaysUntilChange();
   const showEmojiGrid = !isKeyboardVisible && !isClosing;
 
-  const emojiProgress = useSharedValue(1);
-
-  useEffect(() => {
-    emojiProgress.value = withTiming(showEmojiGrid ? 1 : 0, {
-      duration: 250,
-      easing: Easing.out(Easing.ease),
-    });
-  }, [showEmojiGrid]);
-
-  const emojiAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: emojiProgress.value,
-    maxHeight: emojiProgress.value * 400,
-    overflow: 'hidden' as const,
-  }));
 
   return (
     <Modal
@@ -251,41 +255,43 @@ export function ProfileEditModal({
               </View>
             </View>
 
-            <Animated.View style={emojiAnimatedStyle} pointerEvents={showEmojiGrid ? "auto" : "none"}>
-              {error ? (
-                <View style={[styles.errorContainer, { backgroundColor: theme.error + "20" }]}>
-                  <ThemedText style={{ color: theme.error }}>{error}</ThemedText>
-                </View>
-              ) : null}
+            {showEmojiGrid ? (
+              <View>
+                {error ? (
+                  <View style={[styles.errorContainer, { backgroundColor: theme.error + "20" }]}>
+                    <ThemedText style={{ color: theme.error }}>{error}</ThemedText>
+                  </View>
+                ) : null}
 
-              <ThemedText type="body" style={styles.sectionTitle}>
-                {isAdmin
-                  ? t("All Emojis", "\u0412\u0441\u0435 \u044D\u043C\u043E\u0434\u0437\u0438")
-                  : t("Choose Avatar", "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0430\u0432\u0430\u0442\u0430\u0440")}
-              </ThemedText>
+                <ThemedText type="body" style={styles.sectionTitle}>
+                  {isAdmin
+                    ? t("All Emojis", "\u0412\u0441\u0435 \u044D\u043C\u043E\u0434\u0437\u0438")
+                    : t("Choose Avatar", "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0430\u0432\u0430\u0442\u0430\u0440")}
+                </ThemedText>
 
-              <ScrollView
-                style={styles.emojiScroll}
-                contentContainerStyle={styles.emojiGrid}
-                showsVerticalScrollIndicator={false}
-              >
-                {availableEmojis.map((emoji, index) => (
-                  <Pressable
-                    key={`${emoji}-${index}`}
-                    onPress={() => handleEmojiSelect(emoji)}
-                    style={[
-                      styles.emojiButton,
-                      {
-                        backgroundColor: selectedEmoji === emoji ? theme.primary + "30" : theme.background,
-                        borderColor: selectedEmoji === emoji ? theme.primary : "transparent",
-                      },
-                    ]}
-                  >
-                    <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </Animated.View>
+                <ScrollView
+                  style={styles.emojiScroll}
+                  contentContainerStyle={styles.emojiGrid}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {availableEmojis.map((emoji, index) => (
+                    <Pressable
+                      key={`${emoji}-${index}`}
+                      onPress={() => handleEmojiSelect(emoji)}
+                      style={[
+                        styles.emojiButton,
+                        {
+                          backgroundColor: selectedEmoji === emoji ? theme.primary + "30" : theme.background,
+                          borderColor: selectedEmoji === emoji ? theme.primary : "transparent",
+                        },
+                      ]}
+                    >
+                      <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
 
             <View style={styles.inputBar}>
               {error && isKeyboardVisible && !isClosing ? (
