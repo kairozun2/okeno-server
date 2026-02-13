@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput, Platform, ActivityIndicator, KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput, Platform, ActivityIndicator, KeyboardAvoidingView, Keyboard } from "react-native";
+import { BlurView } from "expo-blur";
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,6 +9,8 @@ import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   FadeIn,
+  FadeInUp,
+  SlideInDown,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -765,7 +768,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       <Modal
         visible={showCaptionEditor}
         transparent
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => {
           setShowCaptionEditor(false);
           setTimeout(() => setShowEditModal(true), 300);
@@ -776,42 +779,67 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           style={styles.captionEditorOverlay}
           keyboardVerticalOffset={0}
         >
-          <Pressable 
-            style={StyleSheet.absoluteFillObject} 
-            onPress={() => {
-              setShowCaptionEditor(false);
-              setTimeout(() => setShowEditModal(true), 300);
-            }}
-          />
-          <View style={styles.captionEditorContainer}>
-            <View style={[styles.captionInputRow, { backgroundColor: theme.backgroundSecondary }]}>
-              <Pressable onPress={() => {
+          <Animated.View entering={FadeIn.duration(200)} style={StyleSheet.absoluteFill}>
+            <Pressable 
+              style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.5)" }]}
+              onPress={() => {
+                Keyboard.dismiss();
                 setShowCaptionEditor(false);
                 setTimeout(() => setShowEditModal(true), 300);
-              }} hitSlop={10} style={styles.captionBackButton}>
-                <Feather name="arrow-left" size={22} color={theme.text} />
-              </Pressable>
-              <TextInput
-                value={editedCaption}
-                onChangeText={setEditedCaption}
-                placeholder={t("Enter description...", "Введите описание...")}
-                placeholderTextColor={theme.textSecondary}
-                style={[styles.captionInput, { color: theme.text }]}
-                multiline
-                maxLength={500}
-                autoFocus
-              />
-              <Pressable 
-                onPress={() => {
+              }}
+            />
+          </Animated.View>
+
+          <Animated.View 
+            entering={SlideInDown.springify().damping(20).stiffness(200)} 
+            style={styles.captionEditorContainer}
+          >
+            <View style={[styles.captionInputBar, { overflow: 'hidden' }]}>
+              {Platform.OS === "ios" ? (
+                <BlurView
+                  intensity={80}
+                  tint={isDark ? "dark" : "light"}
+                  style={StyleSheet.absoluteFill}
+                />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundSecondary }]} />
+              )}
+
+              <View style={styles.captionInputContent}>
+                <Pressable onPress={() => {
+                  Keyboard.dismiss();
                   setShowCaptionEditor(false);
                   setTimeout(() => setShowEditModal(true), 300);
-                }}
-                style={[styles.captionSaveButton, { backgroundColor: theme.link }]}
-              >
-                <Feather name="check" size={18} color="#fff" />
-              </Pressable>
+                }} hitSlop={10} style={styles.captionBackButton}>
+                  <Feather name="arrow-left" size={22} color={theme.text} />
+                </Pressable>
+
+                <View style={[styles.captionInputWrapper, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }]}>
+                  <TextInput
+                    value={editedCaption}
+                    onChangeText={setEditedCaption}
+                    placeholder={t("Description...", "\u041E\u043F\u0438\u0441\u0430\u043D\u0438\u0435...")}
+                    placeholderTextColor={theme.textSecondary}
+                    style={[styles.captionInput, { color: theme.text }]}
+                    multiline
+                    maxLength={500}
+                    autoFocus
+                  />
+                </View>
+
+                <Pressable 
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setShowCaptionEditor(false);
+                    setTimeout(() => setShowEditModal(true), 300);
+                  }}
+                  style={[styles.captionSaveButton, { backgroundColor: theme.link }]}
+                >
+                  <Feather name="check" size={18} color="#fff" />
+                </Pressable>
+              </View>
             </View>
-          </View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
     </>
@@ -960,39 +988,47 @@ const styles = StyleSheet.create({
   },
   captionEditorOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
   captionEditorContainer: {
     width: "100%",
+    paddingHorizontal: Spacing.sm,
+    paddingBottom: Platform.OS === 'ios' ? 4 : Spacing.sm,
   },
-  captionInputRow: {
+  captionInputBar: {
+    borderRadius: BorderRadius.xl,
+  },
+  captionInputContent: {
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    gap: Spacing.sm,
-    paddingBottom: Platform.OS === 'ios' ? 36 : Spacing.md,
+    gap: Spacing.xs,
   },
   captionBackButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  captionInputWrapper: {
+    flex: 1,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Platform.OS === 'ios' ? Spacing.sm : Spacing.xs,
+    minHeight: 38,
     justifyContent: "center",
   },
   captionInput: {
     flex: 1,
     fontSize: 16,
-    maxHeight: 120,
-    paddingVertical: Spacing.sm,
+    maxHeight: 100,
   },
   captionSaveButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
   },
