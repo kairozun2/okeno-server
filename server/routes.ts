@@ -1821,6 +1821,67 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
+  app.post("/api/stripe/portal", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) return res.status(400).json({ error: "userId required" });
+
+      const user = await storage.getUser(userId);
+      if (!user || !user.stripeCustomerId) {
+        return res.status(404).json({ error: "No subscription found" });
+      }
+
+      const { getUncachableStripeClient } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+
+      const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: baseUrl,
+      });
+
+      res.json({ url: portalSession.url });
+    } catch (error) {
+      console.error("Portal error:", error);
+      res.status(500).json({ error: "Failed to create portal session" });
+    }
+  });
+
+  app.post("/api/stripe/verify-session", async (req, res) => {
+    try {
+      const { sessionId, userId } = req.body;
+      if (!sessionId || !userId) return res.status(400).json({ error: "sessionId and userId required" });
+
+      const { getUncachableStripeClient } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      if (session.payment_status === "paid" && session.status === "complete") {
+        await db.update(users).set({ isPremium: true }).where(eq(users.id, userId));
+        const updatedUser = await storage.getUser(userId);
+        res.json({ success: true, user: updatedUser });
+      } else {
+        res.json({ success: false, status: session.status });
+      }
+    } catch (error) {
+      console.error("Verify session error:", error);
+      res.status(500).json({ error: "Failed to verify session" });
+    }
+  });
+
+  app.get("/api/premium/features", (_req, res) => {
+    res.json({
+      features: [
+        { id: "effects", titleEn: "Profile Effects", titleRu: "Эффекты профиля", descEn: "Exclusive animated effects for your profile", descRu: "Эксклюзивные анимированные эффекты для профиля", icon: "star" },
+        { id: "badge", titleEn: "Premium Badge", titleRu: "Премиум значок", descEn: "Stand out with a special badge on your profile", descRu: "Выделяйтесь особым значком на профиле", icon: "award" },
+        { id: "themes", titleEn: "Exclusive Themes", titleRu: "Эксклюзивные темы", descEn: "Access to unique color themes", descRu: "Доступ к уникальным цветовым темам", icon: "droplet" },
+        { id: "upload", titleEn: "HD Uploads", titleRu: "HD загрузки", descEn: "Upload photos in full resolution", descRu: "Загружайте фото в полном разрешении", icon: "upload-cloud" },
+        { id: "name", titleEn: "Custom Username Colors", titleRu: "Цвет имени", descEn: "Choose a color for your username", descRu: "Выберите цвет для вашего имени", icon: "edit-3" },
+        { id: "priority", titleEn: "Priority Support", titleRu: "Приоритетная поддержка", descEn: "Get help faster from our support team", descRu: "Получайте помощь быстрее от команды поддержки", icon: "zap" },
+      ],
+    });
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

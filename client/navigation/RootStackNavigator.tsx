@@ -37,6 +37,7 @@ import SupportScreen from "@/screens/SupportScreen";
 import MiniAppsScreen from "@/screens/MiniAppsScreen";
 import MiniAppViewerScreen from "@/screens/MiniAppViewerScreen";
 import ProfileEffectSelectionScreen from "@/screens/ProfileEffectSelectionScreen";
+import PremiumScreen from "@/screens/PremiumScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -68,6 +69,7 @@ export type RootStackParamList = {
   DebugConsole: undefined;
   ThemeSelection: undefined;
   ProfileEffectSelection: undefined;
+  Premium: undefined;
   CreateGroupChat: undefined;
   GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string; isVerified?: boolean };
   CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string; isIncoming?: boolean };
@@ -411,6 +413,15 @@ export default function RootStackNavigator() {
               ...modalOptions,
               headerTitle: "Эффект профиля",
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
+          />
+          <Stack.Screen
+            name="Premium"
+            component={PremiumScreen}
+            options={({ navigation }) => ({
+              ...screenOptions,
+              headerTitle: "Premium",
               headerShadowVisible: false,
             })}
           />

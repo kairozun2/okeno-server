@@ -363,6 +363,17 @@ export default function SettingsScreen({ navigation }: Props) {
       ],
     },
     {
+      title: t("PREMIUM", "ПРЕМИУМ"),
+      items: [
+        {
+          customIcon: "star" as any,
+          title: "Okeno Premium",
+          subtitle: (user as any)?.isPremium ? t("Active subscription", "Активная подписка") : t("Unlock exclusive features", "Разблокируйте эксклюзивные функции"),
+          onPress: () => navigation.navigate("Premium" as any),
+        },
+      ],
+    },
+    {
       title: t("SUPPORT", "ПОДДЕРЖКА"),
       items: [
         {
