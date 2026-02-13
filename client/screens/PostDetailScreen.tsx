@@ -269,7 +269,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "archived"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigation.navigate("Main" as any, { screen: "Home" } as any);
+      setTimeout(() => navigation.goBack(), 100);
     },
   });
 
@@ -277,12 +277,11 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     mutationFn: async () => {
       await apiRequest("DELETE", `/api/users/${currentUser?.id}/archived/${postId}`);
     },
-      onSuccess: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser?.id, "archived"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigation.navigate("Main" as any, { screen: "Home" } as any);
     },
   });
 
