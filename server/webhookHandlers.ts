@@ -8,27 +8,20 @@ export class WebhookHandlers {
     if (!Buffer.isBuffer(payload)) {
       throw new Error(
         'STRIPE WEBHOOK ERROR: Payload must be a Buffer. ' +
-        'Received type: ' + typeof payload + '. ' +
-        'This usually means express.json() parsed the body before reaching this handler. ' +
-        'FIX: Ensure webhook route is registered BEFORE app.use(express.json()).'
+        'Received type: ' + typeof payload + '. '
       );
     }
 
-    const sync = await getStripeSync();
-
     try {
-      const { getUncachableStripeClient } = await import('./stripeClient');
-      const stripe = await getUncachableStripeClient();
-
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-      if (webhookSecret) {
-        const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
-        await WebhookHandlers.handleStripeEvent(event);
+      const body = JSON.parse(payload.toString());
+      if (body?.type) {
+        await WebhookHandlers.handleStripeEvent(body);
       }
     } catch (err: any) {
-      console.log('[Stripe] Webhook event processing (custom):', err?.message);
+      console.log('[Stripe] Custom event processing:', err?.message);
     }
 
+    const sync = await getStripeSync();
     await sync.processWebhook(payload, signature);
   }
 

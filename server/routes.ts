@@ -2019,6 +2019,82 @@ export async function registerRoutes(app: express.Express) {
     });
   });
 
+  app.get("/checkout/success", async (req, res) => {
+    const sessionId = req.query.session_id as string;
+    let activated = false;
+
+    if (sessionId) {
+      try {
+        const { getUncachableStripeClient } = await import("./stripeClient");
+        const stripe = await getUncachableStripeClient();
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        if (session.payment_status === "paid" && session.metadata?.userId) {
+          await db.update(users).set({ 
+            isPremium: true,
+            stripeCustomerId: session.customer as string
+          }).where(eq(users.id, session.metadata.userId));
+          activated = true;
+        }
+      } catch (e: any) {
+        console.error("[Checkout Success] Error:", e?.message);
+      }
+    }
+
+    res.send(`<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Okeno Premium</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif; background: #0a0a0a; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .card { text-align: center; max-width: 400px; }
+    .icon { font-size: 64px; margin-bottom: 16px; }
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    p { font-size: 16px; color: #999; line-height: 1.5; margin-bottom: 24px; }
+    .btn { display: inline-block; background: #FFD700; color: #000; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">${activated ? "✅" : "⏳"}</div>
+    <h1>${activated ? "Премиум активирован!" : "Оплата получена!"}</h1>
+    <p>${activated ? "Спасибо за покупку! Теперь вам доступны все премиум-функции. Вернитесь в приложение." : "Ваш платёж обрабатывается. Премиум будет активирован в течение минуты. Вернитесь в приложение."}</p>
+    <a class="btn" href="okeno://premium">Вернуться в приложение</a>
+  </div>
+</body>
+</html>`);
+  });
+
+  app.get("/checkout/cancel", (_req, res) => {
+    res.send(`<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Okeno - Отменено</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif; background: #0a0a0a; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .card { text-align: center; max-width: 400px; }
+    .icon { font-size: 64px; margin-bottom: 16px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    p { font-size: 16px; color: #999; line-height: 1.5; margin-bottom: 24px; }
+    .btn { display: inline-block; background: #333; color: #fff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">↩️</div>
+    <h1>Оплата отменена</h1>
+    <p>Вы отменили оплату. Деньги не были списаны. Вы можете попробовать снова в любое время.</p>
+    <a class="btn" href="okeno://premium">Вернуться в приложение</a>
+  </div>
+</body>
+</html>`);
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
