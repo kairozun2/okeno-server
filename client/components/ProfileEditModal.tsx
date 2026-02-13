@@ -9,13 +9,18 @@ import {
   Dimensions,
   Platform,
   Keyboard,
-  LayoutAnimation,
-  UIManager,
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  runOnJS,
+  Easing,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
@@ -23,17 +28,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const SMOOTH_TRANSITION = LayoutAnimation.create(
-  300,
-  LayoutAnimation.Types.easeInEaseOut,
-  LayoutAnimation.Properties.opacity,
-);
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const REGULAR_EMOJIS = [
   "\u{1F600}", "\u{1F603}", "\u{1F604}", "\u{1F601}", "\u{1F60A}", "\u{1F642}", "\u{1F60E}", "\u{1F913}", "\u{1F9D0}", "\u{1F914}",
@@ -100,10 +95,49 @@ export function ProfileEditModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const isClosingRef = useRef(false);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
+
+  const backdropOpacity = useSharedValue(0);
+  const slideOffset = useSharedValue(SCREEN_HEIGHT);
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  const modalSlideStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideOffset.value }],
+  }));
+
+  const animateOpen = useCallback(() => {
+    setModalVisible(true);
+    isClosingRef.current = false;
+    requestAnimationFrame(() => {
+      backdropOpacity.value = withTiming(1, { duration: 250 });
+      slideOffset.value = withSpring(0, {
+        damping: 22,
+        stiffness: 200,
+        mass: 0.8,
+      });
+    });
+  }, []);
+
+  const animateClose = useCallback(() => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+    Keyboard.dismiss();
+    backdropOpacity.value = withTiming(0, { duration: 200 });
+    slideOffset.value = withTiming(SCREEN_HEIGHT, {
+      duration: 250,
+      easing: Easing.in(Easing.ease),
+    }, () => {
+      runOnJS(setModalVisible)(false);
+      runOnJS(onClose)();
+    });
+  }, [onClose]);
 
   useEffect(() => {
     if (visible) {
@@ -111,7 +145,9 @@ export function ProfileEditModal({
       setUsername(currentUsername);
       setError(null);
       setIsKeyboardVisible(false);
-      setIsClosing(false);
+      slideOffset.value = SCREEN_HEIGHT;
+      backdropOpacity.value = 0;
+      animateOpen();
     }
   }, [visible, currentEmoji, currentUsername]);
 
@@ -119,26 +155,20 @@ export function ProfileEditModal({
     const showSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       () => {
-        if (!isClosing) {
-          LayoutAnimation.configureNext(SMOOTH_TRANSITION);
-          setIsKeyboardVisible(true);
-        }
+        if (!isClosingRef.current) setIsKeyboardVisible(true);
       }
     );
     const hideSub = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
-        if (!isClosing) {
-          LayoutAnimation.configureNext(SMOOTH_TRANSITION);
-          setIsKeyboardVisible(false);
-        }
+        if (!isClosingRef.current) setIsKeyboardVisible(false);
       }
     );
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, [isClosing]);
+  }, []);
 
   const availableEmojis = isAdmin ? ALL_EMOJIS : REGULAR_EMOJIS;
 
@@ -158,14 +188,6 @@ export function ProfileEditModal({
     const daysSinceChange = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24));
     return Math.max(0, 20 - daysSinceChange);
   };
-
-  const handleClose = useCallback(() => {
-    setIsClosing(true);
-    Keyboard.dismiss();
-    setTimeout(() => {
-      onClose();
-    }, 50);
-  }, [onClose]);
 
   const handleSave = async () => {
     if (!username.trim()) {
@@ -189,14 +211,11 @@ export function ProfileEditModal({
     }
 
     setSaving(true);
-    setIsClosing(true);
-    Keyboard.dismiss();
     try {
       await onSave(selectedEmoji, username.trim());
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      onClose();
+      animateClose();
     } catch (err: any) {
-      setIsClosing(false);
       setError(err.message || t("Failed to save", "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C"));
     } finally {
       setSaving(false);
@@ -210,20 +229,22 @@ export function ProfileEditModal({
 
   const usernameEditable = canChangeUsername();
   const daysLeft = getDaysUntilChange();
-  const showEmojiGrid = !isKeyboardVisible && !isClosing;
-
+  const showEmojiGrid = !isKeyboardVisible && !isClosingRef.current;
 
   return (
     <Modal
-      visible={visible}
+      visible={modalVisible}
       transparent
-      animationType="fade"
-      onRequestClose={handleClose}
+      animationType="none"
+      onRequestClose={animateClose}
+      statusBarTranslucent
     >
       <View style={styles.container}>
-        <Pressable style={styles.backdrop} onPress={handleClose}>
-          <BlurView intensity={30} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
-        </Pressable>
+        <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={animateClose}>
+            <BlurView intensity={30} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+          </Pressable>
+        </Animated.View>
 
         <KeyboardAvoidingView
           behavior="padding"
@@ -231,20 +252,24 @@ export function ProfileEditModal({
           keyboardVerticalOffset={0}
         >
           <Animated.View
-            entering={FadeIn.duration(200)}
             style={[
               styles.modal,
+              modalSlideStyle,
               {
                 backgroundColor: theme.backgroundSecondary,
                 paddingBottom: isKeyboardVisible ? Spacing.sm : insets.bottom + Spacing.lg,
               },
             ]}
           >
+            <View style={styles.handle}>
+              <View style={[styles.handleBar, { backgroundColor: theme.textSecondary + "40" }]} />
+            </View>
+
             <View style={styles.header}>
               <ThemedText type="h3">
                 {t("Edit Profile", "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043F\u0440\u043E\u0444\u0438\u043B\u044C")}
               </ThemedText>
-              <Pressable onPress={handleClose} style={styles.closeButton}>
+              <Pressable onPress={animateClose} style={styles.closeButton} hitSlop={12}>
                 <Feather name="x" size={24} color={theme.text} />
               </Pressable>
             </View>
@@ -294,7 +319,7 @@ export function ProfileEditModal({
             ) : null}
 
             <View style={styles.inputBar}>
-              {error && isKeyboardVisible && !isClosing ? (
+              {error && isKeyboardVisible ? (
                 <View style={[styles.errorContainerInline, { backgroundColor: theme.error + "20" }]}>
                   <ThemedText type="caption" style={{ color: theme.error }}>{error}</ThemedText>
                 </View>
@@ -359,21 +384,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
   },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
   modal: {
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
     maxHeight: "85%",
+  },
+  handle: {
+    alignItems: "center",
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
+  },
+  handleBar: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Spacing.lg,
+    paddingTop: Spacing.xs,
   },
   closeButton: {
     padding: Spacing.xs,
