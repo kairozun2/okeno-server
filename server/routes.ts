@@ -1894,6 +1894,17 @@ export async function registerRoutes(app: express.Express) {
       const stripe = await getUncachableStripeClient();
 
       let customerId = user.stripeCustomerId;
+      if (customerId) {
+        try {
+          await stripe.customers.retrieve(customerId);
+        } catch (e: any) {
+          if (e?.code === 'resource_missing') {
+            customerId = null;
+          } else {
+            throw e;
+          }
+        }
+      }
       if (!customerId) {
         const customer = await stripe.customers.create({
           metadata: { userId: user.id, username: user.username },
