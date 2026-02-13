@@ -720,23 +720,32 @@ export default function FeedScreen({ navigation }: Props) {
             ) : null}
           </View>
           {selectedLocation ? (
-            <View style={{ position: 'absolute', top: Spacing.lg + insets.top, left: 0, right: 0, alignItems: 'center', paddingHorizontal: Spacing.lg }}>
-              <View style={{ borderRadius: 22, overflow: 'hidden', maxWidth: '90%' }}>
+            <View style={{ position: 'absolute', top: Spacing.lg + insets.top, left: Spacing.lg, borderRadius: 22, overflow: 'hidden' }}>
+              {Platform.OS === 'ios' ? (
+                <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ padding: 10 }}>
+                  <Pressable onPress={() => setMapModalVisible(false)} hitSlop={10}>
+                    <Feather name="x" size={20} color={theme.text} />
+                  </Pressable>
+                </BlurView>
+              ) : (
+                <View style={{ padding: 10, backgroundColor: isDark ? 'rgba(50,50,50,0.9)' : 'rgba(255,255,255,0.9)' }}>
+                  <Pressable onPress={() => setMapModalVisible(false)} hitSlop={10}>
+                    <Feather name="x" size={20} color={theme.text} />
+                  </Pressable>
+                </View>
+              )}
+            </View>
+            <View style={{ position: 'absolute', top: Spacing.lg + insets.top, left: 0, right: 0, alignItems: 'center', paddingHorizontal: 72, pointerEvents: 'none' }}>
+              <View style={{ borderRadius: 22, overflow: 'hidden', maxWidth: '100%' }}>
                 {Platform.OS === 'ios' ? (
-                  <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 8, paddingVertical: 10, gap: 8 }}>
+                  <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
                     <Feather name="map-pin" size={14} color={theme.textSecondary} />
-                    <ThemedText numberOfLines={1} style={{ fontSize: 14, fontWeight: '600', flex: 1 }}>{selectedLocation.name}</ThemedText>
-                    <Pressable onPress={() => setMapModalVisible(false)} hitSlop={10} style={{ padding: 4 }}>
-                      <Feather name="x" size={18} color={theme.text} />
-                    </Pressable>
+                    <ThemedText numberOfLines={1} style={{ fontSize: 14, fontWeight: '600' }}>{selectedLocation.name}</ThemedText>
                   </BlurView>
                 ) : (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 8, paddingVertical: 10, gap: 8, backgroundColor: isDark ? 'rgba(50,50,50,0.9)' : 'rgba(255,255,255,0.9)' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8, backgroundColor: isDark ? 'rgba(50,50,50,0.9)' : 'rgba(255,255,255,0.9)' }}>
                     <Feather name="map-pin" size={14} color={theme.textSecondary} />
-                    <ThemedText numberOfLines={1} style={{ fontSize: 14, fontWeight: '600', flex: 1 }}>{selectedLocation.name}</ThemedText>
-                    <Pressable onPress={() => setMapModalVisible(false)} hitSlop={10} style={{ padding: 4 }}>
-                      <Feather name="x" size={18} color={theme.text} />
-                    </Pressable>
+                    <ThemedText numberOfLines={1} style={{ fontSize: 14, fontWeight: '600' }}>{selectedLocation.name}</ThemedText>
                   </View>
                 )}
               </View>
