@@ -39,6 +39,12 @@ Design priorities: Stability, optimization, smooth performance, minimalist Teleg
 - Premium screen accessible from Settings > Premium section
 - Features: profile effects, premium badge, exclusive themes, HD uploads, custom username colors, priority support
 - API: `/api/stripe/checkout`, `/api/stripe/portal`, `/api/stripe/subscription/:userId`, `/api/premium/features`
+- Admin API: `POST /api/admin/users/:id/premium` (grant/revoke premium)
+- Admins bypass all premium checks (can use profile effects, username colors without subscription)
+- Username color: Full HSL color wheel + preset colors, any valid hex color allowed
+- Long-press avatar in profile → opens username color picker (premium/admin only)
+- Premium badge and username colors displayed everywhere: feed, profiles, comments, chats, search results, admin panel
+- NOTE: Stripe test mode message "funds won't be charged" comes from Stripe's test environment (test keys). Switch to live Stripe keys for real payments.
 
 ### Path Aliases
 - `@/` maps to `./client/` (frontend code)
