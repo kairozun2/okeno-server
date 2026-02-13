@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Modal,
@@ -7,14 +7,15 @@ import {
   TextInput,
   ScrollView,
   Dimensions,
-  KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -86,6 +87,8 @@ export function ProfileEditModal({
   const [username, setUsername] = useState(currentUsername);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -94,8 +97,24 @@ export function ProfileEditModal({
       setSelectedEmoji(currentEmoji);
       setUsername(currentUsername);
       setError(null);
+      setIsKeyboardVisible(false);
     }
   }, [visible, currentEmoji, currentUsername]);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const availableEmojis = isAdmin ? ALL_EMOJIS : REGULAR_EMOJIS;
 
@@ -168,119 +187,149 @@ export function ProfileEditModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
-        <Pressable style={styles.backdrop} onPress={onClose}>
+      <View style={styles.container}>
+        <Pressable style={styles.backdrop} onPress={() => { Keyboard.dismiss(); onClose(); }}>
           <BlurView intensity={30} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
         </Pressable>
 
-        <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
-          style={[
-            styles.modal,
-            {
-              backgroundColor: theme.backgroundSecondary,
-              paddingBottom: insets.bottom + Spacing.lg,
-            },
-          ]}
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={styles.keyboardContainer}
+          keyboardVerticalOffset={0}
         >
-          <View style={styles.header}>
-            <ThemedText type="h3">{t("Edit Profile", "Редактировать профиль")}</ThemedText>
-            <Pressable onPress={onClose} style={styles.closeButton}>
-              <Feather name="x" size={24} color={theme.text} />
-            </Pressable>
-          </View>
-
-          <View style={styles.previewSection}>
-            <View style={[styles.emojiPreview, { backgroundColor: theme.background }]}>
-              <ThemedText style={styles.previewEmoji}>{selectedEmoji}</ThemedText>
+          <Animated.View
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(150)}
+            style={[
+              styles.modal,
+              {
+                backgroundColor: theme.backgroundSecondary,
+                paddingBottom: isKeyboardVisible ? Spacing.sm : insets.bottom + Spacing.lg,
+              },
+            ]}
+          >
+            <View style={styles.header}>
+              <ThemedText type="h3">{t("Edit Profile", "Редактировать профиль")}</ThemedText>
+              <Pressable onPress={onClose} style={styles.closeButton}>
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
             </View>
-            <View style={styles.usernameInputContainer}>
-              <TextInput
-                value={username}
-                onChangeText={setUsername}
-                style={[
-                  styles.usernameInput,
-                  {
-                    color: theme.text,
-                    backgroundColor: theme.background,
-                    borderColor: error ? theme.error : theme.border,
-                    opacity: usernameEditable ? 1 : 0.5,
-                  },
-                ]}
-                placeholder={t("Username", "Имя пользователя")}
-                placeholderTextColor={theme.textSecondary}
-                editable={usernameEditable}
-                maxLength={20}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+
+            <View style={styles.previewSection}>
+              <View style={[styles.emojiPreview, { backgroundColor: theme.background }]}>
+                <ThemedText style={styles.previewEmoji}>{selectedEmoji}</ThemedText>
+              </View>
+            </View>
+
+            {error && !isKeyboardVisible ? (
+              <View style={[styles.errorContainer, { backgroundColor: theme.error + "20" }]}>
+                <ThemedText style={{ color: theme.error }}>{error}</ThemedText>
+              </View>
+            ) : null}
+
+            {!isKeyboardVisible ? (
+              <>
+                <ThemedText type="body" style={styles.sectionTitle}>
+                  {isAdmin ? t("All Emojis", "Все эмодзи") : t("Choose Avatar", "Выберите аватар")}
+                </ThemedText>
+
+                <ScrollView
+                  style={styles.emojiScroll}
+                  contentContainerStyle={styles.emojiGrid}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {availableEmojis.map((emoji, index) => (
+                    <Pressable
+                      key={`${emoji}-${index}`}
+                      onPress={() => handleEmojiSelect(emoji)}
+                      style={[
+                        styles.emojiButton,
+                        {
+                          backgroundColor: selectedEmoji === emoji ? theme.primary + "30" : theme.background,
+                          borderColor: selectedEmoji === emoji ? theme.primary : "transparent",
+                        },
+                      ]}
+                    >
+                      <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </>
+            ) : null}
+
+            <View style={[
+              styles.inputBar,
+              {
+                backgroundColor: isKeyboardVisible
+                  ? (isDark ? "rgba(30,30,30,0.95)" : "rgba(245,245,245,0.95)")
+                  : "transparent",
+                borderTopWidth: isKeyboardVisible ? 1 : 0,
+                borderTopColor: theme.border,
+                paddingTop: isKeyboardVisible ? Spacing.sm : 0,
+              },
+            ]}>
+              {error && isKeyboardVisible ? (
+                <View style={[styles.errorContainerInline, { backgroundColor: theme.error + "20" }]}>
+                  <ThemedText type="caption" style={{ color: theme.error }}>{error}</ThemedText>
+                </View>
+              ) : null}
+              <View style={styles.inputRow}>
+                <TextInput
+                  ref={inputRef}
+                  value={username}
+                  onChangeText={(text) => { setUsername(text); setError(null); }}
+                  style={[
+                    styles.usernameInput,
+                    {
+                      color: theme.text,
+                      backgroundColor: theme.background,
+                      borderColor: error ? theme.error : theme.border,
+                      opacity: usernameEditable ? 1 : 0.5,
+                    },
+                  ]}
+                  placeholder={t("Username", "Имя пользователя")}
+                  placeholderTextColor={theme.textSecondary}
+                  editable={usernameEditable}
+                  maxLength={20}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSave}
+                />
+                <Pressable
+                  onPress={handleSave}
+                  disabled={saving}
+                  style={[
+                    styles.saveButton,
+                    {
+                      backgroundColor: theme.primary,
+                      opacity: saving ? 0.6 : 1,
+                    },
+                  ]}
+                >
+                  <ThemedText style={styles.saveButtonText}>
+                    {saving ? "..." : t("Save", "OK")}
+                  </ThemedText>
+                </Pressable>
+              </View>
               {!usernameEditable && daysLeft > 0 ? (
                 <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
                   {t(`Change available in ${daysLeft} days`, `Изменение доступно через ${daysLeft} дн.`)}
                 </ThemedText>
               ) : null}
             </View>
-          </View>
-
-          {error ? (
-            <View style={[styles.errorContainer, { backgroundColor: theme.error + "20" }]}>
-              <ThemedText style={{ color: theme.error }}>{error}</ThemedText>
-            </View>
-          ) : null}
-
-          <ThemedText type="body" style={styles.sectionTitle}>
-            {isAdmin ? t("All Emojis", "Все эмодзи") : t("Choose Avatar", "Выберите аватар")}
-          </ThemedText>
-
-          <ScrollView
-            style={styles.emojiScroll}
-            contentContainerStyle={styles.emojiGrid}
-            showsVerticalScrollIndicator={false}
-          >
-            {availableEmojis.map((emoji, index) => (
-              <Pressable
-                key={`${emoji}-${index}`}
-                onPress={() => handleEmojiSelect(emoji)}
-                style={[
-                  styles.emojiButton,
-                  {
-                    backgroundColor: selectedEmoji === emoji ? theme.primary + "30" : theme.background,
-                    borderColor: selectedEmoji === emoji ? theme.primary : "transparent",
-                  },
-                ]}
-              >
-                <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
-              </Pressable>
-            ))}
-          </ScrollView>
-
-          <Pressable
-            onPress={handleSave}
-            disabled={saving}
-            style={[
-              styles.saveButton,
-              {
-                backgroundColor: theme.primary,
-                opacity: saving ? 0.6 : 1,
-              },
-            ]}
-          >
-            <ThemedText style={styles.saveButtonText}>
-              {saving ? t("Saving...", "Сохранение...") : t("Save", "Сохранить")}
-            </ThemedText>
-          </Pressable>
-        </Animated.View>
-      </KeyboardAvoidingView>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardContainer: {
     flex: 1,
     justifyContent: "flex-end",
   },
@@ -304,9 +353,7 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
   },
   previewSection: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
     marginBottom: Spacing.lg,
   },
   emojiPreview: {
@@ -323,28 +370,22 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     lineHeight: Platform.OS === "ios" ? 60 : undefined,
   },
-  usernameInputContainer: {
-    flex: 1,
-  },
-  usernameInput: {
-    fontSize: 18,
-    fontWeight: "600",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-  },
   errorContainer: {
     padding: Spacing.sm,
     borderRadius: BorderRadius.sm,
     marginBottom: Spacing.md,
+  },
+  errorContainerInline: {
+    padding: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.xs,
   },
   sectionTitle: {
     marginBottom: Spacing.sm,
   },
   emojiScroll: {
     maxHeight: 300,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   emojiGrid: {
     flexDirection: "row",
@@ -367,10 +408,31 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     lineHeight: Platform.OS === "ios" ? 30 : undefined,
   },
+  inputBar: {
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: 0,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  usernameInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
   saveButton: {
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
   },
   saveButtonText: {
     color: "#FFFFFF",

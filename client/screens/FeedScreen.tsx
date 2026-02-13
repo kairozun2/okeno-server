@@ -504,7 +504,11 @@ export default function FeedScreen({ navigation }: Props) {
         setHasMore(false);
       }
       
-      setAllPosts(prev => [...prev, ...postsArray]);
+      setAllPosts(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const uniqueNew = postsArray.filter((p: PostWithUser) => !existingIds.has(p.id));
+        return [...prev, ...uniqueNew];
+      });
       setCurrentOffset(prev => prev + postsArray.length);
     } catch (error) {
       console.error("Failed to load more posts:", error);
@@ -512,7 +516,11 @@ export default function FeedScreen({ navigation }: Props) {
       if (localPosts.length < PAGE_SIZE) {
         setHasMore(false);
       }
-      setAllPosts(prev => [...prev, ...(localPosts as PostWithUser[])]);
+      setAllPosts(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const uniqueNew = (localPosts as PostWithUser[]).filter(p => !existingIds.has(p.id));
+        return [...prev, ...uniqueNew];
+      });
       setCurrentOffset(prev => prev + localPosts.length);
     } finally {
       setIsFetchingMore(false);
