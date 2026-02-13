@@ -151,6 +151,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   const [showActionMenu, setShowActionMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCaptionEditor, setShowCaptionEditor] = useState(false);
   const [editedCaption, setEditedCaption] = useState("");
   const [editedLocation, setEditedLocation] = useState<string | null>(null);
   const [editedLat, setEditedLat] = useState<number | null>(null);
@@ -581,162 +582,167 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       <Modal
         visible={showActionMenu}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowActionMenu(false)}
       >
-        <Pressable 
-          style={styles.actionSheetOverlay} 
-          onPress={() => setShowActionMenu(false)}
-        >
-          <ThemedView style={styles.actionSheetContainer}>
+        <View style={styles.actionSheetOverlay}>
+          <Pressable 
+            style={StyleSheet.absoluteFillObject} 
+            onPress={() => setShowActionMenu(false)}
+          />
+          <Animated.View 
+            entering={FadeIn}
+            style={[styles.actionSheetContainer, { backgroundColor: theme.backgroundSecondary }]}
+          >
             <Pressable 
-              style={styles.actionSheetItem}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
               onPress={startEditing}
             >
               <Feather name="edit-2" size={20} color={theme.text} />
-              <ThemedText style={{ marginLeft: Spacing.md }}>{t("Edit publication", "Редактировать публикацию")}</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, fontSize: 16, fontWeight: "500" }}>{t("Edit publication", "Редактировать публикацию")}</ThemedText>
             </Pressable>
+
+            <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: Spacing.md }} />
 
             {isArchived ? (
               <Pressable 
-                style={styles.actionSheetItem}
+                style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
                 onPress={() => {
                   setShowActionMenu(false);
                   unarchiveMutation.mutate();
                 }}
               >
                 <Feather name="arrow-up" size={20} color={theme.text} />
-                <ThemedText style={{ marginLeft: Spacing.md }}>{t("Restore from archive", "Восстановить из архива")}</ThemedText>
+                <ThemedText style={{ marginLeft: Spacing.md, fontSize: 16, fontWeight: "500" }}>{t("Restore from archive", "Восстановить из архива")}</ThemedText>
               </Pressable>
             ) : (
               <Pressable 
-                style={styles.actionSheetItem}
+                style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
                 onPress={() => {
                   setShowActionMenu(false);
                   archiveMutation.mutate();
                 }}
               >
                 <Feather name="archive" size={20} color={theme.text} />
-                <ThemedText style={{ marginLeft: Spacing.md }}>{t("Move to archive", "В архив")}</ThemedText>
+                <ThemedText style={{ marginLeft: Spacing.md, fontSize: 16, fontWeight: "500" }}>{t("Move to archive", "В архив")}</ThemedText>
               </Pressable>
             )}
 
-            <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
+            <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: Spacing.md }} />
 
             <Pressable 
-              style={styles.actionSheetItem}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
               onPress={() => {
                 setShowActionMenu(false);
                 handleDelete();
               }}
             >
               <Feather name="trash-2" size={20} color={theme.error} />
-              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error }}>{t("Delete post", "Удалить пост")}</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.error, fontSize: 16, fontWeight: "500" }}>{t("Delete post", "Удалить пост")}</ThemedText>
             </Pressable>
 
+            <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: Spacing.md }} />
+
             <Pressable 
-              style={[styles.actionSheetItem, { marginTop: Spacing.xs }]}
+              style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
               onPress={() => setShowActionMenu(false)}
             >
-              <ThemedText style={{ width: '100%', textAlign: 'center', color: theme.textSecondary }}>{t("Cancel", "Отмена")}</ThemedText>
+              <ThemedText style={{ marginLeft: Spacing.md, color: theme.textSecondary, fontSize: 16, fontWeight: "500" }}>{t("Cancel", "Отмена")}</ThemedText>
             </Pressable>
-          </ThemedView>
-        </Pressable>
+          </Animated.View>
+        </View>
       </Modal>
 
       <Modal
         visible={showEditModal}
         transparent
-        animationType="slide" // Use native slide for smoothness
+        animationType="fade"
         onRequestClose={() => setShowEditModal(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-          keyboardVerticalOffset={Platform.OS === "ios" ? -40 : 0} // Slight offset to overlap gaps
-        >
-          <ThemedView style={styles.modalContent}>
+        <View style={styles.actionSheetOverlay}>
+          <Pressable 
+            style={StyleSheet.absoluteFillObject} 
+            onPress={() => setShowEditModal(false)}
+          />
+          <Animated.View 
+            entering={FadeIn}
+            style={[styles.actionSheetContainer, { backgroundColor: theme.backgroundSecondary }]}
+          >
             <View style={styles.modalHeader}>
               <ThemedText type="h4">{t("Edit publication", "Редактировать публикацию")}</ThemedText>
-              <Pressable onPress={() => setShowEditModal(false)}>
-                <Feather name="x" size={24} color={theme.text} />
+              <Pressable onPress={() => setShowEditModal(false)} hitSlop={10}>
+                <Feather name="x" size={22} color={theme.textSecondary} />
               </Pressable>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Pressable 
-                onPress={handlePickImage}
-                style={[styles.imagePickerButton, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
-              >
-                {isUpdatingImage ? (
-                  <ActivityIndicator color={theme.accent} />
-                ) : (
-                  <>
-                    <Feather name="image" size={20} color={theme.accent} />
-                    <ThemedText style={{ marginLeft: Spacing.sm, color: theme.text }}>
-                      {t("Change photo", "Заменить фотографию")}
-                    </ThemedText>
-                  </>
-                )}
-              </Pressable>
-
-              <Pressable 
-                onPress={handleGetLocation}
-                disabled={isLocating}
-                style={[styles.locationPicker, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                  <Feather name="map-pin" size={18} color={isLocating ? theme.textSecondary : theme.accent} />
-                  <ThemedText style={{ marginLeft: Spacing.sm, flex: 1, color: editedLocation ? theme.text : theme.textSecondary }}>
-                    {isLocating ? t("Locating...", "Определяем...") : (editedLocation || t("Add location", "Добавить локацию"))}
-                  </ThemedText>
-                  {editedLocation && (
-                    <Pressable onPress={() => { setEditedLocation(null); setEditedLat(null); setEditedLng(null); }} hitSlop={10}>
-                      <Feather name="x" size={16} color={theme.textSecondary} />
-                    </Pressable>
-                  )}
-                </View>
-              </Pressable>
-
-              <ThemedText type="small" style={{ color: theme.textSecondary, marginBottom: Spacing.xs, marginLeft: Spacing.xs }}>
-                {t("Description", "Описание")}
-              </ThemedText>
-              <TextInput
-                value={editedCaption}
-                onChangeText={setEditedCaption}
-                placeholder={t("Enter caption...", "Введите описание...")}
-                placeholderTextColor={theme.textSecondary}
-                style={[styles.editInput, { color: theme.text, backgroundColor: theme.backgroundSecondary }]}
-                multiline
-                maxLength={500}
-              />
-
-              <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.md, opacity: 0.5 }} />
-
-              {isArchived ? (
-                <Pressable 
-                  style={styles.actionSheetItem}
-                  onPress={() => {
-                    setShowEditModal(false);
-                    unarchiveMutation.mutate();
-                  }}
-                >
-                  <Feather name="arrow-up" size={20} color={theme.text} />
-                  <ThemedText style={{ marginLeft: Spacing.md }}>{t("Restore from archive", "Восстановить из архива")}</ThemedText>
-                </Pressable>
+            <Pressable 
+              onPress={handlePickImage}
+              style={({ pressed }) => [styles.editActionItem, { backgroundColor: theme.cardBackground }, pressed && { opacity: 0.6 }]}
+            >
+              {isUpdatingImage ? (
+                <ActivityIndicator color={theme.accent} />
               ) : (
-                <Pressable 
-                  style={styles.actionSheetItem}
-                  onPress={() => {
-                    setShowEditModal(false);
-                    archiveMutation.mutate();
-                  }}
-                >
-                  <Feather name="archive" size={20} color={theme.text} />
-                  <ThemedText style={{ marginLeft: Spacing.md }}>{t("Move to archive", "В архив")}</ThemedText>
-                </Pressable>
+                <>
+                  <Feather name="image" size={20} color={theme.accent} />
+                  <ThemedText style={{ marginLeft: Spacing.md, fontSize: 16, fontWeight: "500" }}>
+                    {t("Change photo", "Заменить фотографию")}
+                  </ThemedText>
+                </>
               )}
-            </ScrollView>
+            </Pressable>
+
+            <Pressable 
+              onPress={handleGetLocation}
+              disabled={isLocating}
+              style={({ pressed }) => [styles.editActionItem, { backgroundColor: theme.cardBackground }, pressed && { opacity: 0.6 }]}
+            >
+              <Feather name="map-pin" size={20} color={isLocating ? theme.textSecondary : theme.accent} />
+              <ThemedText style={{ marginLeft: Spacing.md, flex: 1, fontSize: 16, fontWeight: "500", color: editedLocation ? theme.text : theme.textSecondary }}>
+                {isLocating ? t("Locating...", "Определяем...") : (editedLocation || t("Add location", "Добавить локацию"))}
+              </ThemedText>
+              {editedLocation ? (
+                <Pressable onPress={() => { setEditedLocation(null); setEditedLat(null); setEditedLng(null); }} hitSlop={10}>
+                  <Feather name="x" size={16} color={theme.textSecondary} />
+                </Pressable>
+              ) : null}
+            </Pressable>
+
+            <Pressable
+              onPress={() => setShowCaptionEditor(true)}
+              style={({ pressed }) => [styles.editActionItem, { backgroundColor: theme.cardBackground }, pressed && { opacity: 0.6 }]}
+            >
+              <Feather name="type" size={20} color={theme.accent} />
+              <ThemedText style={{ marginLeft: Spacing.md, flex: 1, fontSize: 16, fontWeight: "500" }} numberOfLines={1}>
+                {editedCaption ? editedCaption : t("Add description", "Добавить описание")}
+              </ThemedText>
+              <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+            </Pressable>
+
+            <View style={{ height: 1, backgroundColor: theme.border, marginVertical: Spacing.xs, opacity: 0.5 }} />
+
+            {isArchived ? (
+              <Pressable 
+                style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
+                onPress={() => {
+                  setShowEditModal(false);
+                  unarchiveMutation.mutate();
+                }}
+              >
+                <Feather name="arrow-up" size={20} color={theme.text} />
+                <ThemedText style={{ marginLeft: Spacing.md, fontSize: 16, fontWeight: "500" }}>{t("Restore from archive", "Восстановить из архива")}</ThemedText>
+              </Pressable>
+            ) : (
+              <Pressable 
+                style={({ pressed }) => [styles.actionSheetItem, pressed && { opacity: 0.6 }]}
+                onPress={() => {
+                  setShowEditModal(false);
+                  archiveMutation.mutate();
+                }}
+              >
+                <Feather name="archive" size={20} color={theme.text} />
+                <ThemedText style={{ marginLeft: Spacing.md, fontSize: 16, fontWeight: "500" }}>{t("Move to archive", "В архив")}</ThemedText>
+              </Pressable>
+            )}
 
             <View style={styles.modalFooter}>
               <Pressable 
@@ -751,7 +757,48 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 )}
               </Pressable>
             </View>
-          </ThemedView>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showCaptionEditor}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCaptionEditor(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.captionEditorOverlay}
+          keyboardVerticalOffset={0}
+        >
+          <Pressable 
+            style={StyleSheet.absoluteFillObject} 
+            onPress={() => setShowCaptionEditor(false)}
+          />
+          <View style={styles.captionEditorContainer}>
+            <View style={[styles.captionInputRow, { backgroundColor: theme.backgroundSecondary }]}>
+              <Pressable onPress={() => setShowCaptionEditor(false)} hitSlop={10} style={styles.captionBackButton}>
+                <Feather name="arrow-left" size={22} color={theme.text} />
+              </Pressable>
+              <TextInput
+                value={editedCaption}
+                onChangeText={setEditedCaption}
+                placeholder={t("Enter description...", "Введите описание...")}
+                placeholderTextColor={theme.textSecondary}
+                style={[styles.captionInput, { color: theme.text }]}
+                multiline
+                maxLength={500}
+                autoFocus
+              />
+              <Pressable 
+                onPress={() => setShowCaptionEditor(false)}
+                style={[styles.captionSaveButton, { backgroundColor: theme.link }]}
+              >
+                <Feather name="check" size={18} color="#fff" />
+              </Pressable>
+            </View>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </>
@@ -851,68 +898,79 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   actionSheetContainer: {
+    width: "100%",
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
-    padding: Spacing.lg,
+    padding: Spacing.sm,
     paddingBottom: Platform.OS === 'ios' ? 40 : Spacing.xl,
   },
   actionSheetItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: Spacing.md,
+    padding: Spacing.md,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    width: "100%",
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    paddingBottom: Platform.OS === 'ios' ? 100 : Spacing.xl, // Increased padding to hide gaps below rounded keyboard
-    maxHeight: '90%',
+  editActionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.xs,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: Spacing.sm,
     marginBottom: Spacing.md,
-  },
-  editInput: {
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    fontSize: 16,
-    minHeight: 80,
-    textAlignVertical: "top",
-    marginBottom: Spacing.md,
-  },
-  imagePickerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    marginBottom: Spacing.md,
-    justifyContent: 'center',
-  },
-  locationPicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    marginBottom: Spacing.lg,
+    paddingTop: Spacing.xs,
   },
   modalFooter: {
     flexDirection: "row",
     justifyContent: "flex-end",
+    marginTop: Spacing.sm,
   },
   saveButton: {
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  captionEditorOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  captionEditorContainer: {
+    width: "100%",
+  },
+  captionInputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    gap: Spacing.sm,
+    paddingBottom: Platform.OS === 'ios' ? 36 : Spacing.md,
+  },
+  captionBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  captionInput: {
+    flex: 1,
+    fontSize: 16,
+    maxHeight: 120,
+    paddingVertical: Spacing.sm,
+  },
+  captionSaveButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },
