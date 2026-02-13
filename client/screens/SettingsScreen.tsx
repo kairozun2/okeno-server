@@ -366,13 +366,13 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("PREMIUM", "ПРЕМИУМ"),
       items: [
         {
-          customIcon: "star" as any,
+          icon: "star" as keyof typeof Feather.glyphMap,
           title: "Okeno Premium",
           subtitle: (user as any)?.isPremium ? t("Active subscription", "Активная подписка") : t("Unlock exclusive features", "Разблокируйте эксклюзивные функции"),
           onPress: () => navigation.navigate("Premium" as any),
         },
-        ...((user as any)?.isPremium ? [{
-          customIcon: "edit-3" as any,
+        ...((user as any)?.isPremium || (user as any)?.isAdmin ? [{
+          icon: "droplet" as keyof typeof Feather.glyphMap,
           title: t("Username Color", "Цвет имени"),
           subtitle: (user as any)?.usernameColor ? t("Custom color set", "Свой цвет установлен") : t("Default", "По умолчанию"),
           onPress: () => navigation.navigate("UsernameColor" as any),

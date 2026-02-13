@@ -75,8 +75,10 @@ interface ProfileEditModalProps {
   currentEmoji: string;
   currentUsername: string;
   isAdmin: boolean;
+  isPremium?: boolean;
   lastUsernameChange: string | null;
   onSave: (emoji: string, username: string) => Promise<void>;
+  onNavigateToColor?: () => void;
 }
 
 export function ProfileEditModal({
@@ -85,8 +87,10 @@ export function ProfileEditModal({
   currentEmoji,
   currentUsername,
   isAdmin,
+  isPremium,
   lastUsernameChange,
   onSave,
+  onNavigateToColor,
 }: ProfileEditModalProps) {
   const { theme, isDark, language } = useTheme();
   const insets = useSafeAreaInsets();
@@ -318,6 +322,22 @@ export function ProfileEditModal({
               </View>
             ) : null}
 
+            {(isPremium || isAdmin) && onNavigateToColor && !isKeyboardVisible ? (
+              <Pressable
+                onPress={() => {
+                  animateClose();
+                  setTimeout(() => onNavigateToColor(), 350);
+                }}
+                style={[styles.colorButton, { backgroundColor: theme.background, borderColor: theme.border }]}
+              >
+                <Feather name="droplet" size={18} color={theme.accent} />
+                <ThemedText type="body" style={{ flex: 1, marginLeft: Spacing.sm }}>
+                  {t("Username Color", "\u0426\u0432\u0435\u0442 \u0438\u043C\u0435\u043D\u0438")}
+                </ThemedText>
+                <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+              </Pressable>
+            ) : null}
+
             <View style={styles.inputBar}>
               {error && isKeyboardVisible ? (
                 <View style={[styles.errorContainerInline, { backgroundColor: theme.error + "20" }]}>
@@ -465,6 +485,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     includeFontPadding: false,
     lineHeight: Platform.OS === "ios" ? 30 : undefined,
+  },
+  colorButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
   },
   inputBar: {
     paddingHorizontal: 0,

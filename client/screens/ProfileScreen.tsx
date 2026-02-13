@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { View, StyleSheet, RefreshControl, Pressable, Dimensions, FlatList, ActivityIndicator } from "react-native";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -121,9 +121,22 @@ export default function ProfileScreen({ navigation }: Props) {
   const scrollY = useSharedValue(0);
   const refreshOpacity = useSharedValue(0);
 
+  const lastRefreshRef = useRef(0);
+
   useEffect(() => {
     refreshOpacity.value = withTiming(refreshing ? 1 : 0, { duration: 200 });
   }, [refreshing]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      const now = Date.now();
+      if (now - lastRefreshRef.current > 5000) {
+        lastRefreshRef.current = now;
+        refreshUser();
+      }
+    });
+    return unsubscribe;
+  }, [navigation, refreshUser]);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -150,11 +163,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const handleAvatarLongPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if ((user as any)?.isPremium || (user as any)?.isAdmin) {
-      navigation.navigate("UsernameColor" as any);
-    } else {
-      setEditModalVisible(true);
-    }
+    setEditModalVisible(true);
   };
 
   const handleSaveProfile = async (emoji: string, username: string) => {
@@ -299,8 +308,10 @@ export default function ProfileScreen({ navigation }: Props) {
         currentEmoji={user?.emoji || "🐸"}
         currentUsername={user?.username || ""}
         isAdmin={user?.isAdmin || false}
+        isPremium={(user as any)?.isPremium || false}
         lastUsernameChange={user?.lastUsernameChange || null}
         onSave={handleSaveProfile}
+        onNavigateToColor={() => navigation.navigate("UsernameColor" as any)}
       />
       <View style={[styles.customHeader, { height: headerHeight + insets.top, backgroundColor: theme.backgroundRoot }]}>
         <View style={[styles.headerContent, { paddingTop: insets.top }]}>
