@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 import Animated, {
   useSharedValue,
@@ -15,16 +15,19 @@ interface ParallaxAvatarProps {
 }
 
 const SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 120,
-  mass: 0.8,
+  damping: 25,
+  stiffness: 80,
+  mass: 0.6,
+  overshootClamping: true,
 };
 
-const TILT_RANGE = 8;
+const TILT_RANGE = 6;
+const UPDATE_INTERVAL = 80;
 
 export function ParallaxAvatar({ emoji, size }: ParallaxAvatarProps) {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
+  const isActive = useRef(true);
 
   useEffect(() => {
     if (Platform.OS === "web") return;
@@ -36,13 +39,16 @@ export function ParallaxAvatar({ emoji, size }: ParallaxAvatarProps) {
         const available = await DeviceMotion.isAvailableAsync();
         if (!available) return;
 
-        DeviceMotion.setUpdateInterval(50);
+        DeviceMotion.setUpdateInterval(UPDATE_INTERVAL);
 
         subscription = DeviceMotion.addListener((data: any) => {
+          if (!isActive.current) return;
           if (data.rotation) {
             const { beta, gamma } = data.rotation;
-            translateX.value = withSpring(gamma * TILT_RANGE, SPRING_CONFIG);
-            translateY.value = withSpring(beta * TILT_RANGE, SPRING_CONFIG);
+            const clampedGamma = Math.max(-1, Math.min(1, gamma));
+            const clampedBeta = Math.max(-1, Math.min(1, beta));
+            translateX.value = withSpring(clampedGamma * TILT_RANGE, SPRING_CONFIG);
+            translateY.value = withSpring(clampedBeta * TILT_RANGE, SPRING_CONFIG);
           }
         });
       } catch {
@@ -52,6 +58,7 @@ export function ParallaxAvatar({ emoji, size }: ParallaxAvatarProps) {
     startListening();
 
     return () => {
+      isActive.current = false;
       if (subscription) {
         subscription.remove();
       }
