@@ -60,7 +60,7 @@ export async function registerRoutes(app: express.Express) {
         deviceInfo: req.headers["user-agent"] || "Unknown device",
       });
 
-      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned }, session });
+      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, profileEffect: user.profileEffect }, session });
     } catch (error) {
       console.error("Register error:", error);
       res.status(500).json({ error: "Failed to register" });
@@ -98,7 +98,7 @@ export async function registerRoutes(app: express.Express) {
         deviceInfo: req.headers["user-agent"] || "Unknown device",
       });
 
-      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned }, session });
+      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, profileEffect: user.profileEffect }, session });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Failed to login" });
