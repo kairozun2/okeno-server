@@ -197,7 +197,7 @@ export async function registerRoutes(app: express.Express) {
         
         return {
           ...post,
-          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined,
+          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isPremium: user.isPremium, usernameColor: user.usernameColor } : undefined,
           likesCount,
           commentsCount,
           isLiked,
@@ -536,7 +536,7 @@ export async function registerRoutes(app: express.Express) {
         
         return {
           ...post,
-          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined,
+          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isPremium: user.isPremium, usernameColor: user.usernameColor } : undefined,
           likesCount,
           commentsCount,
           isLiked: false, // Client should determine this
@@ -662,6 +662,8 @@ export async function registerRoutes(app: express.Express) {
           username: users.username,
           emoji: users.emoji,
           isVerified: users.isVerified,
+          isPremium: users.isPremium,
+          usernameColor: users.usernameColor,
         }).from(users).where(inArray(users.id, userIdsArray));
         for (const u of fetchedUsers) {
           usersMap.set(u.id, u);
@@ -750,7 +752,7 @@ export async function registerRoutes(app: express.Express) {
         const user = await storage.getUser(member.userId);
         return {
           ...member,
-          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined,
+          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isPremium: user.isPremium, usernameColor: user.usernameColor } : undefined,
         };
       }));
       res.json(membersWithUsers);
@@ -1305,7 +1307,7 @@ export async function registerRoutes(app: express.Express) {
           
           return {
             ...post,
-            user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined,
+            user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isPremium: user.isPremium, usernameColor: user.usernameColor } : undefined,
             likesCount,
             commentsCount,
             isLiked: false,

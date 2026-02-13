@@ -1,10 +1,12 @@
-import React, { useState, useRef } from "react";
-import { View, StyleSheet, ScrollView, Pressable, PanResponder, Dimensions } from "react-native";
+import React, { useState, useCallback, useRef } from "react";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -16,8 +18,7 @@ import { apiRequest } from "@/lib/query-client";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const WHEEL_SIZE = Math.min(SCREEN_WIDTH - Spacing.lg * 4, 280);
-const WHEEL_RADIUS = WHEEL_SIZE / 2;
+const SLIDER_WIDTH = SCREEN_WIDTH - Spacing.lg * 4;
 
 const PRESET_COLORS = [
   "#FF6B6B", "#FF8C00", "#FFD700", "#FFEAA7",
@@ -57,6 +58,117 @@ function hexToHsl(hex: string): [number, number, number] {
   return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
 }
 
+function HueSlider({ value, onValueChange, lightness, saturation }: { value: number; onValueChange: (v: number) => void; lightness: number; saturation: number }) {
+  const { theme } = useTheme();
+  const sliderWidth = useRef(SLIDER_WIDTH);
+  const thumbX = useSharedValue((value / 360) * SLIDER_WIDTH);
+
+  const updateFromX = useCallback((x: number) => {
+    const clamped = Math.max(0, Math.min(x, sliderWidth.current));
+    const newHue = Math.round((clamped / sliderWidth.current) * 360);
+    thumbX.value = clamped;
+    onValueChange(newHue);
+  }, [onValueChange]);
+
+  const gesture = Gesture.Pan()
+    .onStart((e) => { updateFromX(e.x); })
+    .onUpdate((e) => { updateFromX(e.x); })
+    .hitSlop({ top: 20, bottom: 20 });
+
+  const tapGesture = Gesture.Tap()
+    .onEnd((e) => { updateFromX(e.x); });
+
+  const composed = Gesture.Race(gesture, tapGesture);
+
+  const thumbStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: thumbX.value - 14 }],
+  }));
+
+  const hueColors = Array.from({ length: 12 }, (_, i) => hslToHex(i * 30, saturation, lightness));
+
+  return (
+    <View style={{ marginBottom: Spacing.md }}>
+      <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.xs, fontWeight: "600" }}>
+        HUE
+      </ThemedText>
+      <GestureDetector gesture={composed}>
+        <View
+          style={styles.sliderTrack}
+          onLayout={(e: LayoutChangeEvent) => {
+            sliderWidth.current = e.nativeEvent.layout.width;
+            thumbX.value = (value / 360) * e.nativeEvent.layout.width;
+          }}
+        >
+          <View style={[StyleSheet.absoluteFill, styles.sliderGradient]}>
+            {hueColors.map((color, i) => (
+              <View key={i} style={{ flex: 1, backgroundColor: color }} />
+            ))}
+          </View>
+          <Animated.View style={[styles.sliderThumb, { borderColor: lightness > 50 ? "#222" : "#fff" }, thumbStyle]}>
+            <View style={[styles.sliderThumbInner, { backgroundColor: hslToHex(value, saturation, lightness) }]} />
+          </Animated.View>
+        </View>
+      </GestureDetector>
+    </View>
+  );
+}
+
+function SingleSlider({ label, value, min, max, onValueChange, getColor }: { label: string; value: number; min: number; max: number; onValueChange: (v: number) => void; getColor: (v: number) => string }) {
+  const { theme } = useTheme();
+  const sliderWidth = useRef(SLIDER_WIDTH);
+  const range = max - min;
+  const thumbX = useSharedValue(((value - min) / range) * SLIDER_WIDTH);
+
+  const updateFromX = useCallback((x: number) => {
+    const clamped = Math.max(0, Math.min(x, sliderWidth.current));
+    const newVal = Math.round(min + (clamped / sliderWidth.current) * range);
+    thumbX.value = clamped;
+    onValueChange(newVal);
+  }, [onValueChange, min, range]);
+
+  const gesture = Gesture.Pan()
+    .onStart((e) => { updateFromX(e.x); })
+    .onUpdate((e) => { updateFromX(e.x); })
+    .hitSlop({ top: 20, bottom: 20 });
+
+  const tapGesture = Gesture.Tap()
+    .onEnd((e) => { updateFromX(e.x); });
+
+  const composed = Gesture.Race(gesture, tapGesture);
+
+  const thumbStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: thumbX.value - 14 }],
+  }));
+
+  const gradColors = [getColor(min), getColor(Math.round((min + max) / 2)), getColor(max)];
+
+  return (
+    <View style={{ marginBottom: Spacing.md }}>
+      <ThemedText type="caption" style={{ color: theme.textSecondary, marginBottom: Spacing.xs, fontWeight: "600" }}>
+        {label}
+      </ThemedText>
+      <GestureDetector gesture={composed}>
+        <View
+          style={styles.sliderTrack}
+          onLayout={(e: LayoutChangeEvent) => {
+            sliderWidth.current = e.nativeEvent.layout.width;
+            thumbX.value = ((value - min) / range) * e.nativeEvent.layout.width;
+          }}
+        >
+          <View style={[StyleSheet.absoluteFill, styles.sliderGradient]}>
+            {gradColors.map((color, i) => (
+              <View key={i} style={{ flex: 1, backgroundColor: color }} />
+            ))}
+          </View>
+          <Animated.View style={[styles.sliderThumb, { borderColor: value > 50 ? "#222" : "#fff" }, thumbStyle]}>
+            <View style={[styles.sliderThumbInner, { backgroundColor: getColor(value) }]} />
+          </Animated.View>
+        </View>
+      </GestureDetector>
+    </View>
+  );
+}
+
 export default function UsernameColorScreen({ navigation }: any) {
   const { theme, language, hapticsEnabled } = useTheme();
   const { user, refreshUser } = useAuth();
@@ -67,28 +179,17 @@ export default function UsernameColorScreen({ navigation }: any) {
   const initialColor = (user as any)?.usernameColor || null;
   const [selected, setSelected] = useState<string | null>(initialColor);
   const [hue, setHue] = useState<number>(() => {
-    if (initialColor) {
-      const [h] = hexToHsl(initialColor);
-      return h;
-    }
+    if (initialColor) { const [h] = hexToHsl(initialColor); return h; }
     return 0;
   });
   const [saturation, setSaturation] = useState<number>(() => {
-    if (initialColor) {
-      const [, s] = hexToHsl(initialColor);
-      return s;
-    }
+    if (initialColor) { const [, s] = hexToHsl(initialColor); return s; }
     return 80;
   });
   const [lightness, setLightness] = useState<number>(() => {
-    if (initialColor) {
-      const [, , l] = hexToHsl(initialColor);
-      return l;
-    }
+    if (initialColor) { const [, , l] = hexToHsl(initialColor); return l; }
     return 55;
   });
-
-  const wheelRef = useRef<View>(null);
 
   const t = (en: string, ru: string) => (language === "ru" ? ru : en);
 
@@ -110,104 +211,22 @@ export default function UsernameColorScreen({ navigation }: any) {
     mutation.mutate(selected);
   };
 
-  const handleWheelTouch = (x: number, y: number) => {
-    const cx = x - WHEEL_RADIUS;
-    const cy = y - WHEEL_RADIUS;
-    const dist = Math.sqrt(cx * cx + cy * cy);
-    if (dist > WHEEL_RADIUS) return;
+  const handleHueChange = useCallback((h: number) => {
+    setHue(h);
+    setSelected(hslToHex(h, saturation, lightness));
+  }, [saturation, lightness]);
 
-    let angle = Math.atan2(cy, cx) * (180 / Math.PI);
-    if (angle < 0) angle += 360;
-    const newHue = Math.round(angle);
-    const newSat = Math.round(Math.min(dist / WHEEL_RADIUS, 1) * 100);
-    setHue(newHue);
-    setSaturation(newSat);
-    const hex = hslToHex(newHue, newSat, lightness);
-    setSelected(hex);
-    if (hapticsEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
+  const handleSatChange = useCallback((s: number) => {
+    setSaturation(s);
+    setSelected(hslToHex(hue, s, lightness));
+  }, [hue, lightness]);
 
-  const wheelPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => {
-        const { locationX, locationY } = evt.nativeEvent;
-        handleWheelTouch(locationX, locationY);
-      },
-      onPanResponderMove: (evt) => {
-        const { locationX, locationY } = evt.nativeEvent;
-        handleWheelTouch(locationX, locationY);
-      },
-    })
-  ).current;
+  const handleLightChange = useCallback((l: number) => {
+    setLightness(l);
+    setSelected(hslToHex(hue, saturation, l));
+  }, [hue, saturation]);
 
-  const handleLightnessChange = (lx: number, width: number) => {
-    const newL = Math.round(Math.max(15, Math.min(85, (lx / width) * 100)));
-    setLightness(newL);
-    if (selected) {
-      const hex = hslToHex(hue, saturation, newL);
-      setSelected(hex);
-    }
-  };
-
-  const lightnessPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => {
-        handleLightnessChange(evt.nativeEvent.locationX, WHEEL_SIZE);
-      },
-      onPanResponderMove: (evt) => {
-        handleLightnessChange(evt.nativeEvent.locationX, WHEEL_SIZE);
-      },
-    })
-  ).current;
-
-  const renderColorWheel = () => {
-    const segments = 36;
-    const segmentAngle = 360 / segments;
-    const rings = 5;
-
-    return (
-      <View
-        ref={wheelRef}
-        style={[styles.wheel, { width: WHEEL_SIZE, height: WHEEL_SIZE }]}
-        {...wheelPanResponder.panHandlers}
-      >
-        {Array.from({ length: segments }).map((_, i) => {
-          const angle = i * segmentAngle;
-          return Array.from({ length: rings }).map((_, r) => {
-            const ringRadius = ((r + 1) / rings) * WHEEL_RADIUS;
-            const sat = ((r + 1) / rings) * 100;
-            const rad = (angle * Math.PI) / 180;
-            const x = WHEEL_RADIUS + Math.cos(rad) * ringRadius * 0.85 - 8;
-            const y = WHEEL_RADIUS + Math.sin(rad) * ringRadius * 0.85 - 8;
-            const color = hslToHex(angle, sat, lightness);
-            return (
-              <View
-                key={`${i}-${r}`}
-                style={{
-                  position: "absolute",
-                  left: x,
-                  top: y,
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
-                  backgroundColor: color,
-                }}
-              />
-            );
-          });
-        })}
-        {selected ? (
-          <View style={[styles.wheelIndicator, { borderColor: lightness > 50 ? "#000" : "#fff" }]}>
-            <View style={[styles.wheelIndicatorInner, { backgroundColor: selected }]} />
-          </View>
-        ) : null}
-      </View>
-    );
-  };
+  const currentColor = selected || hslToHex(hue, saturation, lightness);
 
   return (
     <ThemedView style={styles.container}>
@@ -220,47 +239,53 @@ export default function UsernameColorScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.preview}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <ThemedText type="h2" style={selected ? { color: selected } : undefined}>
-              {user?.username || "Username"}
-            </ThemedText>
-            {(user as any)?.isVerified ? (
-              <View style={{ marginLeft: 2 }}>
+          <View style={[styles.previewCard, { backgroundColor: theme.backgroundSecondary }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <ThemedText type="h2" style={selected ? { color: selected } : undefined}>
+                {user?.username || "Username"}
+              </ThemedText>
+              {(user as any)?.isVerified ? (
                 <Feather name="check-circle" size={18} color="#007AFF" />
-              </View>
-            ) : null}
-            {(user as any)?.isPremium ? <PremiumBadge size={16} /> : null}
+              ) : null}
+              {(user as any)?.isPremium ? <PremiumBadge size={16} /> : null}
+            </View>
           </View>
-          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
+          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
             {t("Preview of your username color", "Предпросмотр цвета имени")}
           </ThemedText>
         </View>
 
-        <ThemedText type="body" style={{ fontWeight: "600", marginBottom: Spacing.sm }}>
-          {t("Color Wheel", "Цветовой круг")}
-        </ThemedText>
-        <View style={[styles.wheelContainer, { backgroundColor: theme.backgroundSecondary }]}>
-          {renderColorWheel()}
-          <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-            {t("Brightness", "Яркость")}
-          </ThemedText>
-          <View
-            style={[styles.lightnessBar, { width: WHEEL_SIZE }]}
-            {...lightnessPanResponder.panHandlers}
-          >
-            <View style={[styles.lightnessGradient, {
-              backgroundColor: hslToHex(hue, saturation, 50),
-            }]}>
-              <View style={[styles.lightnessOverlayDark]} />
-              <View style={[styles.lightnessOverlayLight]} />
-              <View style={[styles.lightnessThumb, {
-                left: `${lightness}%`,
-                backgroundColor: hslToHex(hue, saturation, lightness),
-                borderColor: lightness > 50 ? "#000" : "#fff",
-              }]} />
-            </View>
-          </View>
+        <View style={[styles.slidersCard, { backgroundColor: theme.backgroundSecondary }]}>
+          <HueSlider
+            value={hue}
+            onValueChange={handleHueChange}
+            lightness={lightness}
+            saturation={saturation}
+          />
+          <SingleSlider
+            label={t("SATURATION", "НАСЫЩЕННОСТЬ")}
+            value={saturation}
+            min={0}
+            max={100}
+            onValueChange={handleSatChange}
+            getColor={(s) => hslToHex(hue, s, lightness)}
+          />
+          <SingleSlider
+            label={t("BRIGHTNESS", "ЯРКОСТЬ")}
+            value={lightness}
+            min={15}
+            max={85}
+            onValueChange={handleLightChange}
+            getColor={(l) => hslToHex(hue, saturation, l)}
+          />
         </View>
+
+        {selected ? (
+          <View style={[styles.hexDisplay, { backgroundColor: theme.backgroundSecondary }]}>
+            <View style={[styles.hexSwatch, { backgroundColor: selected }]} />
+            <ThemedText type="body" style={{ fontFamily: "monospace" }}>{selected.toUpperCase()}</ThemedText>
+          </View>
+        ) : null}
 
         <ThemedText type="body" style={{ fontWeight: "600", marginTop: Spacing.lg, marginBottom: Spacing.sm }}>
           {t("Quick Colors", "Быстрые цвета")}
@@ -277,8 +302,7 @@ export default function UsernameColorScreen({ navigation }: any) {
               if (hapticsEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             }}
           >
-            <View style={[styles.presetSwatch, { backgroundColor: theme.text, opacity: 0.3 }]} />
-            {selected === null ? <Feather name="check" size={14} color={theme.accent} /> : null}
+            <Feather name="x" size={20} color={theme.textSecondary} />
           </Pressable>
           {PRESET_COLORS.map((color) => (
             <Pressable
@@ -286,7 +310,7 @@ export default function UsernameColorScreen({ navigation }: any) {
               style={[
                 styles.presetItem,
                 { backgroundColor: theme.backgroundSecondary },
-                selected === color ? { borderColor: theme.accent, borderWidth: 2 } : { borderWidth: 2, borderColor: "transparent" },
+                selected === color ? { borderColor: color, borderWidth: 2 } : { borderWidth: 2, borderColor: "transparent" },
               ]}
               onPress={() => {
                 setSelected(color);
@@ -298,19 +322,11 @@ export default function UsernameColorScreen({ navigation }: any) {
               }}
             >
               <View style={[styles.presetSwatch, { backgroundColor: color }]} />
-              {selected === color ? <Feather name="check" size={14} color={theme.accent} /> : null}
             </Pressable>
           ))}
         </View>
 
-        {selected ? (
-          <View style={[styles.hexDisplay, { backgroundColor: theme.backgroundSecondary }]}>
-            <View style={[styles.hexSwatch, { backgroundColor: selected }]} />
-            <ThemedText type="body" style={{ fontFamily: "monospace" }}>{selected.toUpperCase()}</ThemedText>
-          </View>
-        ) : null}
-
-        <Button onPress={handleSave} style={{ backgroundColor: theme.accent, marginTop: Spacing.lg }}>
+        <Button onPress={handleSave} style={{ backgroundColor: theme.accent, marginTop: Spacing.xl }}>
           <ThemedText style={{ color: "#fff", fontWeight: "700" }}>
             {mutation.isPending ? t("Saving...", "Сохранение...") : t("Save", "Сохранить")}
           </ThemedText>
@@ -326,82 +342,52 @@ const styles = StyleSheet.create({
   },
   preview: {
     alignItems: "center",
-    marginBottom: Spacing.xl,
-    paddingVertical: Spacing.lg,
+    marginBottom: Spacing.lg,
   },
-  wheelContainer: {
-    alignItems: "center",
+  previewCard: {
+    paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.sm,
+    alignItems: "center",
   },
-  wheel: {
-    borderRadius: 999,
-    backgroundColor: "#111",
+  slidersCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+  },
+  sliderTrack: {
+    height: 36,
+    borderRadius: 18,
+    overflow: "hidden",
+    justifyContent: "center",
+  },
+  sliderGradient: {
+    flexDirection: "row",
+    borderRadius: 18,
     overflow: "hidden",
   },
-  wheelIndicator: {
+  sliderThumb: {
     position: "absolute",
-    top: "50%",
-    left: "50%",
     width: 28,
     height: 28,
     borderRadius: 14,
-    marginLeft: -14,
-    marginTop: -14,
     borderWidth: 3,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
-  wheelIndicatorInner: {
+  sliderThumbInner: {
     width: 20,
     height: 20,
     borderRadius: 10,
   },
-  lightnessBar: {
-    height: 32,
-    borderRadius: 16,
-    overflow: "hidden",
-    marginTop: Spacing.sm,
-  },
-  lightnessGradient: {
-    flex: 1,
-    borderRadius: 16,
-    position: "relative",
-  },
-  lightnessOverlayDark: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: "50%",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
-  },
-  lightnessOverlayLight: {
-    position: "absolute",
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: "50%",
-    backgroundColor: "rgba(255,255,255,0.3)",
-    borderTopRightRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-  lightnessThumb: {
-    position: "absolute",
-    top: 2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginLeft: -14,
-    borderWidth: 3,
-  },
   presetsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
   presetItem: {
     width: 48,
@@ -411,9 +397,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   presetSwatch: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
   hexDisplay: {
     flexDirection: "row",

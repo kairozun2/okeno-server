@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { ThemedText } from "@/components/ThemedText";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, getApiUrl, getImageUrl } from "@/lib/query-client";
@@ -162,6 +163,7 @@ function MessageBubble({
   onImagePress,
   senderName,
   senderEmoji,
+  senderColor,
   onMiniAppPress,
   miniApps,
 }: {
@@ -176,6 +178,7 @@ function MessageBubble({
   onImagePress?: (imageUrl: string) => void;
   senderName?: string;
   senderEmoji?: string;
+  senderColor?: string | null;
   onMiniAppPress?: (appId: string) => void;
   miniApps?: { id: string; name: string; emoji: string; url: string; isVerified: boolean }[];
 }) {
@@ -435,7 +438,7 @@ function MessageBubble({
           {senderName ? (
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4, gap: 4 }}>
               {senderEmoji ? <Avatar emoji={senderEmoji} size={16} /> : null}
-              <ThemedText type="caption" style={{ color: theme.link, fontWeight: "600", fontSize: 11 }}>
+              <ThemedText type="caption" style={{ color: senderColor || theme.link, fontWeight: "600", fontSize: 11 }}>
                 {senderName}
               </ThemedText>
             </View>
@@ -814,14 +817,16 @@ export default function ChatScreen({ route, navigation }: Props) {
   });
 
   const membersMap = useMemo(() => {
-    const map: Record<string, { username: string; emoji: string }> = {};
+    const map: Record<string, { username: string; emoji: string; usernameColor?: string | null; isPremium?: boolean }> = {};
     if (groupMembersData) {
       groupMembersData.forEach((m) => {
         const userId = m.userId || m.id;
         const username = m.user?.username || m.username || "";
         const emoji = m.user?.emoji || m.emoji || "🐸";
+        const usernameColor = m.user?.usernameColor || m.usernameColor || null;
+        const isPremium = m.user?.isPremium || m.isPremium || false;
         if (userId) {
-          map[userId] = { username, emoji };
+          map[userId] = { username, emoji, usernameColor, isPremium };
         }
       });
     }
@@ -1227,6 +1232,7 @@ export default function ChatScreen({ route, navigation }: Props) {
           onImagePress={handleImagePreview}
           senderName={senderInfo?.username}
           senderEmoji={senderInfo?.emoji}
+          senderColor={senderInfo?.usernameColor}
           onMiniAppPress={handleMiniAppPress}
           miniApps={miniAppsForCommand}
         />
@@ -1402,9 +1408,10 @@ export default function ChatScreen({ route, navigation }: Props) {
                 ) : null}
                 <View style={{ marginRight: Spacing.sm, alignItems: 'flex-end' }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                    <ThemedText type="small" style={{ fontWeight: "600" }} truncate maxLength={12}>{displayName}</ThemedText>
+                    <ThemedText type="small" style={[{ fontWeight: "600" }, !isGroupChat && userData?.usernameColor ? { color: userData.usernameColor } : undefined]} truncate maxLength={12}>{displayName}</ThemedText>
                     {isGroupChat && chatData?.isVerified ? <VerifiedBadge size={14} /> : null}
                     {!isGroupChat && userData?.isVerified ? <VerifiedBadge size={14} /> : null}
+                    {!isGroupChat && userData?.isPremium ? <PremiumBadge size={14} /> : null}
                   </View>
                 </View>
                 <Avatar emoji={displayEmoji} size={32} />

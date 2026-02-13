@@ -26,6 +26,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsOnline } from "@/hooks/useNetworkStatus";
@@ -62,6 +63,8 @@ interface User {
   username: string;
   emoji: string;
   isVerified?: boolean;
+  isPremium?: boolean;
+  usernameColor?: string | null;
 }
 
 interface ChatWithDetails extends Chat {
@@ -237,11 +240,12 @@ function ChatItem({
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1, flexGrow: 1 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", flexShrink: 1 }}>
-                  <ThemedText type="body" style={styles.chatName} truncate maxLength={12}>
+                  <ThemedText type="body" style={[styles.chatName, !isGroup && chat.otherUser?.usernameColor ? { color: chat.otherUser.usernameColor } : undefined]} truncate maxLength={12}>
                     {displayName}
                   </ThemedText>
                   {isGroup && chat.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
                   {!isGroup && chat.otherUser?.isVerified ? <VerifiedBadge size={14} style={{ marginLeft: 4 }} /> : null}
+                  {!isGroup && chat.otherUser?.isPremium ? <PremiumBadge size={14} style={{ marginLeft: 4 }} /> : null}
                 </View>
               </View>
               <ThemedText type="caption" style={{ color: theme.textSecondary, flexShrink: 0, marginLeft: Spacing.xs, fontSize: 11 }}>
