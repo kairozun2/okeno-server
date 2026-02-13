@@ -60,7 +60,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "PostDetail">;
 
 export default function PostDetailScreen({ route, navigation }: Props) {
   const { postId } = route.params;
-  const { theme, language } = useTheme();
+  const { theme, isDark, language } = useTheme();
   const { user: currentUser } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -173,6 +173,9 @@ export default function PostDetailScreen({ route, navigation }: Props) {
     onSuccess: (updatedPost) => {
       queryClient.setQueryData(["/api/posts", postId], updatedPost);
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      if (currentUser?.id) {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", currentUser.id, "posts"] });
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowEditModal(false);
     },
