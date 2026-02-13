@@ -73,7 +73,8 @@ export default function SavedMessagesScreen({ navigation }: Props) {
       return response.json();
     },
     enabled: !!user?.id,
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const uploadImage = async (uri: string): Promise<string> => {
@@ -93,6 +94,8 @@ export default function SavedMessagesScreen({ navigation }: Props) {
     return data.url;
   };
 
+  const queryKey = ["/api/saved-messages", user?.id];
+
   const addMessageMutation = useMutation({
     mutationFn: async (params: { type: "photo" | "note"; content?: string; imageUrl?: string }) => {
       const response = await apiRequest("POST", "/api/saved-messages", {
@@ -103,11 +106,31 @@ export default function SavedMessagesScreen({ navigation }: Props) {
       });
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/saved-messages", user?.id] });
+    onMutate: async (params) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<SavedMessage[]>(queryKey);
+      const optimistic: SavedMessage = {
+        id: `temp-${Date.now()}`,
+        userId: user?.id || "",
+        type: params.type,
+        content: params.content || null,
+        imageUrl: params.imageUrl || null,
+        fileName: null,
+        createdAt: new Date().toISOString(),
+      };
+      queryClient.setQueryData<SavedMessage[]>(queryKey, (old) => [optimistic, ...(old || [])]);
       if (hapticsEnabled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -115,11 +138,24 @@ export default function SavedMessagesScreen({ navigation }: Props) {
     mutationFn: async (messageId: string) => {
       await apiRequest("DELETE", `/api/saved-messages/${messageId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/saved-messages", user?.id] });
+    onMutate: async (messageId) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<SavedMessage[]>(queryKey);
+      queryClient.setQueryData<SavedMessage[]>(queryKey, (old) =>
+        (old || []).filter((m) => m.id !== messageId)
+      );
       if (hapticsEnabled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 
