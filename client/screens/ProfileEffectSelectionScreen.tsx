@@ -79,7 +79,33 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
     setSelected(effect);
   };
 
+  const isPremium = (user as any)?.isPremium;
   const effectsOnly = PROFILE_EFFECTS.filter(e => e.id !== null);
+
+  if (!isPremium) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.backgroundRoot, justifyContent: "center", alignItems: "center", padding: Spacing.xl }]}>
+        <Feather name="star" size={48} color={theme.accent} style={{ marginBottom: Spacing.lg }} />
+        <ThemedText type="h3" style={{ textAlign: "center", marginBottom: Spacing.sm }}>
+          {t("Premium Feature", "Премиум функция")}
+        </ThemedText>
+        <ThemedText type="body" style={{ textAlign: "center", color: theme.textSecondary, marginBottom: Spacing.xl }}>
+          {t("Profile effects are available for Premium subscribers", "Эффекты профиля доступны для подписчиков Premium")}
+        </ThemedText>
+        <Pressable
+          onPress={() => {
+            navigation.goBack();
+            setTimeout(() => navigation.navigate("Premium" as any), 100);
+          }}
+          style={{ backgroundColor: theme.accent, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.md, borderRadius: BorderRadius.lg }}
+        >
+          <ThemedText style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+            {t("Get Premium", "Получить Premium")}
+          </ThemedText>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <ScrollView

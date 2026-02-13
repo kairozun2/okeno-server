@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { Button } from "@/components/Button";
 import { ProfileEffect, ProfileEffectType } from "@/components/ProfileEffect";
 import { ParallaxAvatar } from "@/components/ParallaxAvatar";
@@ -309,10 +310,11 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         <ProfileEffect effect={profileUser?.profileEffect as ProfileEffectType} height={200} scrollY={scrollY} />
         <ParallaxAvatar emoji={profileUser?.emoji || "🐸"} size={72} />
         <View style={{ flexDirection: "row", alignItems: "center", marginTop: Spacing.sm }}>
-          <ThemedText type="h3" style={[styles.username, { marginTop: 0 }]} truncate maxLength={15}>
+          <ThemedText type="h3" style={[styles.username, { marginTop: 0 }, (profileUser as any)?.usernameColor ? { color: (profileUser as any).usernameColor } : null]} truncate maxLength={15}>
             {profileUser?.username}
           </ThemedText>
           {profileUser?.isVerified ? <VerifiedBadge size={18} style={{ marginLeft: 6 }} /> : null}
+          {(profileUser as any)?.isPremium ? <PremiumBadge size={16} style={{ marginLeft: 4 }} /> : null}
         </View>
 
         <View style={styles.stats}>

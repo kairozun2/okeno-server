@@ -25,6 +25,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, getImageUrl, getApiUrl, getShareUrl } from "@/lib/query-client";
@@ -185,10 +186,11 @@ function PostCard({
           <Avatar emoji={post.user?.emoji || "🐸"} size={32} />
           <View style={styles.postHeaderInfo}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <ThemedText type="small" style={[styles.username, { marginRight: 4 }]} truncate maxLength={12}>
+              <ThemedText type="small" style={[styles.username, { marginRight: 4 }, (post.user as any)?.usernameColor ? { color: (post.user as any).usernameColor } : null]} truncate maxLength={12}>
                 {post.user?.username || "..."}
               </ThemedText>
               {post.user?.isVerified ? <VerifiedBadge size={14} /> : null}
+              {(post.user as any)?.isPremium ? <PremiumBadge size={12} /> : null}
             </View>
             {post.location ? (
               <Pressable onPress={onLocationPress} style={styles.locationRow}>

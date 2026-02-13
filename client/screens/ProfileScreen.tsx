@@ -23,6 +23,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { ParallaxAvatar } from "@/components/ParallaxAvatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { ProfileEditModal } from "@/components/ProfileEditModal";
 import { ProfileEffect, ProfileEffectType } from "@/components/ProfileEffect";
 import { useTheme } from "@/hooks/useTheme";
@@ -269,10 +270,11 @@ export default function ProfileScreen({ navigation }: Props) {
         </Animated.View>
       </Pressable>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        <ThemedText type="h3" style={styles.username} truncate maxLength={15}>
+        <ThemedText type="h3" style={[styles.username, (user as any)?.usernameColor ? { color: (user as any).usernameColor } : null]} truncate maxLength={15}>
           {user?.username}
         </ThemedText>
         {user?.isVerified ? <VerifiedBadge size={18} /> : null}
+        {(user as any)?.isPremium ? <PremiumBadge size={16} /> : null}
       </View>
       <View style={styles.stats}>
         <View style={styles.stat}>

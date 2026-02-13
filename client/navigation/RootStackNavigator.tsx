@@ -38,6 +38,7 @@ import MiniAppsScreen from "@/screens/MiniAppsScreen";
 import MiniAppViewerScreen from "@/screens/MiniAppViewerScreen";
 import ProfileEffectSelectionScreen from "@/screens/ProfileEffectSelectionScreen";
 import PremiumScreen from "@/screens/PremiumScreen";
+import UsernameColorScreen from "@/screens/UsernameColorScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -70,6 +71,7 @@ export type RootStackParamList = {
   ThemeSelection: undefined;
   ProfileEffectSelection: undefined;
   Premium: undefined;
+  UsernameColor: undefined;
   CreateGroupChat: undefined;
   GroupChatInfo: { chatId: string; groupName?: string; groupEmoji?: string; isVerified?: boolean };
   CallScreen: { userId?: string; displayName?: string; displayEmoji?: string; chatId?: string; isIncoming?: boolean };
@@ -422,6 +424,15 @@ export default function RootStackNavigator() {
             options={({ navigation }) => ({
               ...screenOptions,
               headerTitle: "Premium",
+              headerShadowVisible: false,
+            })}
+          />
+          <Stack.Screen
+            name="UsernameColor"
+            component={UsernameColorScreen}
+            options={({ navigation }) => ({
+              ...screenOptions,
+              headerTitle: "\u0426\u0432\u0435\u0442 \u0438\u043C\u0435\u043D\u0438",
               headerShadowVisible: false,
             })}
           />

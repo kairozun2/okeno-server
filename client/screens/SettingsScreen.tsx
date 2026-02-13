@@ -371,6 +371,12 @@ export default function SettingsScreen({ navigation }: Props) {
           subtitle: (user as any)?.isPremium ? t("Active subscription", "Активная подписка") : t("Unlock exclusive features", "Разблокируйте эксклюзивные функции"),
           onPress: () => navigation.navigate("Premium" as any),
         },
+        ...((user as any)?.isPremium ? [{
+          customIcon: "edit-3" as any,
+          title: t("Username Color", "Цвет имени"),
+          subtitle: (user as any)?.usernameColor ? t("Custom color set", "Свой цвет установлен") : t("Default", "По умолчанию"),
+          onPress: () => navigation.navigate("UsernameColor" as any),
+        }] : []),
       ],
     },
     {

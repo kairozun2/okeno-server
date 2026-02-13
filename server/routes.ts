@@ -60,7 +60,7 @@ export async function registerRoutes(app: express.Express) {
         deviceInfo: req.headers["user-agent"] || "Unknown device",
       });
 
-      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, profileEffect: user.profileEffect }, session });
+      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, profileEffect: user.profileEffect, isPremium: user.isPremium, usernameColor: user.usernameColor }, session });
     } catch (error) {
       console.error("Register error:", error);
       res.status(500).json({ error: "Failed to register" });
@@ -98,7 +98,7 @@ export async function registerRoutes(app: express.Express) {
         deviceInfo: req.headers["user-agent"] || "Unknown device",
       });
 
-      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, profileEffect: user.profileEffect }, session });
+      res.json({ user: { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, profileEffect: user.profileEffect, isPremium: user.isPremium, usernameColor: user.usernameColor }, session });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Failed to login" });
@@ -216,7 +216,7 @@ export async function registerRoutes(app: express.Express) {
     try {
       const user = await storage.getUserByUsername(req.params.username);
       if (!user) return res.status(404).json({ error: "User not found" });
-      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, profileEffect: user.profileEffect });
+      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, profileEffect: user.profileEffect, isPremium: user.isPremium, usernameColor: user.usernameColor });
     } catch (error) {
       console.error("Get user by username error:", error);
       res.status(500).json({ error: "Failed to get user" });
@@ -239,7 +239,7 @@ export async function registerRoutes(app: express.Express) {
     try {
       const user = await storage.getUser(req.params.id);
       if (!user) return res.status(404).json({ error: "User not found" });
-      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, lastUsernameChange: user.lastUsernameChange, profileEffect: user.profileEffect });
+      res.json({ id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified, isAdmin: user.isAdmin, isBanned: user.isBanned, lastUsernameChange: user.lastUsernameChange, profileEffect: user.profileEffect, isPremium: user.isPremium, usernameColor: user.usernameColor });
     } catch (error) {
       console.error("Get user error:", error);
       res.status(500).json({ error: "Failed to get user" });
@@ -322,6 +322,14 @@ export async function registerRoutes(app: express.Express) {
       if (!validEffects.includes(effect)) {
         return res.status(400).json({ error: "Invalid effect" });
       }
+
+      if (effect !== null) {
+        const user = await storage.getUser(userId);
+        if (!user?.isPremium) {
+          return res.status(403).json({ error: "Premium subscription required for profile effects" });
+        }
+      }
+
       const [updated] = await db.update(users).set({ profileEffect: effect }).where(eq(users.id, userId)).returning();
       if (!updated) {
         return res.status(404).json({ error: "User not found" });
@@ -330,6 +338,28 @@ export async function registerRoutes(app: express.Express) {
     } catch (error) {
       console.error("Update profile effect error:", error);
       res.status(500).json({ error: "Failed to update effect" });
+    }
+  });
+
+  app.patch("/api/users/:id/username-color", async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const { color } = req.body;
+
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ error: "User not found" });
+      if (!user.isPremium) return res.status(403).json({ error: "Premium subscription required" });
+
+      const validColors = [null, "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", "#FF8C00", "#00CED1", "#FF69B4", "#7B68EE", "#98FB98", "#F0E68C"];
+      if (color !== null && !validColors.includes(color)) {
+        return res.status(400).json({ error: "Invalid color" });
+      }
+
+      const [updated] = await db.update(users).set({ usernameColor: color }).where(eq(users.id, userId)).returning();
+      res.json({ usernameColor: updated.usernameColor, isPremium: updated.isPremium });
+    } catch (error) {
+      console.error("Update username color error:", error);
+      res.status(500).json({ error: "Failed to update color" });
     }
   });
 
@@ -343,7 +373,7 @@ export async function registerRoutes(app: express.Express) {
       const postsWithData = await db.execute(sql`
         SELECT 
           p.*,
-          u.id as author_id, u.username as author_username, u.emoji as author_emoji, u.is_verified as author_verified,
+          u.id as author_id, u.username as author_username, u.emoji as author_emoji, u.is_verified as author_verified, u.is_premium as author_premium, u.username_color as author_username_color,
           COALESCE(lc.likes_count, 0)::int as likes_count,
           COALESCE(cc.comments_count, 0)::int as comments_count,
           ${currentUserId ? sql`CASE WHEN ul.user_id IS NOT NULL THEN true ELSE false END` : sql`false`} as is_liked,
@@ -375,6 +405,8 @@ export async function registerRoutes(app: express.Express) {
           username: row.author_username,
           emoji: row.author_emoji,
           isVerified: row.author_verified,
+          isPremium: row.author_premium === true || row.author_premium === 't',
+          usernameColor: row.author_username_color,
         } : undefined,
         likesCount: row.likes_count,
         commentsCount: row.comments_count,
@@ -1848,10 +1880,24 @@ export async function registerRoutes(app: express.Express) {
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
         payment_method_types: ['card'],
-        line_items: [{ price: priceId, quantity: 1 }],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Okeno Premium',
+              description: 'Premium subscription with exclusive features',
+            },
+            unit_amount: 499,
+            recurring: {
+              interval: 'month',
+            },
+          },
+          quantity: 1,
+        }],
         mode: 'subscription',
         success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/checkout/cancel`,
+        metadata: { userId: user.id },
       });
 
       res.json({ url: session.url });
