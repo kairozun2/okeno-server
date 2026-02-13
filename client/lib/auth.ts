@@ -15,6 +15,7 @@ export interface User {
   createdAt: string;
   lastSeen: string;
   lastUsernameChange?: string | null;
+  profileEffect?: string | null;
 }
 
 export interface AuthState {

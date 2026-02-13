@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect } from "react";
-import { View, StyleSheet, Pressable, Dimensions } from "react-native";
+import { View, StyleSheet, Pressable, Dimensions, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -82,9 +82,13 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
   const effectsOnly = PROFILE_EFFECTS.filter(e => e.id !== null);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
+      contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
+      showsVerticalScrollIndicator={false}
+    >
       <Animated.View entering={FadeIn.duration(300)} style={[styles.preview, { backgroundColor: theme.backgroundSecondary }]}>
-        <ProfileEffect effect={selected} height={220} />
+        <ProfileEffect effect={selected} height={200} />
         <View style={styles.previewContent}>
           <Avatar emoji={user?.emoji || "🐸"} size={72} />
           <ThemedText type="h3" style={{ marginTop: Spacing.sm }}>
@@ -96,11 +100,11 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
         </View>
       </Animated.View>
 
-      <View style={styles.cardsRow}>
+      <View style={styles.cardsGrid}>
         {effectsOnly.map((effect, index) => {
           const isActive = selected === effect.id;
           return (
-            <Animated.View key={effect.id} entering={FadeIn.delay(index * 80).duration(300)} style={{ width: CARD_WIDTH }}>
+            <Animated.View key={effect.id} entering={FadeIn.delay(index * 60).duration(250)} style={{ width: CARD_WIDTH }}>
               <Pressable
                 onPress={() => handleSelect(effect.id)}
                 style={[
@@ -113,15 +117,20 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
                 ]}
               >
                 <View style={[styles.cardPreview, { backgroundColor: theme.backgroundRoot }]}>
-                  <ProfileEffect effect={effect.id} height={100} />
+                  <ProfileEffect effect={effect.id} height={80} />
                 </View>
                 <View style={styles.cardLabel}>
-                  <ThemedText type="body" style={[isActive ? { color: theme.accent, fontWeight: "600" } : null]}>
-                    {language === "ru" ? effect.labelRu : effect.label}
-                  </ThemedText>
+                  <View style={styles.cardLabelText}>
+                    <ThemedText type="caption" style={{ fontSize: 14, opacity: 0.5, marginRight: 4 }}>
+                      {effect.emoji}
+                    </ThemedText>
+                    <ThemedText type="body" style={[isActive ? { color: theme.accent, fontWeight: "600" } : null]}>
+                      {language === "ru" ? effect.labelRu : effect.label}
+                    </ThemedText>
+                  </View>
                   {isActive ? (
                     <View style={[styles.checkmark, { backgroundColor: theme.accent }]}>
-                      <Feather name="check" size={12} color="#fff" />
+                      <Feather name="check" size={10} color="#fff" />
                     </View>
                   ) : null}
                 </View>
@@ -142,7 +151,7 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
           </ThemedText>
         </Pressable>
       ) : null}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -154,7 +163,7 @@ const styles = StyleSheet.create({
   },
   preview: {
     borderRadius: BorderRadius.xl,
-    height: 220,
+    height: 200,
     overflow: "hidden",
     marginBottom: Spacing.xl,
     justifyContent: "center",
@@ -164,8 +173,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 1,
   },
-  cardsRow: {
+  cardsGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.md,
   },
   card: {
@@ -173,20 +183,24 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   cardPreview: {
-    height: 100,
+    height: 80,
     overflow: "hidden",
   },
   cardLabel: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
+  cardLabelText: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   checkmark: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     justifyContent: "center",
     alignItems: "center",
   },
