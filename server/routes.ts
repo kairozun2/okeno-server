@@ -1709,6 +1709,118 @@ export async function registerRoutes(app: express.Express) {
     }
   });
 
+  app.get("/api/stripe/publishable-key", async (_req, res) => {
+    try {
+      const { getStripePublishableKey } = await import("./stripeClient");
+      const key = await getStripePublishableKey();
+      res.json({ publishableKey: key });
+    } catch (error) {
+      console.error("Get publishable key error:", error);
+      res.status(500).json({ error: "Failed to get Stripe key" });
+    }
+  });
+
+  app.get("/api/stripe/products", async (_req, res) => {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          p.id as product_id,
+          p.name as product_name,
+          p.description as product_description,
+          p.metadata as product_metadata,
+          pr.id as price_id,
+          pr.unit_amount,
+          pr.currency,
+          pr.recurring,
+          pr.active as price_active
+        FROM stripe.products p
+        LEFT JOIN stripe.prices pr ON pr.product = p.id AND pr.active = true
+        WHERE p.active = true
+        ORDER BY p.name, pr.unit_amount
+      `);
+
+      const productsMap = new Map();
+      for (const row of result.rows as any[]) {
+        if (!productsMap.has(row.product_id)) {
+          productsMap.set(row.product_id, {
+            id: row.product_id,
+            name: row.product_name,
+            description: row.product_description,
+            metadata: row.product_metadata,
+            prices: [],
+          });
+        }
+        if (row.price_id) {
+          productsMap.get(row.product_id).prices.push({
+            id: row.price_id,
+            unitAmount: row.unit_amount,
+            currency: row.currency,
+            recurring: row.recurring,
+          });
+        }
+      }
+
+      res.json({ products: Array.from(productsMap.values()) });
+    } catch (error) {
+      console.error("List products error:", error);
+      res.json({ products: [] });
+    }
+  });
+
+  app.post("/api/stripe/checkout", async (req, res) => {
+    try {
+      const { userId, priceId } = req.body;
+      if (!userId || !priceId) {
+        return res.status(400).json({ error: "userId and priceId required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const { getUncachableStripeClient } = await import("./stripeClient");
+      const stripe = await getUncachableStripeClient();
+
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          metadata: { userId: user.id, username: user.username },
+        });
+        customerId = customer.id;
+        await db.update(users).set({ stripeCustomerId: customerId }).where(eq(users.id, userId));
+      }
+
+      const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: 'subscription',
+        success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/checkout/cancel`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Checkout error:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  app.get("/api/stripe/subscription/:userId", async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ isPremium: user.isPremium, stripeCustomerId: user.stripeCustomerId });
+    } catch (error) {
+      console.error("Get subscription error:", error);
+      res.status(500).json({ error: "Failed to get subscription" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

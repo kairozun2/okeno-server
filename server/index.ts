@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { addDatabaseIndexes } from "./add-indexes";
+import { WebhookHandlers } from "./webhookHandlers";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -484,15 +485,77 @@ function setupErrorHandler(app: express.Application) {
   });
 }
 
+async function initStripe() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    log('[Stripe] DATABASE_URL not set, skipping Stripe init');
+    return;
+  }
+
+  try {
+    const { runMigrations } = await import('stripe-replit-sync');
+    const { getStripeSync } = await import('./stripeClient');
+
+    log('[Stripe] Initializing schema...');
+    await runMigrations({ databaseUrl } as any);
+    log('[Stripe] Schema ready');
+
+    const stripeSync = await getStripeSync();
+
+    log('[Stripe] Setting up managed webhook...');
+    try {
+      const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+      await stripeSync.findOrCreateManagedWebhook(
+        `${webhookBaseUrl}/api/stripe/webhook`
+      );
+      log('[Stripe] Webhook configured');
+    } catch (webhookErr: any) {
+      log('[Stripe] Webhook setup warning:', webhookErr?.message || webhookErr);
+    }
+
+    stripeSync.syncBackfill()
+      .then(() => log('[Stripe] Data synced'))
+      .catch((err: any) => log('[Stripe] Sync error:', err));
+  } catch (error) {
+    log('[Stripe] Init error (non-fatal):', error);
+  }
+}
+
 (async () => {
   setupRateLimiting(app);
   setupCors(app);
   app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+
+  app.post(
+    '/api/stripe/webhook',
+    express.raw({ type: 'application/json' }),
+    async (req, res) => {
+      const signature = req.headers['stripe-signature'];
+      if (!signature) {
+        return res.status(400).json({ error: 'Missing stripe-signature' });
+      }
+
+      try {
+        const sig = Array.isArray(signature) ? signature[0] : signature;
+        if (!Buffer.isBuffer(req.body)) {
+          return res.status(500).json({ error: 'Webhook processing error' });
+        }
+        await WebhookHandlers.processWebhook(req.body as Buffer, sig);
+        res.status(200).json({ received: true });
+      } catch (error: any) {
+        log('[Stripe] Webhook error:', error.message);
+        res.status(400).json({ error: 'Webhook processing error' });
+      }
+    }
+  );
+
   setupBodyParsing(app);
   setupRequestLogging(app);
 
   const server = await registerRoutes(app);
   await addDatabaseIndexes();
+
+  await initStripe();
 
   configureExpoAndLanding(app);
 

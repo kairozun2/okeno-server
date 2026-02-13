@@ -15,6 +15,8 @@ export const users = pgTable("users", {
   isVerified: boolean("is_verified").default(false).notNull(),
   isBanned: boolean("is_banned").default(false).notNull(),
   profileEffect: text("profile_effect"),
+  stripeCustomerId: text("stripe_customer_id"),
+  isPremium: boolean("is_premium").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastSeen: timestamp("last_seen").defaultNow().notNull(),
   lastUsernameChange: timestamp("last_username_change"),
