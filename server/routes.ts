@@ -3,7 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema, insertMiniAppSchema, chats, groupChatMembers, messages, users } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, isNotNull, desc, like, or, sql } from "drizzle-orm";
+import { eq, and, isNotNull, desc, like, or, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { moderateUsername } from "./moderation";
 import * as fs from "fs";
@@ -339,33 +339,50 @@ export async function registerRoutes(app: express.Express) {
       const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
       const offset = parseInt(req.query.offset as string) || 0;
       const currentUserId = req.headers["x-user-id"] as string;
-      const allPosts = await storage.getPosts(limit, offset);
       
-      const authorIds = [...new Set(allPosts.map(p => p.userId))];
-      const archivedByAuthor = new Set<string>();
-      await Promise.all(authorIds.map(async (authorId) => {
-        const archived = await storage.getArchivedPosts(authorId);
-        archived.forEach(id => archivedByAuthor.add(id));
-      }));
-      const posts = allPosts.filter(post => !archivedByAuthor.has(post.id));
+      const postsWithData = await db.execute(sql`
+        SELECT 
+          p.*,
+          u.id as author_id, u.username as author_username, u.emoji as author_emoji, u.is_verified as author_verified,
+          COALESCE(lc.likes_count, 0)::int as likes_count,
+          COALESCE(cc.comments_count, 0)::int as comments_count,
+          ${currentUserId ? sql`CASE WHEN ul.user_id IS NOT NULL THEN true ELSE false END` : sql`false`} as is_liked,
+          ${currentUserId ? sql`CASE WHEN us.user_id IS NOT NULL THEN true ELSE false END` : sql`false`} as is_saved
+        FROM posts p
+        LEFT JOIN users u ON u.id = p.user_id
+        LEFT JOIN (SELECT post_id, COUNT(*) as likes_count FROM likes GROUP BY post_id) lc ON lc.post_id = p.id
+        LEFT JOIN (SELECT post_id, COUNT(*) as comments_count FROM comments GROUP BY post_id) cc ON cc.post_id = p.id
+        ${currentUserId ? sql`LEFT JOIN likes ul ON ul.post_id = p.id AND ul.user_id = ${currentUserId}` : sql``}
+        ${currentUserId ? sql`LEFT JOIN saves us ON us.post_id = p.id AND us.user_id = ${currentUserId}` : sql``}
+        LEFT JOIN archived_posts ap ON ap.post_id = p.id AND ap.user_id = p.user_id
+        WHERE ap.id IS NULL
+        ORDER BY p.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `);
       
-      const postsWithUser = await Promise.all(posts.map(async (post) => {
-        const user = await storage.getUser(post.userId);
-        const likesCount = await storage.getPostLikesCount(post.id);
-        const commentsCount = await storage.getPostCommentsCount(post.id);
-        const isLiked = currentUserId ? !!(await storage.getLike(currentUserId, post.id)) : false;
-        const isSaved = currentUserId ? (await storage.getUserSaves(currentUserId)).some(s => s.postId === post.id) : false;
-        
-        return {
-          ...post,
-          user: user ? { id: user.id, username: user.username, emoji: user.emoji, isVerified: user.isVerified } : undefined,
-          likesCount,
-          commentsCount,
-          isLiked,
-          isSaved
-        };
+      const result = postsWithData.rows.map((row: any) => ({
+        id: row.id,
+        userId: row.user_id,
+        imageUrl: row.image_url,
+        caption: row.caption,
+        location: row.location,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        feeling: row.feeling,
+        createdAt: row.created_at,
+        user: row.author_id ? {
+          id: row.author_id,
+          username: row.author_username,
+          emoji: row.author_emoji,
+          isVerified: row.author_verified,
+        } : undefined,
+        likesCount: row.likes_count,
+        commentsCount: row.comments_count,
+        isLiked: row.is_liked === true || row.is_liked === 't',
+        isSaved: row.is_saved === true || row.is_saved === 't',
       }));
-      res.json(postsWithUser);
+      
+      res.json(result);
     } catch (error) {
       console.error("Get posts error:", error);
       res.status(500).json({ error: "Failed to get posts" });
@@ -393,7 +410,7 @@ export async function registerRoutes(app: express.Express) {
       const commentsCount = await storage.getPostCommentsCount(post.id);
       const currentUserId = req.headers["x-user-id"] as string;
       const isLiked = currentUserId ? !!(await storage.getLike(currentUserId, post.id)) : false;
-      const isSaved = currentUserId ? (await storage.getUserSaves(currentUserId)).some(s => s.postId === post.id) : false;
+      const isSaved = currentUserId ? !!(await storage.getSave(currentUserId, post.id)) : false;
 
       res.json({
         ...post,
@@ -580,35 +597,71 @@ export async function registerRoutes(app: express.Express) {
   // Chats routes
   app.get("/api/users/:id/chats", async (req, res) => {
     try {
-      const userChats = await storage.getUserChats(req.params.id);
-      const chatsWithUsers = await Promise.all(userChats.map(async (chat) => {
+      const userId = req.params.id;
+      const userChats = await storage.getUserChats(userId);
+      
+      const userIdsNeeded = new Set<string>();
+      const groupChatIds: string[] = [];
+      
+      for (const chat of userChats) {
         if (chat.isGroup) {
-          const members = await storage.getGroupChatMembers(chat.id);
-          const memberUsers = await Promise.all(members.map(async (m) => {
-            const u = await storage.getUser(m.userId);
-            return u ? { id: u.id, username: u.username, emoji: u.emoji, isVerified: u.isVerified } : null;
-          }));
-          const lastMessages = await storage.getChatMessages(chat.id, 1);
-          const unreadCount = await storage.getUnreadMessagesCount(chat.id, req.params.id);
+          groupChatIds.push(chat.id);
+        } else {
+          const otherUserId = chat.user1Id === userId ? chat.user2Id : chat.user1Id;
+          userIdsNeeded.add(otherUserId);
+        }
+      }
+      
+      const groupMembersMap = new Map<string, any[]>();
+      if (groupChatIds.length > 0) {
+        for (const chatId of groupChatIds) {
+          const members = await storage.getGroupChatMembers(chatId);
+          for (const m of members) {
+            userIdsNeeded.add(m.userId);
+          }
+          groupMembersMap.set(chatId, members);
+        }
+      }
+      
+      const userIdsArray = [...userIdsNeeded];
+      const usersMap = new Map<string, any>();
+      if (userIdsArray.length > 0) {
+        const fetchedUsers = await db.select({
+          id: users.id,
+          username: users.username,
+          emoji: users.emoji,
+          isVerified: users.isVerified,
+        }).from(users).where(inArray(users.id, userIdsArray));
+        for (const u of fetchedUsers) {
+          usersMap.set(u.id, u);
+        }
+      }
+      
+      const chatsWithUsers = await Promise.all(userChats.map(async (chat) => {
+        const lastMessages = await storage.getChatMessages(chat.id, 1);
+        const unreadCount = await storage.getUnreadMessagesCount(chat.id, userId);
+        
+        if (chat.isGroup) {
+          const members = groupMembersMap.get(chat.id) || [];
+          const memberUsers = members.map(m => usersMap.get(m.userId) || null).filter(Boolean);
           return {
             ...chat,
-            members: memberUsers.filter(Boolean),
+            members: memberUsers,
             lastMessage: lastMessages[0] || null,
             unreadCount,
           };
         }
-
-        const otherUserId = chat.user1Id === req.params.id ? chat.user2Id : chat.user1Id;
-        const otherUser = await storage.getUser(otherUserId);
-        const lastMessages = await storage.getChatMessages(chat.id, 1);
-        const unreadCount = await storage.getUnreadMessagesCount(chat.id, req.params.id);
+        
+        const otherUserId = chat.user1Id === userId ? chat.user2Id : chat.user1Id;
+        const otherUser = usersMap.get(otherUserId);
         return {
           ...chat,
-          otherUser: otherUser ? { id: otherUser.id, username: otherUser.username, emoji: otherUser.emoji, isVerified: otherUser.isVerified } : undefined,
+          otherUser: otherUser || undefined,
           lastMessage: lastMessages[0] || null,
           unreadCount,
         };
       }));
+      
       res.json(chatsWithUsers);
     } catch (error) {
       console.error("Get chats error:", error);
@@ -1870,6 +1923,7 @@ export async function registerRoutes(app: express.Express) {
   });
 
   app.get("/api/premium/features", (_req, res) => {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     res.json({
       features: [
         { id: "effects", titleEn: "Profile Effects", titleRu: "Эффекты профиля", descEn: "Exclusive animated effects for your profile", descRu: "Эксклюзивные анимированные эффекты для профиля", icon: "star" },

@@ -24,6 +24,11 @@ export async function addDatabaseIndexes() {
       CREATE INDEX IF NOT EXISTS idx_saves_user_id ON saves(user_id);
       CREATE INDEX IF NOT EXISTS idx_saves_post_id ON saves(post_id);
       CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+      CREATE INDEX IF NOT EXISTS idx_archived_posts_user_post ON archived_posts(user_id, post_id);
+      CREATE INDEX IF NOT EXISTS idx_blocked_users_user ON blocked_users(user_id);
+      CREATE INDEX IF NOT EXISTS idx_hidden_users_user ON hidden_users(user_id);
+      CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_id);
+      CREATE INDEX IF NOT EXISTS idx_messages_chat_read ON messages(chat_id, is_read);
     `);
     console.log("Database indexes created/verified successfully");
   } catch (error) {

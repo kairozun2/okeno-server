@@ -1,5 +1,6 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
+import compression from "compression";
 import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { addDatabaseIndexes } from "./add-indexes";
@@ -524,6 +525,7 @@ async function initStripe() {
 (async () => {
   setupRateLimiting(app);
   setupCors(app);
+  app.use(compression());
   app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 
   app.post(
