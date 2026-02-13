@@ -129,8 +129,8 @@ export default function PostDetailScreen({ route, navigation }: Props) {
   });
 
   const handleLike = () => {
-    likeScale.value = withSpring(1.2, { damping: 4 }, () => {
-      likeScale.value = withSpring(1);
+    likeScale.value = withSpring(1.15, { damping: 12, stiffness: 300 }, () => {
+      likeScale.value = withSpring(1, { damping: 12, stiffness: 300 });
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     likeMutation.mutate();
@@ -143,8 +143,8 @@ export default function PostDetailScreen({ route, navigation }: Props) {
         runOnJS(handleLike)();
       }
       heartOpacity.value = withSequence(
-        withSpring(1, { damping: 20, stiffness: 100 }),
-        withDelay(600, withSpring(0, { damping: 20, stiffness: 100 }))
+        withSpring(1, { damping: 15, stiffness: 300 }),
+        withDelay(400, withSpring(0, { damping: 15, stiffness: 300 }))
       );
       runOnJS(Haptics.notificationAsync)(Haptics.NotificationFeedbackType.Success);
     });
@@ -1002,7 +1002,6 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: Spacing.lg,
   },
   actionCount: {
     marginLeft: Spacing.xs,
