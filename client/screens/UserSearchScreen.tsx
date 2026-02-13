@@ -21,6 +21,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, getApiUrl } from "@/lib/query-client";
@@ -33,6 +34,8 @@ interface User {
   username: string;
   emoji: string;
   isVerified?: boolean;
+  isPremium?: boolean;
+  usernameColor?: string | null;
 }
 
 interface MiniApp {
@@ -78,10 +81,11 @@ function UserItem({
       <Avatar emoji={user.emoji} size={44} />
       <View style={styles.userInfo}>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <ThemedText type="body" style={[styles.username, { marginRight: 4 }]} truncate maxLength={12}>
+          <ThemedText type="body" style={[styles.username, { marginRight: 4 }, user.usernameColor ? { color: user.usernameColor } : null]} truncate maxLength={12}>
             {user.username}
           </ThemedText>
           {user.isVerified ? <VerifiedBadge size={14} /> : null}
+          {user.isPremium ? <PremiumBadge size={12} /> : null}
         </View>
         {isCurrentUser ? (
           <ThemedText type="caption" style={{ color: theme.textSecondary }}>

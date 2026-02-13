@@ -150,7 +150,11 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const handleAvatarLongPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setEditModalVisible(true);
+    if ((user as any)?.isPremium || (user as any)?.isAdmin) {
+      navigation.navigate("UsernameColor" as any);
+    } else {
+      setEditModalVisible(true);
+    }
   };
 
   const handleSaveProfile = async (emoji: string, username: string) => {

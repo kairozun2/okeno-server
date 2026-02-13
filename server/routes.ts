@@ -228,7 +228,7 @@ export async function registerRoutes(app: express.Express) {
       const query = req.query.q as string;
       if (!query) return res.json([]);
       const results = await storage.searchUsers(query);
-      res.json(results.map(u => ({ id: u.id, username: u.username, emoji: u.emoji, isVerified: u.isVerified })));
+      res.json(results.map(u => ({ id: u.id, username: u.username, emoji: u.emoji, isVerified: u.isVerified, isPremium: u.isPremium, usernameColor: u.usernameColor })));
     } catch (error) {
       console.error("Search users error:", error);
       res.status(500).json({ error: "Failed to search users" });
@@ -325,7 +325,7 @@ export async function registerRoutes(app: express.Express) {
 
       if (effect !== null) {
         const user = await storage.getUser(userId);
-        if (!user?.isPremium) {
+        if (!user?.isPremium && !user?.isAdmin) {
           return res.status(403).json({ error: "Premium subscription required for profile effects" });
         }
       }
@@ -348,10 +348,9 @@ export async function registerRoutes(app: express.Express) {
 
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ error: "User not found" });
-      if (!user.isPremium) return res.status(403).json({ error: "Premium subscription required" });
+      if (!user.isPremium && !user.isAdmin) return res.status(403).json({ error: "Premium subscription required" });
 
-      const validColors = [null, "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", "#FF8C00", "#00CED1", "#FF69B4", "#7B68EE", "#98FB98", "#F0E68C"];
-      if (color !== null && !validColors.includes(color)) {
+      if (color !== null && !/^#[0-9A-Fa-f]{6}$/.test(color)) {
         return res.status(400).json({ error: "Invalid color" });
       }
 
@@ -1502,6 +1501,7 @@ export async function registerRoutes(app: express.Express) {
         isAdmin: u.isAdmin,
         isVerified: u.isVerified,
         isBanned: u.isBanned,
+        isPremium: u.isPremium,
         createdAt: u.createdAt,
       })));
     } catch (error) {
@@ -1577,6 +1577,30 @@ export async function registerRoutes(app: express.Express) {
     } catch (error) {
       console.error("Set ban error:", error);
       res.status(500).json({ error: "Failed to update ban status" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/premium", async (req, res) => {
+    try {
+      const adminId = req.headers["x-user-id"] as string;
+      if (!adminId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const isAdmin = await storage.isUserAdmin(adminId);
+      if (!isAdmin && adminId !== "36277fd7-5211-4715-9411-4401ea120d88") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      
+      const { value } = req.body;
+      const [updated] = await db.update(users).set({ isPremium: value }).where(eq(users.id, req.params.id)).returning();
+      if (!updated) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ success: true, isPremium: value });
+    } catch (error) {
+      console.error("Set premium error:", error);
+      res.status(500).json({ error: "Failed to update premium status" });
     }
   });
 

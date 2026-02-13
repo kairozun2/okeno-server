@@ -79,7 +79,7 @@ export default function ProfileEffectSelectionScreen({ navigation }: Props) {
     setSelected(effect);
   };
 
-  const isPremium = (user as any)?.isPremium;
+  const isPremium = (user as any)?.isPremium || (user as any)?.isAdmin;
   const effectsOnly = PROFILE_EFFECTS.filter(e => e.id !== null);
 
   if (!isPremium) {

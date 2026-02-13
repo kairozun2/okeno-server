@@ -22,6 +22,7 @@ interface AdminUser {
   isAdmin: boolean;
   isVerified: boolean;
   isBanned: boolean;
+  isPremium: boolean;
   createdAt: string;
 }
 
@@ -95,7 +96,7 @@ export default function AdminPanelScreen({ navigation }: Props) {
   });
 
   const userMutation = useMutation({
-    mutationFn: async ({ userId, action, value }: { userId: string; action: "admin" | "verify" | "ban"; value: boolean }) => {
+    mutationFn: async ({ userId, action, value }: { userId: string; action: "admin" | "verify" | "ban" | "premium"; value: boolean }) => {
       const url = new URL(`/api/admin/users/${userId}/${action}`, getApiUrl());
       const response = await fetch(url.toString(), {
         method: "POST",
@@ -149,14 +150,16 @@ export default function AdminPanelScreen({ navigation }: Props) {
         t("Cancel", "Отмена"),
         targetUser.isVerified ? t("Remove Verification", "Снять верификацию") : t("Verify", "Верифицировать"),
         targetUser.isAdmin ? t("Remove Admin", "Снять админку") : t("Make Admin", "Дать админку"),
+        targetUser.isPremium ? t("Remove Premium", "Снять Premium") : t("Give Premium", "Выдать Premium"),
         targetUser.isBanned ? t("Unban", "Разбанить") : t("Ban", "Забанить"),
       ];
       ActionSheetIOS.showActionSheetWithOptions(
-        { options, cancelButtonIndex: 0, destructiveButtonIndex: targetUser.isBanned ? undefined : 3, title: `@${targetUser.username}` },
+        { options, cancelButtonIndex: 0, destructiveButtonIndex: targetUser.isBanned ? undefined : 4, title: `@${targetUser.username}` },
         (buttonIndex) => {
           if (buttonIndex === 1) userMutation.mutate({ userId: targetUser.id, action: "verify", value: !targetUser.isVerified });
           else if (buttonIndex === 2) userMutation.mutate({ userId: targetUser.id, action: "admin", value: !targetUser.isAdmin });
-          else if (buttonIndex === 3) userMutation.mutate({ userId: targetUser.id, action: "ban", value: !targetUser.isBanned });
+          else if (buttonIndex === 3) userMutation.mutate({ userId: targetUser.id, action: "premium", value: !targetUser.isPremium });
+          else if (buttonIndex === 4) userMutation.mutate({ userId: targetUser.id, action: "ban", value: !targetUser.isBanned });
         }
       );
     } else {
@@ -179,6 +182,7 @@ export default function AdminPanelScreen({ navigation }: Props) {
           <ThemedText type="body" style={{ fontWeight: "600" }}>@{item.username}</ThemedText>
           {item.isVerified ? <View style={[styles.badge, { backgroundColor: "#007AFF" }]}><Feather name="check" size={10} color="#FFF" /></View> : null}
           {item.isAdmin ? <View style={[styles.badge, { backgroundColor: "#FF9500" }]}><Feather name="shield" size={10} color="#FFF" /></View> : null}
+          {item.isPremium ? <View style={[styles.badge, { backgroundColor: "#FFD700" }]}><Feather name="star" size={10} color="#FFF" /></View> : null}
         </View>
         <ThemedText type="caption" style={{ color: theme.textSecondary }}>ID: {item.id.slice(0, 8)}...</ThemedText>
       </View>
@@ -329,6 +333,15 @@ export default function AdminPanelScreen({ navigation }: Props) {
                   <Feather name="shield" size={18} color="#FFF" />
                   <ThemedText type="body" style={{ color: "#FFF", marginLeft: Spacing.sm }}>
                     {selectedUser.isAdmin ? t("Remove Admin", "Снять админку") : t("Make Admin", "Дать админку")}
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={() => userMutation.mutate({ userId: selectedUser.id, action: "premium", value: !selectedUser.isPremium })}
+                  style={[styles.modalButton, { backgroundColor: "#FFD700" }]}
+                >
+                  <Feather name="star" size={18} color="#FFF" />
+                  <ThemedText type="body" style={{ color: "#FFF", marginLeft: Spacing.sm }}>
+                    {selectedUser.isPremium ? t("Remove Premium", "Снять Premium") : t("Give Premium", "Выдать Premium")}
                   </ThemedText>
                 </Pressable>
                 <Pressable
