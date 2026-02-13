@@ -721,7 +721,7 @@ export default function FeedScreen({ navigation }: Props) {
           </View>
           {selectedLocation ? (
             <>
-              <View style={{ position: 'absolute', top: Spacing.lg + insets.top, left: Spacing.lg, borderRadius: 22, overflow: 'hidden', zIndex: 2 }}>
+              <View style={{ position: 'absolute', top: Spacing.sm + insets.top, left: Spacing.lg, borderRadius: 22, overflow: 'hidden', zIndex: 2 }}>
                 {Platform.OS === 'ios' ? (
                   <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ padding: 10 }}>
                     <Pressable onPress={() => setMapModalVisible(false)} hitSlop={10}>
@@ -736,7 +736,7 @@ export default function FeedScreen({ navigation }: Props) {
                   </View>
                 )}
               </View>
-              <View style={{ position: 'absolute', top: Spacing.lg + insets.top, left: 0, right: 0, alignItems: 'center', paddingHorizontal: 72, pointerEvents: 'none' }}>
+              <View style={{ position: 'absolute', top: Spacing.sm + insets.top, left: 0, right: 0, alignItems: 'center', paddingHorizontal: 72, pointerEvents: 'none' }}>
                 <View style={{ borderRadius: 22, overflow: 'hidden', maxWidth: '100%' }}>
                   {Platform.OS === 'ios' ? (
                     <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}>
