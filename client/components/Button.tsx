@@ -21,11 +21,10 @@ interface ButtonProps {
 }
 
 const springConfig: WithSpringConfig = {
-  damping: 15,
-  mass: 0.3,
-  stiffness: 150,
+  damping: 20,
+  mass: 0.2,
+  stiffness: 300,
   overshootClamping: true,
-  energyThreshold: 0.001,
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);

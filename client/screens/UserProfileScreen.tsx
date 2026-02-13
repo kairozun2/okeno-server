@@ -412,6 +412,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
         visible={showActionSheet}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setShowActionSheet(false)}
       >
         <View style={styles.actionSheetOverlay}>
@@ -420,7 +421,7 @@ export default function UserProfileScreen({ route, navigation }: Props) {
             onPress={() => setShowActionSheet(false)}
           />
           <Animated.View 
-            entering={FadeIn}
+            entering={FadeIn.duration(150)}
             style={[styles.actionSheetContainer, { backgroundColor: theme.backgroundRoot }]}
           >
             <Pressable
