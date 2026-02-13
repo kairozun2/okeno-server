@@ -30,6 +30,15 @@ Design priorities: Stability, optimization, smooth performance, minimalist Teleg
 - **Security**: Helmet headers, in-memory rate limiting (100/min general, 10/min auth), input sanitization
 - **Database Indexes**: Comprehensive indexes on all frequently queried columns (server/add-indexes.ts)
 - **Connection Pool**: Optimized with max=20, idle timeout 30s, connection timeout 5s
+- **Response Compression**: gzip/deflate via compression middleware
+- **Feed Query**: Single SQL query with JOINs (no N+1), includes likes/comments counts, isLiked/isSaved
+- **Chat List Query**: Batch user lookups with inArray instead of per-chat queries
+
+### Premium System
+- Stripe integration for premium subscriptions (checkout, billing portal, webhook)
+- Premium screen accessible from Settings > Premium section
+- Features: profile effects, premium badge, exclusive themes, HD uploads, custom username colors, priority support
+- API: `/api/stripe/checkout`, `/api/stripe/portal`, `/api/stripe/subscription/:userId`, `/api/premium/features`
 
 ### Path Aliases
 - `@/` maps to `./client/` (frontend code)
