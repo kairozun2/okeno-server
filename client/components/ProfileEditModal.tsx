@@ -194,15 +194,19 @@ export function ProfileEditModal({
   const daysLeft = getDaysUntilChange();
   const showEmojiGrid = !isKeyboardVisible && !isClosing;
 
-  const emojiOpacity = useSharedValue(1);
+  const emojiProgress = useSharedValue(1);
 
   useEffect(() => {
-    const timingConfig = { duration: 200, easing: Easing.out(Easing.ease) };
-    emojiOpacity.value = withTiming(showEmojiGrid ? 1 : 0, timingConfig);
+    emojiProgress.value = withTiming(showEmojiGrid ? 1 : 0, {
+      duration: 250,
+      easing: Easing.out(Easing.ease),
+    });
   }, [showEmojiGrid]);
 
   const emojiAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: emojiOpacity.value,
+    opacity: emojiProgress.value,
+    maxHeight: emojiProgress.value * 400,
+    overflow: 'hidden' as const,
   }));
 
   return (
@@ -247,43 +251,41 @@ export function ProfileEditModal({
               </View>
             </View>
 
-            {showEmojiGrid ? (
-              <Animated.View style={emojiAnimatedStyle}>
-                {error ? (
-                  <View style={[styles.errorContainer, { backgroundColor: theme.error + "20" }]}>
-                    <ThemedText style={{ color: theme.error }}>{error}</ThemedText>
-                  </View>
-                ) : null}
+            <Animated.View style={emojiAnimatedStyle} pointerEvents={showEmojiGrid ? "auto" : "none"}>
+              {error ? (
+                <View style={[styles.errorContainer, { backgroundColor: theme.error + "20" }]}>
+                  <ThemedText style={{ color: theme.error }}>{error}</ThemedText>
+                </View>
+              ) : null}
 
-                <ThemedText type="body" style={styles.sectionTitle}>
-                  {isAdmin
-                    ? t("All Emojis", "\u0412\u0441\u0435 \u044D\u043C\u043E\u0434\u0437\u0438")
-                    : t("Choose Avatar", "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0430\u0432\u0430\u0442\u0430\u0440")}
-                </ThemedText>
+              <ThemedText type="body" style={styles.sectionTitle}>
+                {isAdmin
+                  ? t("All Emojis", "\u0412\u0441\u0435 \u044D\u043C\u043E\u0434\u0437\u0438")
+                  : t("Choose Avatar", "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0430\u0432\u0430\u0442\u0430\u0440")}
+              </ThemedText>
 
-                <ScrollView
-                  style={styles.emojiScroll}
-                  contentContainerStyle={styles.emojiGrid}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {availableEmojis.map((emoji, index) => (
-                    <Pressable
-                      key={`${emoji}-${index}`}
-                      onPress={() => handleEmojiSelect(emoji)}
-                      style={[
-                        styles.emojiButton,
-                        {
-                          backgroundColor: selectedEmoji === emoji ? theme.primary + "30" : theme.background,
-                          borderColor: selectedEmoji === emoji ? theme.primary : "transparent",
-                        },
-                      ]}
-                    >
-                      <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </Animated.View>
-            ) : null}
+              <ScrollView
+                style={styles.emojiScroll}
+                contentContainerStyle={styles.emojiGrid}
+                showsVerticalScrollIndicator={false}
+              >
+                {availableEmojis.map((emoji, index) => (
+                  <Pressable
+                    key={`${emoji}-${index}`}
+                    onPress={() => handleEmojiSelect(emoji)}
+                    style={[
+                      styles.emojiButton,
+                      {
+                        backgroundColor: selectedEmoji === emoji ? theme.primary + "30" : theme.background,
+                        borderColor: selectedEmoji === emoji ? theme.primary : "transparent",
+                      },
+                    ]}
+                  >
+                    <ThemedText style={styles.emojiText}>{emoji}</ThemedText>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Animated.View>
 
             <View style={styles.inputBar}>
               {error && isKeyboardVisible && !isClosing ? (
