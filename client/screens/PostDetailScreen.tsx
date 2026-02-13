@@ -790,11 +790,11 @@ export default function PostDetailScreen({ route, navigation }: Props) {
           />
 
           <View style={styles.captionEditorContainer}>
-            <View style={[styles.captionInputBar, { overflow: 'hidden', backgroundColor: isDark ? theme.backgroundSecondary : '#f0f0f0' }]}>
+            <View style={[styles.captionInputBar, { overflow: 'hidden', backgroundColor: isDark ? 'rgba(30,30,30,0.7)' : 'rgba(240,240,240,0.7)' }]}>
               {Platform.OS === "ios" ? (
                 <BlurView
-                  intensity={80}
-                  tint={isDark ? "dark" : "light"}
+                  intensity={90}
+                  tint={isDark ? "systemChromeMaterialDark" : "systemChromeMaterialLight"}
                   style={StyleSheet.absoluteFill}
                 />
               ) : null}
@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
   },
   captionInputContent: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     gap: Spacing.xs,
@@ -1008,16 +1008,17 @@ const styles = StyleSheet.create({
   },
   captionInputWrapper: {
     flex: 1,
-    borderRadius: BorderRadius.lg,
+    borderRadius: 20,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? Spacing.sm : Spacing.xs,
     minHeight: 38,
     justifyContent: "center",
   },
   captionInput: {
-    flex: 1,
     fontSize: 16,
     maxHeight: 100,
+    paddingTop: Platform.OS === 'ios' ? 9 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 9 : 8,
+    textAlignVertical: "center",
   },
   captionSaveButton: {
     width: 38,
