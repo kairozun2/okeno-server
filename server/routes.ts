@@ -184,7 +184,9 @@ export async function registerRoutes(app: express.Express) {
 
   app.get("/api/users/:id/posts", async (req, res) => {
     try {
-      const posts = await storage.getUserPosts(req.params.id);
+      const allPosts = await storage.getUserPosts(req.params.id);
+      const archivedIds = await storage.getArchivedPosts(req.params.id);
+      const posts = allPosts.filter(post => !archivedIds.includes(post.id));
       const postsWithUser = await Promise.all(posts.map(async (post) => {
         const user = await storage.getUser(post.userId);
         const likesCount = await storage.getPostLikesCount(post.id);
@@ -316,12 +318,21 @@ export async function registerRoutes(app: express.Express) {
     try {
       const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
       const offset = parseInt(req.query.offset as string) || 0;
-      const posts = await storage.getPosts(limit, offset);
+      const currentUserId = req.headers["x-user-id"] as string;
+      const allPosts = await storage.getPosts(limit, offset);
+      
+      const authorIds = [...new Set(allPosts.map(p => p.userId))];
+      const archivedByAuthor = new Set<string>();
+      await Promise.all(authorIds.map(async (authorId) => {
+        const archived = await storage.getArchivedPosts(authorId);
+        archived.forEach(id => archivedByAuthor.add(id));
+      }));
+      const posts = allPosts.filter(post => !archivedByAuthor.has(post.id));
+      
       const postsWithUser = await Promise.all(posts.map(async (post) => {
         const user = await storage.getUser(post.userId);
         const likesCount = await storage.getPostLikesCount(post.id);
         const commentsCount = await storage.getPostCommentsCount(post.id);
-        const currentUserId = req.headers["x-user-id"] as string;
         const isLiked = currentUserId ? !!(await storage.getLike(currentUserId, post.id)) : false;
         const isSaved = currentUserId ? (await storage.getUserSaves(currentUserId)).some(s => s.postId === post.id) : false;
         
