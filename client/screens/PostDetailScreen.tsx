@@ -9,8 +9,6 @@ import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   FadeIn,
-  FadeInUp,
-  SlideInDown,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -771,42 +769,35 @@ export default function PostDetailScreen({ route, navigation }: Props) {
       <Modal
         visible={showCaptionEditor}
         transparent
-        animationType="none"
+        animationType="fade"
         onRequestClose={() => {
           setShowCaptionEditor(false);
           setTimeout(() => setShowEditModal(true), 300);
         }}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior="padding"
           style={styles.captionEditorOverlay}
-          keyboardVerticalOffset={0}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
         >
-          <Animated.View entering={FadeIn.duration(200)} style={StyleSheet.absoluteFill}>
-            <Pressable 
-              style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.5)" }]}
-              onPress={() => {
-                Keyboard.dismiss();
-                setShowCaptionEditor(false);
-                setTimeout(() => setShowEditModal(true), 300);
-              }}
-            />
-          </Animated.View>
+          <Pressable 
+            style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.5)" }]}
+            onPress={() => {
+              Keyboard.dismiss();
+              setShowCaptionEditor(false);
+              setTimeout(() => setShowEditModal(true), 300);
+            }}
+          />
 
-          <Animated.View 
-            entering={SlideInDown.springify().damping(20).stiffness(200)} 
-            style={styles.captionEditorContainer}
-          >
-            <View style={[styles.captionInputBar, { overflow: 'hidden' }]}>
+          <View style={styles.captionEditorContainer}>
+            <View style={[styles.captionInputBar, { overflow: 'hidden', backgroundColor: isDark ? theme.backgroundSecondary : '#f0f0f0' }]}>
               {Platform.OS === "ios" ? (
                 <BlurView
                   intensity={80}
                   tint={isDark ? "dark" : "light"}
                   style={StyleSheet.absoluteFill}
                 />
-              ) : (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.backgroundSecondary }]} />
-              )}
+              ) : null}
 
               <View style={styles.captionInputContent}>
                 <Pressable onPress={() => {
@@ -842,7 +833,7 @@ export default function PostDetailScreen({ route, navigation }: Props) {
                 </Pressable>
               </View>
             </View>
-          </Animated.View>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </>
