@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").default(false).notNull(),
   isVerified: boolean("is_verified").default(false).notNull(),
   isBanned: boolean("is_banned").default(false).notNull(),
+  profileEffect: text("profile_effect"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastSeen: timestamp("last_seen").defaultNow().notNull(),
   lastUsernameChange: timestamp("last_username_change"),
