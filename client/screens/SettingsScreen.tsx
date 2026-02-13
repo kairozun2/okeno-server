@@ -40,6 +40,8 @@ const SETTINGS_ICONS = {
   miniapps: require("../assets/icons/settings/miniapps.png"),
   developer: require("../assets/icons/settings/developer.png"),
   effects: require("../assets/icons/settings/effects.png"),
+  premium: require("../assets/icons/settings/premium.png"),
+  usernameColor: require("../assets/icons/settings/username-color.png"),
 };
 
 const ACCENT_COLORS = [
@@ -366,13 +368,13 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("PREMIUM", "ПРЕМИУМ"),
       items: [
         {
-          icon: "star" as keyof typeof Feather.glyphMap,
+          customIcon: SETTINGS_ICONS.premium,
           title: "Okeno Premium",
           subtitle: (user as any)?.isPremium ? t("Active subscription", "Активная подписка") : t("Unlock exclusive features", "Разблокируйте эксклюзивные функции"),
           onPress: () => navigation.navigate("Premium" as any),
         },
         ...((user as any)?.isPremium || (user as any)?.isAdmin ? [{
-          icon: "droplet" as keyof typeof Feather.glyphMap,
+          customIcon: SETTINGS_ICONS.usernameColor,
           title: t("Username Color", "Цвет имени"),
           subtitle: (user as any)?.usernameColor ? t("Custom color set", "Свой цвет установлен") : t("Default", "По умолчанию"),
           onPress: () => navigation.navigate("UsernameColor" as any),

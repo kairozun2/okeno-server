@@ -5,7 +5,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, runOnJS } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -71,11 +71,13 @@ function HueSlider({ value, onValueChange, lightness, saturation }: { value: num
   }, [onValueChange]);
 
   const gesture = Gesture.Pan()
+    .runOnJS(true)
     .onStart((e) => { updateFromX(e.x); })
     .onUpdate((e) => { updateFromX(e.x); })
     .hitSlop({ top: 20, bottom: 20 });
 
   const tapGesture = Gesture.Tap()
+    .runOnJS(true)
     .onEnd((e) => { updateFromX(e.x); });
 
   const composed = Gesture.Race(gesture, tapGesture);
@@ -127,11 +129,13 @@ function SingleSlider({ label, value, min, max, onValueChange, getColor }: { lab
   }, [onValueChange, min, range]);
 
   const gesture = Gesture.Pan()
+    .runOnJS(true)
     .onStart((e) => { updateFromX(e.x); })
     .onUpdate((e) => { updateFromX(e.x); })
     .hitSlop({ top: 20, bottom: 20 });
 
   const tapGesture = Gesture.Tap()
+    .runOnJS(true)
     .onEnd((e) => { updateFromX(e.x); });
 
   const composed = Gesture.Race(gesture, tapGesture);
