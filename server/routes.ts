@@ -1,14 +1,14 @@
 import { createServer } from "http";
 import express, { type Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema, insertMiniAppSchema, chats, groupChatMembers, messages, users } from "@shared/schema";
+import { insertPostSchema, insertCommentSchema, insertMessageSchema, insertChatSchema, insertChatSettingsSchema, insertReportSchema, insertPushTokenSchema, insertMiniAppSchema, chats, groupChatMembers, messages, users, savedMessages, loginTokens, sessions } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, isNotNull, desc, like, or, sql, inArray } from "drizzle-orm";
+import { eq, and, isNotNull, desc, like, or, sql, inArray, gt } from "drizzle-orm";
 import { z } from "zod";
 import { moderateUsername } from "./moderation";
 import * as fs from "fs";
 import * as path from "path";
-import { randomUUID } from "crypto";
+import { randomUUID, randomBytes } from "crypto";
 import { sendNewMessageNotification, sendLikeNotification, sendCommentNotification, sendCallNotification } from "./push-notifications";
 
 const EMOJIS = ["🐸", "🦊", "🐻", "🐼", "🦁", "🐯", "🐨", "🐮", "🐷", "🐵", "🐔", "🐧", "🐦", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🕷", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊", "🐇", "🦝", "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿", "🦔"];
@@ -2093,6 +2093,78 @@ export async function registerRoutes(app: express.Express) {
   </div>
 </body>
 </html>`);
+  });
+
+  app.get("/api/saved-messages/:userId", async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const result = await db.select().from(savedMessages).where(eq(savedMessages.userId, userId)).orderBy(desc(savedMessages.createdAt));
+      res.json(result);
+    } catch (error) {
+      console.error("Get saved messages error:", error);
+      res.status(500).json({ error: "Failed to get saved messages" });
+    }
+  });
+
+  app.post("/api/saved-messages", async (req, res) => {
+    try {
+      const { userId, type, content, imageUrl, fileName } = req.body;
+      const [newMessage] = await db.insert(savedMessages).values({ userId, type, content, imageUrl, fileName }).returning();
+      res.status(201).json(newMessage);
+    } catch (error) {
+      console.error("Create saved message error:", error);
+      res.status(500).json({ error: "Failed to create saved message" });
+    }
+  });
+
+  app.delete("/api/saved-messages/:id", async (req, res) => {
+    try {
+      await db.delete(savedMessages).where(eq(savedMessages.id, req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete saved message error:", error);
+      res.status(500).json({ error: "Failed to delete saved message" });
+    }
+  });
+
+  app.post("/api/auth/qr/generate", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      const token = randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+      await db.insert(loginTokens).values({ userId, token, expiresAt });
+      res.json({ token, expiresAt });
+    } catch (error) {
+      console.error("QR generate error:", error);
+      res.status(500).json({ error: "Failed to generate QR token" });
+    }
+  });
+
+  app.post("/api/auth/qr/login", async (req, res) => {
+    try {
+      const { token, deviceInfo } = req.body;
+      const now = new Date();
+      const [loginToken] = await db.select().from(loginTokens).where(and(eq(loginTokens.token, token), eq(loginTokens.used, false), gt(loginTokens.expiresAt, now)));
+      if (!loginToken) {
+        return res.status(401).json({ error: "Invalid or expired token" });
+      }
+      await db.update(loginTokens).set({ used: true }).where(eq(loginTokens.id, loginToken.id));
+      const [user] = await db.select().from(users).where(eq(users.id, loginToken.userId));
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      if (user.isBanned) {
+        return res.status(403).json({ error: "Your account is banned" });
+      }
+      const [newSession] = await db.insert(sessions).values({ userId: user.id, deviceInfo: deviceInfo || 'QR Login' }).returning();
+      res.json({
+        user: { id: user.id, username: user.username, emoji: user.emoji, isAdmin: user.isAdmin, isVerified: user.isVerified, isPremium: user.isPremium, usernameColor: user.usernameColor, profileEffect: user.profileEffect },
+        sessionId: newSession.id
+      });
+    } catch (error) {
+      console.error("QR login error:", error);
+      res.status(500).json({ error: "Failed to login with QR" });
+    }
   });
 
   const httpServer = createServer(app);

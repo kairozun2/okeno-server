@@ -21,6 +21,8 @@ import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from "@tansta
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 
+import { BlurView } from "expo-blur";
+import { MapContent } from "@/components/MapContent";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Avatar } from "@/components/Avatar";
@@ -713,49 +715,50 @@ export default function FeedScreen({ navigation }: Props) {
       >
         <ThemedView style={{ flex: 1 }}>
           <View style={[styles.modalHeader, { paddingTop: Spacing.md }]}>
-            <ThemedText type="h4">{selectedLocation?.name}</ThemedText>
+            <ThemedText type="h4" numberOfLines={1} style={{ flex: 1, marginRight: Spacing.sm }}>{selectedLocation?.name}</ThemedText>
             <Pressable onPress={() => setMapModalVisible(false)} style={styles.closeButton}>
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
           </View>
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl }}>
-             <Feather name="map-pin" size={48} color={theme.link} />
-             {selectedLocation ? (
-               <>
-                 <ThemedText type="caption" style={{ color: theme.textSecondary, marginTop: Spacing.md, textAlign: 'center' }}>
-                   {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
-                 </ThemedText>
-                 <Pressable
-                   onPress={() => {
-                     if (!selectedLocation) return;
-                     const { lat, lng, name } = selectedLocation;
-                     const label = encodeURIComponent(name || `${lat},${lng}`);
-                     const url = Platform.select({
-                       ios: `maps:0,0?q=${label}@${lat},${lng}`,
-                       android: `geo:${lat},${lng}?q=${lat},${lng}(${label})`,
-                       default: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
-                     });
-                     if (url) Linking.openURL(url).catch(() => {});
-                   }}
-                   style={{
-                     marginTop: Spacing.lg,
-                     backgroundColor: theme.link,
-                     paddingHorizontal: 24,
-                     paddingVertical: 12,
-                     borderRadius: 12,
-                     flexDirection: 'row',
-                     alignItems: 'center',
-                     gap: 8,
-                   }}
-                 >
-                   <Feather name="navigation" size={16} color="#fff" />
-                   <ThemedText style={{ color: '#fff', fontWeight: '600' }}>
-                     {t("Open in Maps", "Открыть в Картах")}
-                   </ThemedText>
-                 </Pressable>
-               </>
-             ) : null}
+          <View style={{ flex: 1 }}>
+            {selectedLocation ? (
+              <MapContent lat={selectedLocation.lat} lng={selectedLocation.lng} name={selectedLocation.name} isDark={isDark} />
+            ) : null}
           </View>
+          {selectedLocation ? (
+            <View style={{ position: 'absolute', bottom: Spacing.xl + insets.bottom, left: 0, right: 0, alignItems: 'center' }}>
+              <Pressable
+                onPress={() => {
+                  if (!selectedLocation) return;
+                  const { lat, lng, name } = selectedLocation;
+                  const label = encodeURIComponent(name || `${lat},${lng}`);
+                  const url = Platform.select({
+                    ios: `maps:0,0?q=${label}@${lat},${lng}`,
+                    android: `geo:${lat},${lng}?q=${lat},${lng}(${label})`,
+                    default: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+                  });
+                  if (url) Linking.openURL(url).catch(() => {});
+                }}
+                style={{ borderRadius: 22, overflow: 'hidden' }}
+              >
+                {Platform.OS === 'ios' ? (
+                  <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8 }}>
+                    <Feather name="navigation" size={16} color={theme.text} />
+                    <ThemedText style={{ fontWeight: '600' }}>
+                      {t("Open in Maps", "Открыть в Картах")}
+                    </ThemedText>
+                  </BlurView>
+                ) : (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8, backgroundColor: isDark ? 'rgba(50,50,50,0.9)' : 'rgba(255,255,255,0.9)' }}>
+                    <Feather name="navigation" size={16} color={theme.text} />
+                    <ThemedText style={{ fontWeight: '600' }}>
+                      {t("Open in Maps", "Открыть в Картах")}
+                    </ThemedText>
+                  </View>
+                )}
+              </Pressable>
+            </View>
+          ) : null}
         </ThemedView>
       </Modal>
 

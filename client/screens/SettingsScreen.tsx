@@ -42,6 +42,8 @@ const SETTINGS_ICONS = {
   effects: require("../assets/icons/settings/effects.png"),
   premium: require("../assets/icons/settings/premium.png"),
   usernameColor: require("../assets/icons/settings/username-color.png"),
+  savedMessages: require("../assets/icons/settings/saved-messages.png"),
+  qrLogin: require("../assets/icons/settings/qr-login.png"),
 };
 
 const ACCENT_COLORS = [
@@ -306,6 +308,12 @@ export default function SettingsScreen({ navigation }: Props) {
       title: t("ARCHIVE", "АРХИВ"),
       items: [
         {
+          customIcon: SETTINGS_ICONS.savedMessages,
+          title: t("Saved Messages", "Сохранёнки"),
+          subtitle: t("Personal photo and note storage", "Личное хранилище фото и заметок"),
+          onPress: () => navigation.navigate("SavedMessages"),
+        },
+        {
           customIcon: SETTINGS_ICONS.archive,
           title: t("Saved", "Сохранённые"),
           subtitle: t("View saved posts", "Просмотр сохранённых публикаций"),
@@ -505,6 +513,17 @@ export default function SettingsScreen({ navigation }: Props) {
             <View style={{ height: Spacing.xl }} />
 
             <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground, borderRadius: BorderRadius.lg, overflow: "hidden" }]}>
+              <SettingRow 
+                item={{
+                  customIcon: SETTINGS_ICONS.qrLogin,
+                  title: t("Login via QR Code", "Вход по QR-коду"),
+                  onPress: () => {
+                    setShowAccountModal(false);
+                    navigation.navigate("QRLogin" as any);
+                  }
+                }}
+                isLast={false}
+              />
               <SettingRow 
                 item={{
                   icon: "log-out",

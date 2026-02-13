@@ -479,6 +479,43 @@ export const insertMiniAppSchema = createInsertSchema(miniApps).pick({
   emoji: true,
 });
 
+export const savedMessages = pgTable("saved_messages", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull().default("photo"),
+  content: text("content"),
+  imageUrl: text("image_url"),
+  fileName: text("file_name"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSavedMessageSchema = createInsertSchema(savedMessages).pick({
+  userId: true,
+  type: true,
+  content: true,
+  imageUrl: true,
+  fileName: true,
+});
+
+export const loginTokens = pgTable("login_tokens", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull(),
+  used: boolean("used").default(false).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertLoginTokenSchema = createInsertSchema(loginTokens).pick({
+  userId: true,
+  token: true,
+  expiresAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -512,3 +549,7 @@ export type InsertGroupChatMember = z.infer<typeof insertGroupChatMemberSchema>;
 export type GroupChatMember = typeof groupChatMembers.$inferSelect;
 export type InsertMiniApp = z.infer<typeof insertMiniAppSchema>;
 export type MiniApp = typeof miniApps.$inferSelect;
+export type InsertSavedMessage = z.infer<typeof insertSavedMessageSchema>;
+export type SavedMessage = typeof savedMessages.$inferSelect;
+export type InsertLoginToken = z.infer<typeof insertLoginTokenSchema>;
+export type LoginToken = typeof loginTokens.$inferSelect;

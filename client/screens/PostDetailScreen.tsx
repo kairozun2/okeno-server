@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput, Platform, ActivityIndicator, KeyboardAvoidingView, Keyboard } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, Share, Alert, Modal, TextInput, Platform, ActivityIndicator, KeyboardAvoidingView, Keyboard, Linking } from "react-native";
 import { BlurView } from "expo-blur";
+import { MapContent } from "@/components/MapContent";
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -150,6 +151,8 @@ export default function PostDetailScreen({ route, navigation }: Props) {
 
   const isOwner = currentUser?.id === post?.userId;
 
+  const [mapModalVisible, setMapModalVisible] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [showActionMenu, setShowActionMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCaptionEditor, setShowCaptionEditor] = useState(false);
@@ -522,12 +525,24 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             </View>
 
             {post.location ? (
-              <View style={styles.locationRow}>
+              <Pressable
+                onPress={() => {
+                  if (post.latitude && post.longitude) {
+                    setSelectedLocation({
+                      lat: parseFloat(post.latitude),
+                      lng: parseFloat(post.longitude),
+                      name: post.location || "",
+                    });
+                    setMapModalVisible(true);
+                  }
+                }}
+                style={styles.locationRow}
+              >
                 <Feather name="map-pin" size={14} color={theme.textSecondary} />
                 <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
                   {post.location}
                 </ThemedText>
-              </View>
+              </Pressable>
             ) : null}
 
             {post.caption ? (
@@ -834,6 +849,60 @@ export default function PostDetailScreen({ route, navigation }: Props) {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={mapModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setMapModalVisible(false)}
+      >
+        <ThemedView style={{ flex: 1 }}>
+          <View style={[styles.modalHeader, { paddingTop: Spacing.md }]}>
+            <ThemedText type="h4" numberOfLines={1} style={{ flex: 1, marginRight: Spacing.sm }}>{selectedLocation?.name}</ThemedText>
+            <Pressable onPress={() => setMapModalVisible(false)} hitSlop={10}>
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
+          </View>
+          <View style={{ flex: 1 }}>
+            {selectedLocation ? (
+              <MapContent lat={selectedLocation.lat} lng={selectedLocation.lng} name={selectedLocation.name} isDark={isDark} />
+            ) : null}
+          </View>
+          {selectedLocation ? (
+            <View style={{ position: 'absolute', bottom: Spacing.xl + insets.bottom, left: 0, right: 0, alignItems: 'center' }}>
+              <Pressable
+                onPress={() => {
+                  const { lat, lng, name } = selectedLocation;
+                  const label = encodeURIComponent(name || `${lat},${lng}`);
+                  const url = Platform.select({
+                    ios: `maps:0,0?q=${label}@${lat},${lng}`,
+                    android: `geo:${lat},${lng}?q=${lat},${lng}(${label})`,
+                    default: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+                  });
+                  if (url) Linking.openURL(url).catch(() => {});
+                }}
+                style={{ borderRadius: 22, overflow: 'hidden' }}
+              >
+                {Platform.OS === 'ios' ? (
+                  <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8 }}>
+                    <Feather name="navigation" size={16} color={theme.text} />
+                    <ThemedText style={{ fontWeight: '600' }}>
+                      {t("Open in Maps", "Открыть в Картах")}
+                    </ThemedText>
+                  </BlurView>
+                ) : (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8, backgroundColor: isDark ? 'rgba(50,50,50,0.9)' : 'rgba(255,255,255,0.9)' }}>
+                    <Feather name="navigation" size={16} color={theme.text} />
+                    <ThemedText style={{ fontWeight: '600' }}>
+                      {t("Open in Maps", "Открыть в Картах")}
+                    </ThemedText>
+                  </View>
+                )}
+              </Pressable>
+            </View>
+          ) : null}
+        </ThemedView>
       </Modal>
     </>
   );

@@ -39,6 +39,8 @@ import MiniAppViewerScreen from "@/screens/MiniAppViewerScreen";
 import ProfileEffectSelectionScreen from "@/screens/ProfileEffectSelectionScreen";
 import PremiumScreen from "@/screens/PremiumScreen";
 import UsernameColorScreen from "@/screens/UsernameColorScreen";
+import SavedMessagesScreen from "@/screens/SavedMessagesScreen";
+import QRLoginScreen from "@/screens/QRLoginScreen";
 import { Avatar } from "@/components/Avatar";
 import { ThemedText } from "@/components/ThemedText";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -78,6 +80,8 @@ export type RootStackParamList = {
   IncomingCall: { callerId: string; callerName: string; callerEmoji: string; chatId: string };
   NotificationSettings: undefined;
   Support: undefined;
+  SavedMessages: undefined;
+  QRLogin: undefined;
   MiniApps: undefined;
   MiniAppViewer: { appId: string; appName: string; appUrl: string; appEmoji?: string };
 };
@@ -368,6 +372,25 @@ export default function RootStackNavigator() {
               headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
               headerShadowVisible: false,
             })}
+          />
+          <Stack.Screen
+            name="SavedMessages"
+            component={SavedMessagesScreen}
+            options={({ navigation }) => ({
+              ...modalOptions,
+              headerTitle: "Сохранённые",
+              headerLeft: () => <CloseButton onPress={() => navigation.goBack()} />,
+              headerShadowVisible: false,
+            })}
+          />
+          <Stack.Screen
+            name="QRLogin"
+            component={QRLoginScreen}
+            options={{
+              headerShown: false,
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
           />
           <Stack.Screen
             name="AdminPanel"

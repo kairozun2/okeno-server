@@ -12,6 +12,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   register: (username: string, pin: string) => Promise<void>;
   login: (userId: string, pin: string) => Promise<void>;
+  loginWithSession: (userData: User, sid: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   setUser: (user: User | null) => void;
@@ -89,7 +90,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await authLogin(userId, pin);
     setUser(result.user);
     setSessionId(result.sessionId);
-    // storeAuth is already called in authLogin
+  }, []);
+
+  const loginWithSession = useCallback(async (userData: User, sid: string) => {
+    setUser(userData);
+    setSessionId(sid);
+    await storeAuth(userData, sid);
   }, []);
 
   const logout = useCallback(async () => {
@@ -138,6 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         register,
         login,
+        loginWithSession,
         logout,
         refreshUser,
         setUser,
