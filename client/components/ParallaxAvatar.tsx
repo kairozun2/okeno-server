@@ -5,6 +5,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   cancelAnimation,
+  interpolate,
+  Extrapolation,
 } from "react-native-reanimated";
 import { DeviceMotion } from "expo-sensors";
 import { Avatar } from "@/components/Avatar";
@@ -15,19 +17,23 @@ interface ParallaxAvatarProps {
 }
 
 const SPRING_CONFIG = {
-  damping: 25,
-  stiffness: 80,
-  mass: 0.6,
-  overshootClamping: true,
+  damping: 18,
+  stiffness: 120,
+  mass: 0.4,
+  restDisplacementThreshold: 0.01,
+  restSpeedThreshold: 0.01,
 };
 
-const TILT_RANGE = 6;
-const UPDATE_INTERVAL = 80;
+const TILT_RANGE = 5;
+const UPDATE_INTERVAL = 16;
+const SMOOTHING = 0.3;
 
 export function ParallaxAvatar({ emoji, size }: ParallaxAvatarProps) {
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
+  const targetX = useSharedValue(0);
+  const targetY = useSharedValue(0);
   const isActive = useRef(true);
+  const lastX = useRef(0);
+  const lastY = useRef(0);
 
   useEffect(() => {
     if (Platform.OS === "web") return;
@@ -45,10 +51,17 @@ export function ParallaxAvatar({ emoji, size }: ParallaxAvatarProps) {
           if (!isActive.current) return;
           if (data.rotation) {
             const { beta, gamma } = data.rotation;
-            const clampedGamma = Math.max(-1, Math.min(1, gamma));
-            const clampedBeta = Math.max(-1, Math.min(1, beta));
-            translateX.value = withSpring(clampedGamma * TILT_RANGE, SPRING_CONFIG);
-            translateY.value = withSpring(clampedBeta * TILT_RANGE, SPRING_CONFIG);
+
+            const rawX = Math.max(-1, Math.min(1, gamma)) * TILT_RANGE;
+            const rawY = Math.max(-1, Math.min(1, beta)) * TILT_RANGE;
+
+            const smoothedX = lastX.current + (rawX - lastX.current) * SMOOTHING;
+            const smoothedY = lastY.current + (rawY - lastY.current) * SMOOTHING;
+            lastX.current = smoothedX;
+            lastY.current = smoothedY;
+
+            targetX.value = withSpring(smoothedX, SPRING_CONFIG);
+            targetY.value = withSpring(smoothedY, SPRING_CONFIG);
           }
         });
       } catch {
@@ -62,15 +75,15 @@ export function ParallaxAvatar({ emoji, size }: ParallaxAvatarProps) {
       if (subscription) {
         subscription.remove();
       }
-      cancelAnimation(translateX);
-      cancelAnimation(translateY);
+      cancelAnimation(targetX);
+      cancelAnimation(targetY);
     };
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
+      { translateX: targetX.value },
+      { translateY: targetY.value },
     ],
   }));
 

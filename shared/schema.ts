@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   profileEffect: text("profile_effect"),
   stripeCustomerId: text("stripe_customer_id"),
   isPremium: boolean("is_premium").default(false).notNull(),
+  usernameColor: text("username_color"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastSeen: timestamp("last_seen").defaultNow().notNull(),
   lastUsernameChange: timestamp("last_username_change"),
