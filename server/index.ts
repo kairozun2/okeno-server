@@ -366,7 +366,7 @@ function configureExpoAndLanding(app: express.Application) {
         apps: [],
         details: [
           {
-            appID: "APPLE_TEAM_ID.com.moments.app",
+            appID: "SY2H67GC49.com.moments.app",
             paths: ["/u/*", "/post/*", "/mini-app/*"],
           },
         ],
