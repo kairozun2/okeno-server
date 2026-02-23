@@ -25,25 +25,12 @@ function sanitizeString(input: string | undefined | null): string | null {
 }
 
 export async function registerRoutes(app: express.Express) {
-  // Debug/diagnostic route
-  app.get("/api/debug", async (req, res) => {
+  // Health check
+  app.get("/api/health", async (_req, res) => {
     try {
-      const tables = await db.execute(sql`SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename`);
-      const dbTest = await db.execute(sql`SELECT current_database() as db, current_user as usr`);
-      res.json({
-        ok: true,
-        db: dbTest.rows[0],
-        tables: tables.rows.map((r: any) => r.tablename),
-        diagnostics: (global as any).__diagnostics || {},
-      });
-    } catch (error: any) {
-      res.status(500).json({
-        ok: false,
-        error: error.message,
-        stack: error.stack?.split('\n').slice(0, 5),
-        diagnostics: (global as any).__diagnostics || {},
-      });
-    }
+      await db.execute(sql`SELECT 1`);
+      res.json({ ok: true });
+    } catch { res.status(500).json({ ok: false }); }
   });
 
   // Auth routes
