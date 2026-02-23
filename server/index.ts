@@ -539,9 +539,6 @@ async function initStripe() {
   setupRequestLogging(app);
 
   const server = await registerRoutes(app);
-  await addDatabaseIndexes();
-
-  await initStripe();
 
   configureExpoAndLanding(app);
 
@@ -555,6 +552,23 @@ async function initStripe() {
     },
     () => {
       log(`express server serving on port ${port}`);
+
+      // Run async initialization after server is listening
+      (async () => {
+        try {
+          await addDatabaseIndexes();
+          log('[DB] Database indexes created successfully');
+        } catch (err: any) {
+          log('[DB] Failed to create indexes (non-fatal):', err.message);
+        }
+
+        try {
+          await initStripe();
+          log('[Stripe] Initialized successfully');
+        } catch (err: any) {
+          log('[Stripe] Init failed (non-fatal):', err.message);
+        }
+      })();
     },
   );
 })();

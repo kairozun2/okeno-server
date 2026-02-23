@@ -22,4 +22,10 @@ export const pool = new Pool({
   maxUses: 7500,
   ssl: isRemoteDB ? { rejectUnauthorized: false } : false,
 });
+
+// Prevent unhandled pool errors from crashing the process
+pool.on('error', (err) => {
+  console.error('[DB] Unexpected pool error:', err.message);
+});
+
 export const db = drizzle(pool, { schema });
