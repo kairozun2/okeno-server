@@ -2,53 +2,62 @@
 const http = require('http');
 const pg = require('pg');
 
+// Store diagnostics globally
+global.__diagnostics = {};
+
 async function testDB() {
   const dbUrl = process.env.DATABASE_URL;
-  console.log('DB URL (truncated):', dbUrl ? dbUrl.substring(0, 30) + '...' : 'NOT SET');
+  global.__diagnostics.dbUrlSet = !!dbUrl;
+  global.__diagnostics.dbUrlPrefix = dbUrl ? dbUrl.substring(0, 40) + '...' : 'NOT SET';
   
   const pool = new pg.Pool({
     connectionString: dbUrl,
-    ssl: { rejectUnauthorized: false },
+    ssl: dbUrl && dbUrl.includes('render.com') ? { rejectUnauthorized: false } : false,
     connectionTimeoutMillis: 10000,
   });
   
   try {
     const result = await pool.query('SELECT current_database() as db, current_user as user_name');
     console.log('DB CONNECTION OK:', result.rows[0]);
+    global.__diagnostics.dbConnected = true;
+    global.__diagnostics.dbInfo = result.rows[0];
     
     // Check if tables exist
     const tables = await pool.query("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename");
-    console.log('Tables:', tables.rows.map(r => r.tablename).join(', '));
+    global.__diagnostics.tables = tables.rows.map(r => r.tablename);
+    console.log('Tables found:', global.__diagnostics.tables.length, global.__diagnostics.tables.join(', '));
     
     await pool.end();
-    return { ok: true, info: result.rows[0], tables: tables.rows.map(r => r.tablename) };
+    return true;
   } catch (err) {
     console.error('DB CONNECTION FAILED:', err.message);
+    global.__diagnostics.dbConnected = false;
+    global.__diagnostics.dbError = err.message;
     await pool.end().catch(() => {});
-    return { ok: false, error: err.message };
+    return false;
   }
 }
 
-testDB().then(dbResult => {
-  if (dbResult.ok) {
-    console.log('Loading main server...');
-    try {
-      require('./server_dist/index.cjs');
-    } catch (err) {
-      console.error('SERVER LOAD ERROR:', err.message);
-      http.createServer((req, res) => {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Server load error', details: err.message }));
-      }).listen(10000, '0.0.0.0');
-    }
-  } else {
-    console.log('Starting error server...');
+testDB().then(ok => {
+  console.log('DB test result:', ok);
+  
+  // Set up process error handlers
+  process.on('unhandledRejection', (reason) => {
+    console.error('UNHANDLED REJECTION:', reason);
+  });
+  process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION:', err);
+  });
+  
+  try {
+    // Load main server - it will bind to PORT
+    require('./server_dist/index.cjs');
+  } catch (err) {
+    console.error('SERVER LOAD ERROR:', err);
     http.createServer((req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'DB connection failed', details: dbResult.error, dbUrl: process.env.DATABASE_URL ? 'set' : 'NOT SET' }));
-    }).listen(10000, '0.0.0.0', () => {
-      console.log('Error server on port 10000');
-    });
+      res.end(JSON.stringify({ error: 'Server load error', details: err.message, diagnostics: global.__diagnostics }));
+    }).listen(10000, '0.0.0.0');
   }
 });
 
