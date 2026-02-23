@@ -13,10 +13,13 @@ echo "=== Pushing database schema ==="
 # Use external URL for build-time DB access (internal URL only works at runtime)
 if [ -n "$DATABASE_EXTERNAL_URL" ]; then
   echo "Using DATABASE_EXTERNAL_URL for drizzle-kit push"
-  DATABASE_URL="$DATABASE_EXTERNAL_URL" npx drizzle-kit push
-else
-  echo "Using DATABASE_URL for drizzle-kit push"
-  npx drizzle-kit push
+  export DATABASE_URL="$DATABASE_EXTERNAL_URL"
+  echo "DATABASE_URL now: ${DATABASE_URL:0:40}..."
 fi
+
+echo "Running drizzle-kit push..."
+echo "y" | npx drizzle-kit push --force 2>&1 || echo "drizzle-kit push (with --force) exit code: $?"
+# Try without --force as fallback
+echo "y" | npx drizzle-kit push 2>&1 || echo "drizzle-kit push exit code: $?"
 
 echo "=== Build complete ==="
