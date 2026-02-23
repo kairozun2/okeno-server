@@ -10,11 +10,16 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+const isRemoteDB = process.env.DATABASE_URL.includes('render.com') || 
+  process.env.DATABASE_URL.includes('neon.tech') || 
+  process.env.DATABASE_URL.includes('supabase');
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
   maxUses: 7500,
+  ssl: isRemoteDB ? { rejectUnauthorized: false } : false,
 });
 export const db = drizzle(pool, { schema });

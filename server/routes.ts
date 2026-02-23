@@ -1913,7 +1913,7 @@ export async function registerRoutes(app: express.Express) {
         await db.update(users).set({ stripeCustomerId: customerId }).where(eq(users.id, userId));
       }
 
-      const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+      const baseUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
         payment_method_types: ['card'],
@@ -1970,7 +1970,7 @@ export async function registerRoutes(app: express.Express) {
       const { getUncachableStripeClient } = await import("./stripeClient");
       const stripe = await getUncachableStripeClient();
 
-      const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+      const baseUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: user.stripeCustomerId,
         return_url: baseUrl,

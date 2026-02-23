@@ -1,7 +1,8 @@
-import { getStripeSync } from './stripeClient';
 import { db } from './db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import Stripe from 'stripe';
+import { getStripeClient } from './stripeClient';
 
 export class WebhookHandlers {
   static async processWebhook(payload: Buffer, signature: string): Promise<void> {
@@ -12,17 +13,25 @@ export class WebhookHandlers {
       );
     }
 
-    try {
-      const body = JSON.parse(payload.toString());
-      if (body?.type) {
-        await WebhookHandlers.handleStripeEvent(body);
-      }
-    } catch (err: any) {
-      console.log('[Stripe] Custom event processing:', err?.message);
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    let event: Stripe.Event;
+
+    if (webhookSecret) {
+      // Verify signature if webhook secret is set
+      const stripe = getStripeClient();
+      event = stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        webhookSecret
+      );
+    } else {
+      // Parse directly (development mode)
+      event = JSON.parse(payload.toString()) as Stripe.Event;
     }
 
-    const sync = await getStripeSync();
-    await sync.processWebhook(payload, signature);
+    if (event?.type) {
+      await WebhookHandlers.handleStripeEvent(event);
+    }
   }
 
   static async handleStripeEvent(event: any): Promise<void> {

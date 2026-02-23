@@ -13,11 +13,20 @@ export function getApiUrl(): string {
   let host = process.env.EXPO_PUBLIC_DOMAIN;
 
   if (!host) {
-    throw new Error("EXPO_PUBLIC_DOMAIN is not set");
+    // Fallback to localhost for local development
+    host = "localhost:5000";
   }
 
   const cleanHost = host.replace(/^https?:\/\//, '');
-  return `https://${cleanHost}`;
+  
+  // Use http for localhost / local IP addresses, https for everything else
+  const isLocal = cleanHost.startsWith('localhost') 
+    || cleanHost.startsWith('127.0.0.1')
+    || cleanHost.startsWith('192.168.')
+    || cleanHost.startsWith('10.')
+    || cleanHost.startsWith('172.');
+  const protocol = isLocal ? 'http' : 'https';
+  return `${protocol}://${cleanHost}`;
 }
 
 const PRODUCTION_DOMAIN = "okeno.app";

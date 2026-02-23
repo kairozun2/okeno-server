@@ -7,23 +7,29 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "okeno.replit.app"
+        "EXPO_PUBLIC_DOMAIN": "localhost:5000"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "okeno.replit.app"
+        "EXPO_PUBLIC_DOMAIN": "YOUR_SERVER_DOMAIN"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "okeno.replit.app"
+        "EXPO_PUBLIC_DOMAIN": "YOUR_SERVER_DOMAIN"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "YOUR_APPLE_ID",
+        "ascAppId": "YOUR_ASC_APP_ID",
+        "appleTeamId": "YOUR_TEAM_ID"
+      }
+    }
   }
 }

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import compression from "compression";
@@ -21,19 +22,21 @@ function setupCors(app: express.Application) {
   app.use((req, res, next) => {
     const origins = new Set<string>();
 
-    if (process.env.REPLIT_DEV_DOMAIN) {
-      origins.add(`https://${process.env.REPLIT_DEV_DOMAIN}`);
+    // Add configured server URL
+    if (process.env.SERVER_URL) {
+      origins.add(process.env.SERVER_URL.replace(/\/$/, ''));
     }
 
-    if (process.env.REPLIT_DOMAINS) {
-      process.env.REPLIT_DOMAINS.split(",").forEach((d: string) => {
-        origins.add(`https://${d.trim()}`);
+    // Add any additional allowed origins (comma-separated)
+    if (process.env.ALLOWED_ORIGINS) {
+      process.env.ALLOWED_ORIGINS.split(",").forEach((d: string) => {
+        origins.add(d.trim());
       });
     }
 
     const origin = req.header("origin");
 
-    // Allow localhost origins for Expo web development (any port)
+    // Allow localhost origins for Expo / local development (any port)
     const isLocalhost =
       origin?.startsWith("http://localhost:") ||
       origin?.startsWith("http://127.0.0.1:");
@@ -487,36 +490,17 @@ function setupErrorHandler(app: express.Application) {
 }
 
 async function initStripe() {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    log('[Stripe] DATABASE_URL not set, skipping Stripe init');
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PUBLISHABLE_KEY) {
+    log('[Stripe] STRIPE_SECRET_KEY / STRIPE_PUBLISHABLE_KEY not set, skipping Stripe init');
     return;
   }
 
   try {
-    const { runMigrations } = await import('stripe-replit-sync');
-    const { getStripeSync } = await import('./stripeClient');
-
-    log('[Stripe] Initializing schema...');
-    await runMigrations({ databaseUrl } as any);
-    log('[Stripe] Schema ready');
-
-    const stripeSync = await getStripeSync();
-
-    log('[Stripe] Setting up managed webhook...');
-    try {
-      const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
-      await stripeSync.findOrCreateManagedWebhook(
-        `${webhookBaseUrl}/api/stripe/webhook`
-      );
-      log('[Stripe] Webhook configured');
-    } catch (webhookErr: any) {
-      log('[Stripe] Webhook setup warning:', webhookErr?.message || webhookErr);
-    }
-
-    stripeSync.syncBackfill()
-      .then(() => log('[Stripe] Data synced'))
-      .catch((err: any) => log('[Stripe] Sync error:', err));
+    const { getStripeClient } = await import('./stripeClient');
+    const stripe = getStripeClient();
+    // Verify connection by listing one product
+    await stripe.products.list({ limit: 1 });
+    log('[Stripe] Connected successfully');
   } catch (error) {
     log('[Stripe] Init error (non-fatal):', error);
   }
@@ -568,7 +552,6 @@ async function initStripe() {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
     },
     () => {
       log(`express server serving on port ${port}`);
