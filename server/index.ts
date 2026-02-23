@@ -1,4 +1,13 @@
 import "dotenv/config";
+
+// Prevent unhandled errors from crashing the server process
+process.on('unhandledRejection', (reason) => {
+  console.error('[Process] Unhandled rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[Process] Uncaught exception:', err.message);
+});
+
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import compression from "compression";
