@@ -1,9 +1,17 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
-});
+let openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI | null {
+  if (openai) return openai;
+  const apiKey = process.env.OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  if (!apiKey) return null;
+  openai = new OpenAI({
+    apiKey,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
+  });
+  return openai;
+}
 
 interface ModerationResult {
   isAllowed: boolean;
@@ -125,7 +133,12 @@ function containsObviousOffense(username: string): boolean {
  */
 async function aiModerateUsername(username: string): Promise<ModerationResult> {
   try {
-    const response = await openai.chat.completions.create({
+    const client = getOpenAI();
+    if (!client) {
+      console.log('[Moderation] OpenAI not configured, skipping AI moderation');
+      return { isAllowed: true };
+    }
+    const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
