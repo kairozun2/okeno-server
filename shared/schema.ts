@@ -24,6 +24,14 @@ export const users = pgTable("users", {
 });
 
 // Posts table - photos with location
+// Uploads table - store images in DB (Render filesystem is ephemeral)
+export const uploads = pgTable("uploads", {
+  id: varchar("id").primaryKey(),
+  data: text("data").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Posts table - photos with location
 export const posts = pgTable("posts", {
   id: varchar("id")
     .primaryKey()

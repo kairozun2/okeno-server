@@ -145,38 +145,45 @@ export async function registerRoutes(app: express.Express) {
         return res.status(400).json({ error: "No image data provided" });
       }
 
-      // Extract base64 data (handle both raw base64 and data URL formats)
-      let base64Data = image;
-      let extension = "jpg";
-      
-      if (image.startsWith("data:")) {
-        const matches = image.match(/^data:image\/(\w+);base64,(.+)$/);
-        if (matches) {
-          extension = matches[1] === "jpeg" ? "jpg" : matches[1];
-          base64Data = matches[2];
-        }
+      // Extract base64 data and build data URL for DB storage
+      let dataUrl = image;
+      if (!image.startsWith("data:")) {
+        dataUrl = `data:image/jpeg;base64,${image}`;
       }
 
-      const fileName = `${randomUUID()}.${extension}`;
-      const uploadsDir = path.resolve(process.cwd(), "uploads");
-      
-      // Ensure uploads directory exists
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
+      // Store in database instead of filesystem (Render filesystem is ephemeral)
+      const id = randomUUID();
+      await db.execute(
+        sql`INSERT INTO uploads (id, data, created_at) VALUES (${id}, ${dataUrl}, NOW())`
+      );
 
-      const filePath = path.join(uploadsDir, fileName);
-      
-      // Write file
-      fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
-
-      // Return relative path - client will build full URL using EXPO_PUBLIC_DOMAIN
-      const relativePath = `/uploads/${fileName}`;
-
-      res.json({ url: relativePath });
+      // Return a URL that serves from DB
+      const url = `/api/images/${id}`;
+      res.json({ url });
     } catch (error) {
       console.error("Upload error:", error);
       res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
+
+  // Serve images from database
+  app.get("/api/images/:id", async (req, res) => {
+    try {
+      const result = await db.execute(
+        sql`SELECT data FROM uploads WHERE id = ${req.params.id}`
+      );
+      if (!result.rows.length) return res.status(404).json({ error: "Image not found" });
+
+      const dataUrl = result.rows[0].data as string;
+      const matches = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+      if (!matches) return res.status(500).json({ error: "Invalid image data" });
+
+      const buffer = Buffer.from(matches[2], "base64");
+      res.setHeader("Content-Type", matches[1]);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.send(buffer);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to load image" });
     }
   });
 
@@ -430,12 +437,17 @@ export async function registerRoutes(app: express.Express) {
 
   app.post("/api/posts", async (req, res) => {
     try {
-      const postData = insertPostSchema.parse(req.body);
+      // Convert null values to undefined for Zod compatibility
+      const body = { ...req.body };
+      for (const key of Object.keys(body)) {
+        if (body[key] === null) body[key] = undefined;
+      }
+      const postData = insertPostSchema.parse(body);
       const post = await storage.createPost(postData);
       res.json(post);
-    } catch (error) {
-      console.error("Create post error:", error);
-      res.status(400).json({ error: "Invalid post data" });
+    } catch (error: any) {
+      console.error("Create post error:", error?.issues || error?.message || error);
+      res.status(400).json({ error: "Invalid post data", details: error?.issues?.map((i: any) => `${i.path}: ${i.message}`) });
     }
   });
 

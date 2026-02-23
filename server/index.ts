@@ -578,6 +578,20 @@ async function initStripe() {
           log('[Stripe] Init failed (non-fatal):', err.message);
         }
       })();
+
+      // Self-ping every 14 minutes to prevent Render free tier sleep
+      const serverUrl = process.env.SERVER_URL;
+      if (serverUrl && serverUrl.includes('onrender.com')) {
+        setInterval(async () => {
+          try {
+            const res = await fetch(`${serverUrl}/api/health`);
+            log(`[Keep-alive] ping: ${res.status}`);
+          } catch (e: any) {
+            log(`[Keep-alive] ping failed: ${e.message}`);
+          }
+        }, 14 * 60 * 1000); // 14 minutes
+        log('[Keep-alive] Self-ping enabled (every 14 min)');
+      }
     },
   );
 })();
