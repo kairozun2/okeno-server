@@ -1,6 +1,7 @@
-// Diagnostic start wrapper - tests DB connection then loads main server
+// Production start wrapper - runs drizzle-kit push then loads server
 const http = require('http');
 const pg = require('pg');
+const { execSync } = require('child_process');
 
 // Store diagnostics globally
 global.__diagnostics = {};
@@ -22,25 +23,22 @@ async function testDB() {
     global.__diagnostics.dbConnected = true;
     global.__diagnostics.dbInfo = result.rows[0];
     
-    // Check if tables exist
     const tables = await pool.query("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename");
     global.__diagnostics.tables = tables.rows.map(r => r.tablename);
-    console.log('Tables found:', global.__diagnostics.tables.length, global.__diagnostics.tables.join(', '));
+    console.log('Tables found:', global.__diagnostics.tables.length);
     
     await pool.end();
-    return true;
+    return global.__diagnostics.tables.length;
   } catch (err) {
     console.error('DB CONNECTION FAILED:', err.message);
     global.__diagnostics.dbConnected = false;
     global.__diagnostics.dbError = err.message;
     await pool.end().catch(() => {});
-    return false;
+    return -1;
   }
 }
 
-testDB().then(ok => {
-  console.log('DB test result:', ok);
-  
+async function main() {
   // Set up process error handlers
   process.on('unhandledRejection', (reason) => {
     console.error('UNHANDLED REJECTION:', reason);
@@ -48,9 +46,38 @@ testDB().then(ok => {
   process.on('uncaughtException', (err) => {
     console.error('UNCAUGHT EXCEPTION:', err);
   });
+
+  const tableCount = await testDB();
   
+  if (tableCount === 0) {
+    console.log('No tables found, running drizzle-kit push...');
+    try {
+      // Use the external URL for drizzle-kit push if available, otherwise the current DATABASE_URL
+      const pushUrl = process.env.DATABASE_EXTERNAL_URL || process.env.DATABASE_URL;
+      const output = execSync(`DATABASE_URL="${pushUrl}" npx drizzle-kit push`, {
+        cwd: process.cwd(),
+        encoding: 'utf-8',
+        timeout: 60000,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      console.log('drizzle-kit push output:', output);
+      global.__diagnostics.pushResult = 'success';
+    } catch (err) {
+      console.error('drizzle-kit push failed:', err.message);
+      if (err.stdout) console.log('stdout:', err.stdout);
+      if (err.stderr) console.error('stderr:', err.stderr);
+      global.__diagnostics.pushResult = 'failed: ' + err.message;
+    }
+    
+    // Re-check tables
+    const newCount = await testDB();
+    console.log('Tables after push:', newCount);
+  } else if (tableCount > 0) {
+    console.log(`Found ${tableCount} tables, skipping drizzle-kit push`);
+  }
+  
+  console.log('Loading main server...');
   try {
-    // Load main server - it will bind to PORT
     require('./server_dist/index.cjs');
   } catch (err) {
     console.error('SERVER LOAD ERROR:', err);
@@ -59,5 +86,7 @@ testDB().then(ok => {
       res.end(JSON.stringify({ error: 'Server load error', details: err.message, diagnostics: global.__diagnostics }));
     }).listen(10000, '0.0.0.0');
   }
-});
+}
+
+main();
 
