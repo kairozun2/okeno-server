@@ -52,21 +52,23 @@ async function main() {
   if (tableCount === 0) {
     console.log('No tables found, running drizzle-kit push...');
     try {
-      // Use the external URL for drizzle-kit push if available, otherwise the current DATABASE_URL
-      const pushUrl = process.env.DATABASE_EXTERNAL_URL || process.env.DATABASE_URL;
-      const output = execSync(`DATABASE_URL="${pushUrl}" npx drizzle-kit push`, {
+      // Use the current DATABASE_URL (internal) since we already confirmed it works
+      const output = execSync(`npx drizzle-kit push 2>&1`, {
         cwd: process.cwd(),
         encoding: 'utf-8',
         timeout: 60000,
-        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env },
       });
       console.log('drizzle-kit push output:', output);
       global.__diagnostics.pushResult = 'success';
+      global.__diagnostics.pushOutput = output.substring(0, 500);
     } catch (err) {
       console.error('drizzle-kit push failed:', err.message);
       if (err.stdout) console.log('stdout:', err.stdout);
       if (err.stderr) console.error('stderr:', err.stderr);
       global.__diagnostics.pushResult = 'failed: ' + err.message;
+      global.__diagnostics.pushStdout = err.stdout ? err.stdout.substring(0, 500) : '';
+      global.__diagnostics.pushStderr = err.stderr ? err.stderr.substring(0, 500) : '';
     }
     
     // Re-check tables
